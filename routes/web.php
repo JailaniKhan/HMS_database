@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -9,9 +10,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');   
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [ReportController::class, 'dashboardStats'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/dashboard-redirect', function () {
     $user = Auth::user();
@@ -56,6 +55,5 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 require __DIR__.'/hospital.php';
-require __DIR__.'/redis.php';
 
 

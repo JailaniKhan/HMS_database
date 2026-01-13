@@ -4,23 +4,27 @@ namespace App\Http\Controllers\Appointment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\Patient;
-use App\Models\Doctor;
-use App\Models\Department;
+use App\Services\AppointmentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
 
 class AppointmentController extends Controller
 {
+    protected AppointmentService $appointmentService;
+
+    public function __construct(AppointmentService $appointmentService)
+    {
+        $this->appointmentService = $appointmentService;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(): Response
     {
-        $appointments = Appointment::with('patient', 'doctor', 'department')->paginate(10);
+        $appointments = $this->appointmentService->getAllAppointments();
         return Inertia::render('Appointment/Index', [
             'appointments' => $appointments
         ]);
@@ -31,14 +35,8 @@ class AppointmentController extends Controller
      */
     public function create(): Response
     {
-        $patients = Patient::all();
-        $doctors = Doctor::all();
-        $departments = Department::all();
-        return Inertia::render('Appointment/Create', [
-            'patients' => $patients,
-            'doctors' => $doctors,
-            'departments' => $departments
-        ]);
+        $formData = $this->appointmentService->getAppointmentFormData();
+        return Inertia::render('Appointment/Create', $formData);
     }
 
     /**
@@ -57,8 +55,7 @@ class AppointmentController extends Controller
         ]);
 
         try {
-            $appointment = Appointment::create([
-                'appointment_id' => 'APPT' . date('Y') . str_pad(Appointment::count() + 1, 5, '0', STR_PAD_LEFT),
+            $appointment = $this->appointmentService->createAppointment([
                 'patient_id' => $request->patient_id,
                 'doctor_id' => $request->doctor_id,
                 'department_id' => $request->department_id,
@@ -79,7 +76,7 @@ class AppointmentController extends Controller
      */
     public function show(string $id): Response
     {
-        $appointment = Appointment::with('patient', 'doctor', 'department')->findOrFail($id);
+        $appointment = $this->appointmentService->getAppointmentById($id);
         return Inertia::render('Appointment/Show', [
             'appointment' => $appointment
         ]);
@@ -90,15 +87,11 @@ class AppointmentController extends Controller
      */
     public function edit(string $id): Response
     {
-        $appointment = Appointment::with('patient', 'doctor', 'department')->findOrFail($id);
-        $patients = Patient::all();
-        $doctors = Doctor::all();
-        $departments = Department::all();
+        $appointment = $this->appointmentService->getAppointmentById($id);
+        $formData = $this->appointmentService->getAppointmentFormData();
         return Inertia::render('Appointment/Edit', [
             'appointment' => $appointment,
-            'patients' => $patients,
-            'doctors' => $doctors,
-            'departments' => $departments
+            ...$formData
         ]);
     }
 
@@ -118,9 +111,7 @@ class AppointmentController extends Controller
             'fee' => 'required|numeric|min:0',
         ]);
 
-        $appointment = Appointment::findOrFail($id);
-
-        $appointment->update([
+        $this->appointmentService->updateAppointment($id, [
             'patient_id' => $request->patient_id,
             'doctor_id' => $request->doctor_id,
             'department_id' => $request->department_id,
@@ -139,10 +130,8 @@ class AppointmentController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $appointment = Appointment::findOrFail($id);
-
         try {
-            $appointment->delete();
+            $this->appointmentService->deleteAppointment($id);
             return redirect()->route('appointments.index')->with('success', 'Appointment deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to delete appointment: ' . $e->getMessage()]);

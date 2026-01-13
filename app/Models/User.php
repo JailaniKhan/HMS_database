@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use App\Models\Patient;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -79,19 +80,11 @@ class User extends Authenticatable
     public function hasPermission($permissionName): bool
     {
         // Debug: Log permission check
-        \Log::debug('Checking permission for user', [
-            'user_id' => $this->id,
-            'username' => $this->username,
-            'role' => $this->role,
-            'permission' => $permissionName,
-        ]);
+      
         
         // Super admin check: Hospital Admin has all permissions
         if ($this->role === 'Hospital Admin') {
-            \Log::debug('User is super admin, granting permission', [
-                'user' => $this->username,
-                'permission' => $permissionName,
-            ]);
+           
             return true;
         }
         
@@ -103,11 +96,7 @@ class User extends Authenticatable
             ->first();
         
         if ($userPermission) {
-            \Log::debug('Found user-specific permission override', [
-                'user' => $this->username,
-                'permission' => $permissionName,
-                'allowed' => $userPermission->allowed,
-            ]);
+        
             
             // If there's a specific user permission, return its allowed status
             return $userPermission->allowed;
@@ -121,20 +110,11 @@ class User extends Authenticatable
             ->exists();
         
         if ($rolePermissionExists) {
-            \Log::debug('User has role-based permission', [
-                'user' => $this->username,
-                'role' => $this->role,
-                'permission' => $permissionName,
-            ]);
+           
             return true;
         }
         
-        \Log::debug('User does not have permission', [
-            'user' => $this->username,
-            'role' => $this->role,
-            'permission' => $permissionName,
-        ]);
-        
+    
         return false;
     }
     

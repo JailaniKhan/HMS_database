@@ -148,6 +148,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/billing', [ReportController::class, 'billingReport'])->name('reports.billing');
         Route::get('/pharmacy-sales', [ReportController::class, 'pharmacySalesReport'])->name('reports.pharmacy-sales');
         Route::get('/lab-test', [ReportController::class, 'labTestReport'])->name('reports.lab-test');
+        
+        // Additional statistics reports
+        Route::get('/daily-stats', [ReportController::class, 'dailyStats'])->name('reports.daily-stats');
+        Route::get('/doctor-workload', [ReportController::class, 'doctorWorkload'])->name('reports.doctor-workload');
+        Route::get('/weekly-trend', [ReportController::class, 'weeklyTrend'])->name('reports.weekly-trend');
     });
 
     // Admin Dashboard
