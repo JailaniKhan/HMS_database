@@ -5,6 +5,7 @@ use App\Http\Controllers\API\v1\PatientController;
 use App\Http\Controllers\API\v1\DoctorController;
 use App\Http\Controllers\API\v1\AppointmentController;
 use App\Http\Controllers\API\v1\DepartmentController;
+use App\Http\Controllers\API\v1\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,5 +40,12 @@ Route::prefix('v1')->group(function () {
         // Additional appointment routes
         Route::put('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
         Route::put('/appointments/{id}/complete', [AppointmentController::class, 'complete']);
+    });
+    
+    // Admin dashboard routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/admin/recent-activity', [AdminController::class, 'getRecentActivity']);
+        Route::get('/admin/audit-logs', [AdminController::class, 'getAuditLogs']);
+        Route::get('/admin/stats', [AdminController::class, 'getStats']);
     });
 });

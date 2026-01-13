@@ -50,6 +50,48 @@ export default function UsersIndex({ users }: UsersIndexProps) {
         }
     };
 
+    const getRoleBadge = (role: string) => {
+        switch(role.toLowerCase()) {
+            case 'hospital admin':
+            case 'super admin':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        SUPER ADMIN
+                    </span>
+                );
+            case 'doctor':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {role.toUpperCase()}
+                    </span>
+                );
+            case 'reception':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {role.toUpperCase()}
+                    </span>
+                );
+            case 'pharmacy admin':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        PHARMACY
+                    </span>
+                );
+            case 'laboratory admin':
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        LABORATORY
+                    </span>
+                );
+            default:
+                return (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {role.toUpperCase()}
+                    </span>
+                );
+        }
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -94,9 +136,7 @@ export default function UsersIndex({ users }: UsersIndexProps) {
                                     <TableCell>{user.name}</TableCell>
                                     <TableCell>{user.username}</TableCell>
                                     <TableCell>
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {user.role}
-                                        </span>
+                                        {getRoleBadge(user.role)}
                                     </TableCell>
                                     <TableCell>{formatDate(user.created_at)}</TableCell>
                                     <TableCell>

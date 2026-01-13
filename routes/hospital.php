@@ -14,7 +14,6 @@ use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Laboratory\LabTestController;
 use App\Http\Controllers\Laboratory\LabTestResultController;
 use App\Http\Controllers\Department\DepartmentController;
-use App\Http\Controllers\ServerManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -183,6 +182,27 @@ Route::middleware(['auth'])->group(function () {
 
             Route::delete('/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy')->middleware('auth');
         });
+        
+        // Permissions Management Routes
+        Route::prefix('permissions')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\PermissionsController::class, 'index'])->name('admin.permissions.index')->middleware('auth');
+            Route::get('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'editRolePermissions'])->name('admin.permissions.roles.edit')->middleware('auth');
+            Route::put('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'updateRolePermissions'])->name('admin.permissions.roles.update')->middleware('auth');
+            Route::get('/users/{user}/edit', [App\Http\Controllers\Admin\PermissionsController::class, 'editUserPermissions'])->name('admin.permissions.users.edit')->middleware('auth');
+            Route::put('/users/{user}', [App\Http\Controllers\Admin\PermissionsController::class, 'updateUserPermissions'])->name('admin.permissions.users.update')->middleware('auth');
+        });
+        
+        // Activity Logs Route for Super Admins
+        Route::get('/activity-logs', function () {
+            $user = Auth::user();
+            
+            // Only allow Super Admins to access activity logs
+            if (!$user->isSuperAdmin()) {
+                abort(403, 'Unauthorized access');
+            }
+            
+            return inertia('Admin/ActivityLogs');
+        })->name('admin.activity-logs')->middleware('auth');
     });
 });
 
