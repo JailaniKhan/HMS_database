@@ -12,8 +12,11 @@ if (window.Laravel && window.Laravel.csrfToken) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = window.Laravel.csrfToken;
 } else {
     // Try to get CSRF token from meta tag
-    const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = document.head.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     if (csrfToken) {
-        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = (csrfToken as any).content;
+        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
     }
 }
+
+// Configure Axios to include X-Requested-With header
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
