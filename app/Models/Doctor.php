@@ -27,6 +27,9 @@ class Doctor extends Model
     protected $casts = [
         'fee' => 'decimal:2',
         'address' => 'array',
+        'phone' => 'encrypted',
+        'email' => 'encrypted',
+        'metadata' => 'array',
     ];
 
     public function user()

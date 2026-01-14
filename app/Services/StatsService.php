@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class StatsService
 {
@@ -115,5 +116,72 @@ class StatsService
         }
 
         return $weekData;
+    }
+
+    /**
+     * Get growth metrics for monitoring database scaling needs
+     */
+    public function getGrowthMetrics(): array
+    {
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        return [
+            'patients_this_month' => Patient::whereYear('created_at', $currentYear)
+                ->whereMonth('created_at', $currentMonth)
+                ->count(),
+            'appointments_this_month' => Appointment::whereYear('appointment_date', $currentYear)
+                ->whereMonth('appointment_date', $currentMonth)
+                ->count(),
+            'avg_appointments_per_patient' => round(Appointment::count() / max(Patient::count(), 1), 2),
+            'database_size_mb' => $this->getDatabaseSize(),
+            'largest_tables' => $this->getLargestTables(),
+            'growth_rate_last_3_months' => $this->calculateGrowthRate(3),
+        ];
+    }
+
+    /**
+     * Get database size in MB
+     */
+    private function getDatabaseSize(): float
+    {
+        $result = DB::select("
+            SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) as size_mb
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+        ");
+
+        return $result[0]->size_mb ?? 0;
+    }
+
+    /**
+     * Get largest tables
+     */
+    private function getLargestTables(): array
+    {
+        return DB::select("
+            SELECT table_name, table_rows,
+                   ROUND((data_length + index_length) / 1024 / 1024, 2) as size_mb
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            ORDER BY (data_length + index_length) DESC
+            LIMIT 5
+        ");
+    }
+
+    /**
+     * Calculate growth rate over last N months
+     */
+    private function calculateGrowthRate(int $months): float
+    {
+        $current = Patient::where('created_at', '>=', Carbon::now()->subMonths($months))->count();
+        $previous = Patient::whereBetween('created_at', [
+            Carbon::now()->subMonths($months * 2),
+            Carbon::now()->subMonths($months)
+        ])->count();
+
+        if ($previous == 0) return 0;
+
+        return round((($current - $previous) / $previous) * 100, 2);
     }
 }

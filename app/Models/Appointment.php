@@ -40,4 +40,25 @@ class Appointment extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
+    // Scopes for optimized queries
+    public function scopeUpcoming($query)
+    {
+        return $query->where('appointment_date', '>', now());
+    }
+
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeForDoctor($query, $doctorId)
+    {
+        return $query->where('doctor_id', $doctorId);
+    }
+
+    public function scopeForPatient($query, $patientId)
+    {
+        return $query->where('patient_id', $patientId);
+    }
 }

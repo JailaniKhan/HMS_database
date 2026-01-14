@@ -22,6 +22,8 @@ class Patient extends Model
 
     protected $casts = [
         'address' => 'array',
+        'phone' => 'encrypted',
+        'metadata' => 'array',
     ];
 
     public function user()

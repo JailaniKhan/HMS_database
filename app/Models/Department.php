@@ -15,6 +15,13 @@ class Department extends Model
         'head_doctor',
         'phone',
         'email',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'phone' => 'encrypted',
+        'email' => 'encrypted',
+        'metadata' => 'array',
     ];
 
     public function doctors()

@@ -1,10 +1,13 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Calendar, Stethoscope, DollarSign } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { UserPlus, Calendar, Stethoscope, DollarSign, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useState, useEffect } from 'react';
 
 interface Activity {
     id: number;
@@ -43,18 +46,37 @@ interface DashboardProps {
     recent_activities: Activity[];
     monthly_data: MonthlyData[];
     department_data: DepartmentData[];
+    errors?: Record<string, string>;
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
 export default function Dashboard(props: DashboardProps) {
-    const { 
-        total_patients, 
-        total_doctors, 
-        appointments_today, 
-        revenue_today, 
-        recent_activities, 
-        monthly_data, 
-        department_data 
+    const page = usePage();
+    const {
+        total_patients,
+        total_doctors,
+        appointments_today,
+        revenue_today,
+        recent_activities,
+        monthly_data,
+        department_data,
+        errors,
+        flash
     } = props;
+
+    // Calculate percentage changes (would come from API in real implementation)
+    const calculateChange = (current: number, previous: number) => {
+        if (previous === 0) return 0;
+        return ((current - previous) / previous * 100);
+    };
+
+    const patientChange = calculateChange(total_patients, total_patients * 0.92); // Mock calculation
+    const doctorChange = calculateChange(total_doctors, total_doctors * 0.97);
+    const appointmentChange = calculateChange(appointments_today, appointments_today * 0.95);
+    const revenueChange = calculateChange(revenue_today, revenue_today * 0.92);
 
     // Define colors for the pie chart
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
