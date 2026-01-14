@@ -40,6 +40,9 @@ Route::prefix('v1')->group(function () {
         // Additional appointment routes
         Route::put('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
         Route::put('/appointments/{id}/complete', [AppointmentController::class, 'complete']);
+        
+        // Admin audit logs route
+        Route::get('/admin/audit-logs', [AdminController::class, 'getAuditLogs']);
     });
     
 });

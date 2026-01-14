@@ -31,7 +31,7 @@ export default function ActivityLogs() {
             try {
                 const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 
-                const response = await fetch('/api/admin/audit-logs', {
+                const response = await fetch('/api/v1/admin/audit-logs', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
