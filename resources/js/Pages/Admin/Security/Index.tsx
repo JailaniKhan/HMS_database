@@ -333,8 +333,8 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
     const handleResetPassword = async (userId: number) => {
         setResettingPassword(true);
-        setResetPasswordError('');
-        setResetPasswordMessage('');
+        setPasswordError('');
+        setPasswordMessage('');
 
         try {
             await axios.put(`/api/v1/admin/users/${userId}/reset-password`);
@@ -351,7 +351,15 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                     errorMessage = err.response.data.message;
                 }
             }
-            setResetPasswordError(errorMessage);
+            setPasswordError(errorMessage);
+            console.error('Error resetting password:', error);
+            if (error instanceof Error && error.message) {
+                const err = error as { response?: { data?: { message?: string } } };
+                if (err.response?.data?.message) {
+                    errorMessage = err.response.data.message;
+                }
+            }
+            setPasswordError(errorMessage);
         } finally {
             setResettingPassword(false);
         }
@@ -364,8 +372,8 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">Security Center</h1>
-                        <p className="text-gray-600 mt-2">Manage usernames, passwords and admin accounts</p>
+                        <h1 className="text-3xl font-bold">Security Center</h1>
+                        <p className="text-muted-foreground mt-2">Manage usernames, passwords and admin accounts</p>
                     </div>
 
                     <Tabs value={activeTab} onValueChange={(value) => {
@@ -374,10 +382,10 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                         }
                         setActiveTab(value as 'my-account' | 'admin-management');
                     }} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl h-12 mb-6">
+                        <TabsList className="grid w-full grid-cols-2 bg-muted p-1 rounded-xl h-12 mb-6">
                             <TabsTrigger
                                 value="my-account"
-                                className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2"
+                                className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2"
                             >
                                 <User className="h-4 w-4" />
                                 My Account
@@ -385,7 +393,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                             <TabsTrigger
                                 value="admin-management"
                                 disabled={!(auth.user.role === 'Hospital Admin' || auth.user.permissions?.includes('manage-users'))}
-                                className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Users className="h-4 w-4" />
                                 Admin Management
@@ -393,29 +401,29 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                         </TabsList>
 
                         <TabsContent value="my-account" className="space-y-6">
-                            <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                                <CardHeader className="border-b border-gray-100 dark:border-gray-700 pb-6">
-                                    <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900 dark:text-white">
-                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <Card className="border border-gray-200 bg-white shadow-sm rounded-xl">
+                                <CardHeader className="border-b border-gray-100 pb-6">
+                                    <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900">
+                                        <div className="p-2 bg-primary/10 rounded-lg">
+                                            <User className="h-5 w-5 text-primary" />
                                         </div>
                                         Account Settings
                                     </CardTitle>
-                                    <CardDescription className="text-gray-600 dark:text-gray-300">
+                                    <CardDescription className="text-gray-600">
                                         Manage your profile information and security settings
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="pt-6">
                                     <div className="space-y-8">
                                         {/* Update Profile Info */}
-                                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                                <Edit3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                        <div className="bg-muted/30 rounded-xl p-6 border border-input">
+                                            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                                                <Edit3 className="h-5 w-5 text-primary" />
                                                 Personal Information
                                             </h3>
                                             <form onSubmit={handleUpdateOwnProfile} className="space-y-4">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="ownName" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                    <Label htmlFor="ownName" className="font-medium">
                                                         Full Name
                                                     </Label>
                                                     <Input
@@ -423,12 +431,12 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                         value={ownName}
                                                         onChange={(e) => setOwnName(e.target.value)}
                                                         placeholder="Enter your full name"
-                                                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="ownEmail" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                    <Label htmlFor="ownEmail" className="font-medium">
                                                         Email Address
                                                     </Label>
                                                     <Input
@@ -437,28 +445,28 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                         value={ownEmail}
                                                         onChange={(e) => setOwnEmail(e.target.value)}
                                                         placeholder="Enter your email address"
-                                                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                                     />
                                                 </div>
 
                                                 {ownProfileError && (
-                                                    <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                        <AlertDescription className="text-red-800 dark:text-red-200">{ownProfileError}</AlertDescription>
+                                                    <Alert variant="destructive" className="border-red-200 bg-red-50">
+                                                        <XCircle className="h-4 w-4 text-red-600" />
+                                                        <AlertDescription className="text-destructive-foreground">{ownProfileError}</AlertDescription>
                                                     </Alert>
                                                 )}
 
                                                 {ownProfileMessage && (
-                                                    <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20">
-                                                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                        <AlertDescription className="text-green-800 dark:text-green-200">{ownProfileMessage}</AlertDescription>
+                                                    <Alert className="border-success/50 bg-success/10">
+                                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                                        <AlertDescription className="text-success-foreground">{ownProfileMessage}</AlertDescription>
                                                     </Alert>
                                                 )}
 
                                                 <Button
                                                     type="submit"
                                                     disabled={updatingOwnProfile}
-                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                                                 >
                                                     {updatingOwnProfile ? (
                                                         <>
@@ -479,7 +487,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                             </h3>
                                             <form onSubmit={handleUpdateOwnPassword} className="space-y-5">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="currentPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                                    <Label htmlFor="currentPassword" className="font-medium flex items-center gap-2">
                                                         <Lock className="h-4 w-4" />
                                                         Current Password
                                                     </Label>
@@ -490,11 +498,11 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             value={currentPassword}
                                                             onChange={(e) => setCurrentPassword(e.target.value)}
                                                             placeholder="Enter your current password"
-                                                            className="pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                            className="pr-12 bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                                         />
                                                         <button
                                                             type="button"
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                                                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                                         >
                                                             {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -503,7 +511,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="newPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                                    <Label htmlFor="newPassword" className="font-medium flex items-center gap-2">
                                                         <KeyRound className="h-4 w-4" />
                                                         New Password
                                                     </Label>
@@ -514,11 +522,11 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             value={newPassword}
                                                             onChange={(e) => setNewPassword(e.target.value)}
                                                             placeholder="Create a strong password"
-                                                            className="pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                            className="pr-12 bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                                         />
                                                         <button
                                                             type="button"
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                                                             onClick={() => setShowNewPassword(!showNewPassword)}
                                                         >
                                                             {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -527,34 +535,34 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                     {/* Password Strength Indicator */}
                                                     {newPassword && (
                                                         <div className="mt-2">
-                                                            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
                                                                 <span>Password Strength</span>
                                                                 <span>
                                                                     {passwordStrength < 50 ? 'Weak' :
                                                                      passwordStrength < 75 ? 'Medium' : 'Strong'}
                                                                 </span>
                                                             </div>
-                                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                            <div className="w-full bg-muted rounded-full h-2">
                                                                 <div
                                                                     className={`h-2 rounded-full transition-all duration-300 ${
-                                                                        passwordStrength < 50 ? 'bg-red-500' :
-                                                                        passwordStrength < 75 ? 'bg-yellow-500' : 'bg-green-500'
+                                                                        passwordStrength < 50 ? 'bg-destructive' :
+                                                                        passwordStrength < 75 ? 'bg-warning' : 'bg-success'
                                                                     }`}
                                                                     style={{ width: `${passwordStrength}%` }}
                                                                 ></div>
                                                             </div>
-                                                            <div className="flex gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                <span className={passwordStrength >= 25 ? 'text-green-600 dark:text-green-400' : ''}>• 8+ chars</span>
-                                                                <span className={passwordStrength >= 50 ? 'text-green-600 dark:text-green-400' : ''}>• Uppercase</span>
-                                                                <span className={passwordStrength >= 75 ? 'text-green-600 dark:text-green-400' : ''}>• Number</span>
-                                                                <span className={passwordStrength >= 100 ? 'text-green-600 dark:text-green-400' : ''}>• Symbol</span>
+                                                            <div className="flex gap-2 mt-2 text-xs text-muted-foreground">
+                                                                <span className={passwordStrength >= 25 ? 'text-success' : ''}>• 8+ chars</span>
+                                                                <span className={passwordStrength >= 50 ? 'text-success' : ''}>• Uppercase</span>
+                                                                <span className={passwordStrength >= 75 ? 'text-success' : ''}>• Number</span>
+                                                                <span className={passwordStrength >= 100 ? 'text-success' : ''}>• Symbol</span>
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="confirmNewPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                                    <Label htmlFor="confirmNewPassword" className="font-medium flex items-center gap-2">
                                                         <CheckCircle className="h-4 w-4" />
                                                         Confirm New Password
                                                     </Label>
@@ -565,22 +573,22 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             value={confirmNewPassword}
                                                             onChange={(e) => setConfirmNewPassword(e.target.value)}
                                                             placeholder="Re-enter your new password"
-                                                            className={`pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500 ${
+                                                            className={`pr-12 bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500 ${
                                                                 confirmNewPassword && newPassword !== confirmNewPassword
-                                                                    ? 'border-red-300 focus:ring-red-500'
+                                                                    ? 'border-destructive focus:ring-destructive'
                                                                     : ''
                                                             }`}
                                                         />
                                                         <button
                                                             type="button"
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                         >
                                                             {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                                         </button>
                                                     </div>
                                                     {confirmNewPassword && newPassword !== confirmNewPassword && (
-                                                        <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                                                        <p className="text-sm text-destructive flex items-center gap-1">
                                                             <AlertTriangle className="h-4 w-4" />
                                                             Passwords do not match
                                                         </p>
@@ -588,16 +596,16 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                 </div>
 
                                                 {passwordError && (
-                                                    <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                        <AlertDescription className="text-red-800 dark:text-red-200">{passwordError}</AlertDescription>
+                                                    <Alert variant="destructive" className="border-red-200 bg-red-50">
+                                                        <XCircle className="h-4 w-4 text-red-600" />
+                                                        <AlertDescription className="text-red-800">{passwordError}</AlertDescription>
                                                     </Alert>
                                                 )}
 
                                                 {passwordMessage && showSuccessAnimation && (
-                                                    <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                        <AlertDescription className="text-green-800 dark:text-green-200">{passwordMessage}</AlertDescription>
+                                                    <Alert className="border-green-200 bg-green-50 animate-pulse">
+                                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                                        <AlertDescription className="text-green-800">{passwordMessage}</AlertDescription>
                                                     </Alert>
                                                 )}
 
@@ -623,38 +631,38 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                         </TabsContent>
 
                         <TabsContent value="admin-management" className="space-y-6">
-                            <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                                <CardHeader className="border-b border-gray-100 dark:border-gray-700 pb-6">
-                                    <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900 dark:text-white">
-                                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                                            <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            <Card className="border border-input bg-background shadow-sm rounded-xl">
+                                <CardHeader className="border-b border-gray-100 pb-6">
+                                    <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900">
+                                        <div className="p-2 bg-secondary/10 rounded-lg">
+                                            <Users className="h-5 w-5 text-secondary-foreground" />
                                         </div>
                                         User Management
                                     </CardTitle>
-                                    <CardDescription className="text-gray-600 dark:text-gray-300">
+                                    <CardDescription className="text-gray-600">
                                         Create, edit, and manage user accounts and permissions
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="pt-6">
                                     {loadingUsers ? (
                                         <div className="text-center py-12">
-                                            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
-                                                <Loader2 className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                                            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
+                                                <Loader2 className="h-6 w-6 text-primary animate-spin" />
                                             </div>
-                                            <p className="text-gray-600 dark:text-gray-400">Loading user data...</p>
+                                            <p className="text-muted-foreground">Loading user data...</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-8">
                                             {/* Create User Form */}
-                                            <div className="bg-gray-50 rounded-lg p-6 border">
-                                                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                            <div className="bg-muted/30 rounded-lg p-6 border border-input">
+                                                <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
                                                     <Plus className="h-5 w-5" />
                                                     Create New User
                                                 </h3>
                                                 <form onSubmit={handleCreateUser} className="space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="userName" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                            <Label htmlFor="userName" className="font-medium">
                                                                 Full Name
                                                             </Label>
                                                             <Input
@@ -662,11 +670,11 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 value={userName}
                                                                 onChange={(e) => setUserName(e.target.value)}
                                                                 placeholder="Enter user's full name"
-                                                                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500"
+                                                                className="bg-white border-gray-300 focus:ring-green-500 focus:border-green-500"
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="userEmail" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                            <Label htmlFor="userEmail" className="font-medium">
                                                                 Email Address
                                                             </Label>
                                                             <Input
@@ -675,18 +683,18 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 value={userEmail}
                                                                 onChange={(e) => setUserEmail(e.target.value)}
                                                                 placeholder="Enter user's email"
-                                                                className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500"
+                                                                className="bg-white border-gray-300 focus:ring-green-500 focus:border-green-500"
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="userRole" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                            <Label htmlFor="userRole" className="font-medium">
                                                                 User Role
                                                             </Label>
                                                             <select
                                                                 id="userRole"
                                                                 value={userRole}
                                                                 onChange={(e) => setUserRole(e.target.value)}
-                                                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                                                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-success focus:border-success transition-colors"
                                                             >
                                                                 <option value="">Select a role...</option>
                                                                 <option value="Hospital Admin">🏥 Hospital Admin</option>
@@ -699,16 +707,16 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                     </div>
 
                                                     {userManagementError && (
-                                                        <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                            <AlertDescription className="text-red-800 dark:text-red-200">{userManagementError}</AlertDescription>
+                                                        <Alert variant="destructive" className="border-red-200 bg-red-50">
+                                                            <XCircle className="h-4 w-4 text-red-600" />
+                                                            <AlertDescription className="text-destructive-foreground">{userManagementError}</AlertDescription>
                                                         </Alert>
                                                     )}
 
                                                     {userManagementMessage && showSuccessAnimation && (
-                                                        <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                            <AlertDescription className="text-green-800 dark:text-green-200">{userManagementMessage}</AlertDescription>
+                                                        <Alert className="border-green-200 bg-green-50 animate-pulse">
+                                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                                            <AlertDescription className="text-success-foreground">{userManagementMessage}</AlertDescription>
                                                         </Alert>
                                                     )}
 
@@ -733,31 +741,31 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                             </div>
 
                                             {/* Users List */}
-                                            <div className="border rounded-lg p-6 bg-white dark:bg-gray-800">
-                                                <h3 className="font-semibold mb-4 text-lg text-gray-900 dark:text-white">All Users</h3>
+                                            <div className="border rounded-lg p-6 bg-background">
+                                                <h3 className="font-semibold mb-4 text-lg">All Users</h3>
                                                 <div className="overflow-x-auto">
                                                     <table className="w-full">
                                                         <thead>
-                                                            <tr className="border-b border-gray-200 dark:border-gray-700">
-                                                                <th className="text-left py-3 px-2 text-gray-700 dark:text-gray-300 font-medium">Name</th>
-                                                                <th className="text-left py-3 px-2 text-gray-700 dark:text-gray-300 font-medium">Email</th>
-                                                                <th className="text-left py-3 px-2 text-gray-700 dark:text-gray-300 font-medium">Role</th>
-                                                                <th className="text-left py-3 px-2 text-gray-700 dark:text-gray-300 font-medium">Actions</th>
+                                                            <tr className="border-b border-input">
+                                                                <th className="text-left py-3 px-2 font-medium">Name</th>
+                                                                <th className="text-left py-3 px-2 font-medium">Email</th>
+                                                                <th className="text-left py-3 px-2 font-medium">Role</th>
+                                                                <th className="text-left py-3 px-2 font-medium">Actions</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {users.map(user => (
-                                                                <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                                                    <td className="py-3 px-2 text-gray-900 dark:text-white">{user.name}</td>
-                                                                    <td className="py-3 px-2 text-gray-900 dark:text-white">{user.email}</td>
+                                                                <tr key={user.id} className="border-b border-input hover:bg-muted/50">
+                                                                    <td className="py-3 px-2">{user.name}</td>
+                                                                    <td className="py-3 px-2">{user.email}</td>
                                                                     <td className="py-3 px-2">
                                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                            user.role === 'Hospital Admin' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                                            user.role === 'Doctor' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                                            user.role === 'Reception' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                                            user.role === 'Pharmacy Admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                                            user.role === 'Laboratory Admin' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
-                                                                            'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                                                                            user.role === 'Hospital Admin' ? 'bg-destructive/10 text-destructive-foreground' :
+                                                                            user.role === 'Doctor' ? 'bg-primary/10 text-primary-foreground' :
+                                                                            user.role === 'Reception' ? 'bg-success/10 text-success-foreground' :
+                                                                            user.role === 'Pharmacy Admin' ? 'bg-secondary/10 text-secondary-foreground' :
+                                                                            user.role === 'Laboratory Admin' ? 'bg-warning/10 text-warning-foreground' :
+                                                                            'bg-muted text-muted-foreground'
                                                                         }`}>
                                                                             {user.role || 'User'}
                                                                         </span>
@@ -773,7 +781,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                     setEditingUserEmail(user.email);
                                                                                     setEditingUserRole(user.role || '');
                                                                                 }}
-                                                                                className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                                                                className="text-primary border-primary/20 hover:bg-primary/10"
                                                                             >
                                                                                 <Edit3 className="h-3 w-3" />
                                                                             </Button>
@@ -782,7 +790,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                 variant="outline"
                                                                                 onClick={() => handleResetPassword(user.id)}
                                                                                 disabled={resettingPassword}
-                                                                                className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                                                                                className="text-warning border-warning/20 hover:bg-warning/10"
                                                                             >
                                                                                 <KeyRound className="h-3 w-3" />
                                                                             </Button>
@@ -805,40 +813,40 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
                                             {/* Edit User Form */}
                                             {editingUserId && (
-                                                <div className="border rounded-lg p-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
-                                                    <h3 className="font-semibold mb-4 text-lg text-gray-900 dark:text-white flex items-center gap-2">
-                                                        <Edit3 className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                                                <div className="border rounded-lg p-6 bg-warning/10 border-warning/20">
+                                                    <h3 className="font-semibold mb-4 text-lg flex items-center gap-2">
+                                                        <Edit3 className="h-5 w-5 text-warning" />
                                                         Edit User
                                                     </h3>
                                                     <form onSubmit={handleUpdateUserProfile} className="space-y-4">
                                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                             <div className="space-y-2">
-                                                                <Label htmlFor="editUserName" className="text-gray-700 dark:text-gray-300 font-medium">Name</Label>
+                                                                <Label htmlFor="editUserName" className="text-gray-700 font-medium">Name</Label>
                                                                 <Input
                                                                     id="editUserName"
                                                                     value={editingUserName}
                                                                     onChange={(e) => setEditingUserName(e.target.value)}
                                                                     placeholder="Enter user name"
-                                                                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                                                                    className="bg-white border-gray-300"
                                                                 />
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <Label htmlFor="editUserEmail" className="text-gray-700 dark:text-gray-300 font-medium">Email</Label>
+                                                                <Label htmlFor="editUserEmail" className="text-gray-700 font-medium">Email</Label>
                                                                 <Input
                                                                     id="editUserEmail"
                                                                     value={editingUserEmail}
                                                                     onChange={(e) => setEditingUserEmail(e.target.value)}
                                                                     placeholder="Enter user email"
-                                                                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                                                                    className="bg-white border-gray-300"
                                                                 />
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <Label htmlFor="editUserRole" className="text-gray-700 dark:text-gray-300 font-medium">Role</Label>
+                                                                <Label htmlFor="editUserRole" className="text-gray-700 font-medium">Role</Label>
                                                                 <select
                                                                     id="editUserRole"
                                                                     value={editingUserRole}
                                                                     onChange={(e) => setEditingUserRole(e.target.value)}
-                                                                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm shadow-xs transition-colors"
+                                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors"
                                                                 >
                                                                     <option value="">Select role...</option>
                                                                     <option value="Hospital Admin">Hospital Admin</option>
@@ -851,16 +859,16 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                         </div>
 
                                                         {userProfileError && (
-                                                            <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                                <AlertDescription className="text-red-800 dark:text-red-200">{userProfileError}</AlertDescription>
+                                                            <Alert variant="destructive" className="border-red-200 bg-red-50">
+                                                                <XCircle className="h-4 w-4 text-red-600" />
+                                                                <AlertDescription className="text-red-800">{userProfileError}</AlertDescription>
                                                             </Alert>
                                                         )}
 
                                                         {userProfileMessage && showSuccessAnimation && (
-                                                            <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                                <AlertDescription className="text-green-800 dark:text-green-200">{userProfileMessage}</AlertDescription>
+                                                            <Alert className="border-green-200 bg-green-50 animate-pulse">
+                                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                                <AlertDescription className="text-green-800">{userProfileMessage}</AlertDescription>
                                                             </Alert>
                                                         )}
 
@@ -883,7 +891,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 type="button"
                                                                 variant="outline"
                                                                 onClick={() => setEditingUserId(null)}
-                                                                className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                                className="flex-1 border-input text-foreground hover:bg-muted/50"
                                                             >
                                                                 Cancel
                                                             </Button>
@@ -894,13 +902,13 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
                                             {/* Delete Confirmation Dialog */}
                                             {showDeleteConfirmation && (
-                                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+                                                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                                                    <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 border border-input">
                                                         <div className="flex items-center gap-3 mb-4">
-                                                            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirm Deletion</h3>
+                                                            <AlertTriangle className="h-6 w-6 text-red-600" />
+                                                            <h3 className="text-lg font-semibold">Confirm Deletion</h3>
                                                         </div>
-                                                        <p className="text-gray-600 dark:text-gray-300 mb-6">
+                                                        <p className="text-muted-foreground mb-6">
                                                             Are you sure you want to delete this user? This action cannot be undone.
                                                         </p>
                                                         <div className="flex space-x-3 justify-end">
@@ -908,7 +916,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 variant="outline"
                                                                 onClick={() => setShowDeleteConfirmation(null)}
                                                                 disabled={deletingUser}
-                                                                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                                className="border-input text-foreground hover:bg-muted/50"
                                                             >
                                                                 Cancel
                                                             </Button>

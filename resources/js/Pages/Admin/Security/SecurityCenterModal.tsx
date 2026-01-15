@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Shield, 
   User, 
@@ -16,8 +17,6 @@ import {
   Users,
   Plus,
   Edit3,
-  Trash2,
-  RefreshCw,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -355,7 +354,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
         setResettingPassword(true);
         
         // Clear any previous messages
-        setResetPasswordError('');
+        setPasswordError('');
         setResetPasswordMessage('');
         
         try {
@@ -373,7 +372,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                     errorMessage = err.response.data.message;
                 }
             }
-            setResetPasswordError(errorMessage);
+            setPasswordError(errorMessage);
         } finally {
             setResettingPassword(false);
         }
@@ -381,15 +380,15 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl">
-                <DialogHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-900 dark:text-white">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="border-b pb-4">
+                    <DialogTitle className="flex items-center gap-3 text-2xl font-bold">
                         <div className="relative">
-                            <Shield className="h-7 w-7 text-blue-600 dark:text-blue-400" />
-                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                            <Shield className="h-7 w-7 text-primary" />
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
                         </div>
                         Security Center
-                        <div className="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">
+                        <div className="ml-auto text-sm font-normal text-muted-foreground">
                             {currentUser.role === 'Hospital Admin' || currentUser.permissions?.includes('manage-users') 
                                 ? 'Admin Access' 
                                 : 'User Access'
@@ -404,18 +403,15 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                     }
                     setActiveTab(value as 'my-account' | 'admin-management');
                 }} className="w-full mt-6">
-                    <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl h-12">
-                        <TabsTrigger 
-                            value="my-account" 
-                            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2"
-                        >
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="my-account" className="flex items-center gap-2">
                             <User className="h-4 w-4" />
                             My Account
                         </TabsTrigger>
                         <TabsTrigger 
                             value="admin-management" 
                             disabled={!(currentUser.role === 'Hospital Admin' || currentUser.permissions?.includes('manage-users'))}
-                            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:shadow-sm rounded-lg h-10 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2"
                         >
                             <Users className="h-4 w-4" />
                             Admin Management
@@ -423,29 +419,29 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                     </TabsList>
 
                     <TabsContent value="my-account" className="mt-6">
-                        <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                            <CardHeader className="border-b border-gray-100 dark:border-gray-700 pb-6">
-                                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900 dark:text-white">
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                        <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <Card>
+                            <CardHeader className="border-b pb-6">
+                                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+                                    <div className="p-2 bg-primary/10 rounded-lg">
+                                        <User className="h-5 w-5 text-primary" />
                                     </div>
                                     Account Settings
                                 </CardTitle>
-                                <CardDescription className="text-gray-600 dark:text-gray-300">
+                                <CardDescription>
                                     Manage your profile information and security settings
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="pt-6">
                                 <div className="space-y-8">
                                     {/* Update Profile Info */}
-                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6 border border-gray-100 dark:border-gray-800">
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                            <Edit3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    <div className="rounded-lg p-6 border bg-background">
+                                        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                                            <Edit3 className="h-5 w-5 text-primary" />
                                             Personal Information
                                         </h3>
                                         <form onSubmit={handleUpdateOwnProfile} className="space-y-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="ownName" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                <Label htmlFor="ownName" className="font-medium">
                                                     Full Name
                                                 </Label>
                                                 <Input
@@ -453,12 +449,11 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     value={ownName}
                                                     onChange={(e) => setOwnName(e.target.value)}
                                                     placeholder="Enter your full name"
-                                                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="ownEmail" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                <Label htmlFor="ownEmail" className="font-medium">
                                                     Email Address
                                                 </Label>
                                                 <Input
@@ -467,28 +462,27 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     value={ownEmail}
                                                     onChange={(e) => setOwnEmail(e.target.value)}
                                                     placeholder="Enter your email address"
-                                                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
 
                                         {ownProfileError && (
-                                                <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                    <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                    <AlertDescription className="text-red-800 dark:text-red-200">{ownProfileError}</AlertDescription>
-                                                </Alert>
-                                            )}
+                                            <Alert variant="destructive">
+                                                <XCircle className="h-4 w-4" />
+                                                <AlertDescription>{ownProfileError}</AlertDescription>
+                                            </Alert>
+                                        )}
 
-                                            {ownProfileMessage && (
-                                                <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20">
-                                                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                    <AlertDescription className="text-green-800 dark:text-green-200">{ownProfileMessage}</AlertDescription>
-                                                </Alert>
-                                            )}
+                                        {ownProfileMessage && (
+                                            <Alert>
+                                                <CheckCircle className="h-4 w-4" />
+                                                <AlertDescription>{ownProfileMessage}</AlertDescription>
+                                            </Alert>
+                                        )}
 
                                             <Button 
                                                 type="submit" 
                                                 disabled={updatingOwnProfile}
-                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                                                className="w-full"
                                             >
                                                 {updatingOwnProfile ? (
                                                     <>
@@ -502,14 +496,14 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                         </form>
                                     </div>
 
-                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-900/30">
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                            <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    <div className="rounded-lg p-6 border bg-background">
+                                        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                                            <Lock className="h-5 w-5 text-primary" />
                                             Security Settings
                                         </h3>
                                         <form onSubmit={handleUpdateOwnPassword} className="space-y-5">
                                             <div className="space-y-2">
-                                                <Label htmlFor="currentPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                                <Label htmlFor="currentPassword" className="font-medium flex items-center gap-2">
                                                     <Lock className="h-4 w-4" />
                                                     Current Password
                                                 </Label>
@@ -520,11 +514,11 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                         value={currentPassword}
                                                         onChange={(e) => setCurrentPassword(e.target.value)}
                                                         placeholder="Enter your current password"
-                                                        className="pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="pr-12"
                                                     />
                                                     <button
                                                         type="button"
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                                     >
                                                         {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -533,7 +527,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                             </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="newPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                            <Label htmlFor="newPassword" className="font-medium flex items-center gap-2">
                                                 <KeyRound className="h-4 w-4" />
                                                 New Password
                                             </Label>
@@ -544,11 +538,11 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     value={newPassword}
                                                     onChange={(e) => setNewPassword(e.target.value)}
                                                     placeholder="Create a strong password"
-                                                    className="pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="pr-12"
                                                 />
                                                 <button
                                                     type="button"
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                     onClick={() => setShowNewPassword(!showNewPassword)}
                                                 >
                                                     {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -557,34 +551,34 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                             {/* Password Strength Indicator */}
                                             {newPassword && (
                                                 <div className="mt-2">
-                                                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
                                                         <span>Password Strength</span>
                                                         <span>
                                                             {passwordStrength < 50 ? 'Weak' : 
                                                              passwordStrength < 75 ? 'Medium' : 'Strong'}
                                                         </span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                    <div className="w-full bg-muted rounded-full h-2">
                                                         <div 
                                                             className={`h-2 rounded-full transition-all duration-300 ${
-                                                                passwordStrength < 50 ? 'bg-red-500' : 
+                                                                passwordStrength < 50 ? 'bg-destructive' : 
                                                                 passwordStrength < 75 ? 'bg-yellow-500' : 'bg-green-500'
                                                             }`}
                                                             style={{ width: `${passwordStrength}%` }}
                                                         ></div>
                                                     </div>
-                                                    <div className="flex gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                        <span className={passwordStrength >= 25 ? 'text-green-600 dark:text-green-400' : ''}>• 8+ chars</span>
-                                                        <span className={passwordStrength >= 50 ? 'text-green-600 dark:text-green-400' : ''}>• Uppercase</span>
-                                                        <span className={passwordStrength >= 75 ? 'text-green-600 dark:text-green-400' : ''}>• Number</span>
-                                                        <span className={passwordStrength >= 100 ? 'text-green-600 dark:text-green-400' : ''}>• Symbol</span>
+                                                    <div className="flex gap-2 mt-2 text-xs text-muted-foreground">
+                                                        <span className={passwordStrength >= 25 ? 'text-green-600' : ''}>• 8+ chars</span>
+                                                        <span className={passwordStrength >= 50 ? 'text-green-600' : ''}>• Uppercase</span>
+                                                        <span className={passwordStrength >= 75 ? 'text-green-600' : ''}>• Number</span>
+                                                        <span className={passwordStrength >= 100 ? 'text-green-600' : ''}>• Symbol</span>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="confirmNewPassword" className="text-gray-700 dark:text-gray-300 font-medium flex items-center gap-2">
+                                            <Label htmlFor="confirmNewPassword" className="font-medium flex items-center gap-2">
                                                 <CheckCircle className="h-4 w-4" />
                                                 Confirm New Password
                                             </Label>
@@ -595,22 +589,22 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     value={confirmNewPassword}
                                                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                                                     placeholder="Re-enter your new password"
-                                                    className={`pr-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500 ${
+                                                    className={`pr-12 ${
                                                         confirmNewPassword && newPassword !== confirmNewPassword 
-                                                            ? 'border-red-300 focus:ring-red-500' 
+                                                            ? 'border-destructive focus:ring-destructive' 
                                                             : ''
                                                     }`}
                                                 />
                                                 <button
                                                     type="button"
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 >
                                                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                                 </button>
                                             </div>
                                             {confirmNewPassword && newPassword !== confirmNewPassword && (
-                                                <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                                                <p className="text-sm text-destructive flex items-center gap-1">
                                                     <AlertTriangle className="h-4 w-4" />
                                                     Passwords do not match
                                                 </p>
@@ -618,23 +612,23 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                         </div>
 
                                         {passwordError && (
-                                                <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                    <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                    <AlertDescription className="text-red-800 dark:text-red-200">{passwordError}</AlertDescription>
-                                                </Alert>
-                                            )}
+                                            <Alert variant="destructive">
+                                                <XCircle className="h-4 w-4" />
+                                                <AlertDescription>{passwordError}</AlertDescription>
+                                            </Alert>
+                                        )}
 
-                                            {passwordMessage && showSuccessAnimation && (
-                                                <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                    <AlertDescription className="text-green-800 dark:text-green-200">{passwordMessage}</AlertDescription>
-                                                </Alert>
-                                            )}
+                                        {passwordMessage && showSuccessAnimation && (
+                                            <Alert className="animate-pulse">
+                                                <CheckCircle className="h-4 w-4" />
+                                                <AlertDescription>{passwordMessage}</AlertDescription>
+                                            </Alert>
+                                        )}
 
                                             <Button 
                                                 type="submit" 
                                                 disabled={updatingOwnPassword || !currentPassword || !newPassword || !confirmNewPassword || newPassword !== confirmNewPassword}
-                                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="w-full"
                                             >
                                                 {updatingOwnPassword ? (
                                                     <>
@@ -653,38 +647,38 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                     </TabsContent>
 
                     <TabsContent value="admin-management" className="mt-6">
-                        <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                            <CardHeader className="border-b border-gray-100 dark:border-gray-700 pb-6">
-                                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-900 dark:text-white">
-                                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                                        <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <Card>
+                            <CardHeader className="border-b pb-6">
+                                <CardTitle className="flex items-center gap-3 text-xl font-semibold">
+                                    <div className="p-2 bg-secondary/10 rounded-lg">
+                                        <Users className="h-5 w-5 text-secondary-foreground" />
                                     </div>
                                     User Management
                                 </CardTitle>
-                                <CardDescription className="text-gray-600 dark:text-gray-300">
+                                <CardDescription>
                                     Create, edit, and manage user accounts and permissions
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="pt-6">
                                 {loadingUsers ? (
                                     <div className="text-center py-12">
-                                        <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4">
-                                            <Loader2 className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                                        <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
+                                            <Loader2 className="h-6 w-6 text-primary animate-spin" />
                                         </div>
-                                        <p className="text-gray-600 dark:text-gray-400">Loading user data...</p>
+                                        <p className="text-muted-foreground">Loading user data...</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-8">
                                         {/* Create User Form */}
-                                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-100 dark:border-green-900/30">
-                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                                <Plus className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                        <div className="rounded-lg p-6 border bg-background">
+                                            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                                                <Plus className="h-5 w-5 text-green-600" />
                                                 Create New User
                                             </h3>
                                             <form onSubmit={handleCreateUser} className="space-y-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="userName" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                        <Label htmlFor="userName" className="font-medium">
                                                             Full Name
                                                         </Label>
                                                         <Input
@@ -692,11 +686,10 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             value={userName}
                                                             onChange={(e) => setUserName(e.target.value)}
                                                             placeholder="Enter user's full name"
-                                                            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="userEmail" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                        <Label htmlFor="userEmail" className="font-medium">
                                                             Email Address
                                                         </Label>
                                                         <Input
@@ -705,18 +698,17 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             value={userEmail}
                                                             onChange={(e) => setUserEmail(e.target.value)}
                                                             placeholder="Enter user's email"
-                                                            className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-green-500 focus:border-green-500"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="userRole" className="text-gray-700 dark:text-gray-300 font-medium">
+                                                        <Label htmlFor="userRole" className="font-medium">
                                                             User Role
                                                         </Label>
                                                         <select
                                                             id="userRole"
                                                             value={userRole}
                                                             onChange={(e) => setUserRole(e.target.value)}
-                                                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                         >
                                                             <option value="">Select a role...</option>
                                                             <option value="Hospital Admin">🏥 Hospital Admin</option>
@@ -729,23 +721,23 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                 </div>
 
                                                 {userManagementError && (
-                                                    <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                        <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                        <AlertDescription className="text-red-800 dark:text-red-200">{userManagementError}</AlertDescription>
+                                                    <Alert variant="destructive">
+                                                        <XCircle className="h-4 w-4" />
+                                                        <AlertDescription>{userManagementError}</AlertDescription>
                                                     </Alert>
                                                 )}
 
                                                 {userManagementMessage && showSuccessAnimation && (
-                                                    <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                        <AlertDescription className="text-green-800 dark:text-green-200">{userManagementMessage}</AlertDescription>
+                                                    <Alert className="animate-pulse">
+                                                        <CheckCircle className="h-4 w-4" />
+                                                        <AlertDescription>{userManagementMessage}</AlertDescription>
                                                     </Alert>
                                                 )}
 
                                                 <Button
                                                     type="submit"
                                                     disabled={creatingUser || !userName.trim() || !userEmail.trim() || !userRole.trim()}
-                                                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="w-full bg-green-600 hover:bg-green-700"
                                                 >
                                                     {creatingUser ? (
                                                         <>
@@ -763,26 +755,26 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                         </div>
 
                                         {/* Users List */}
-                                        <div className="border rounded-lg p-4">
-                                            <h3 className="font-medium mb-3">All Users</h3>
+                                        <div className="rounded-lg border">
+                                            <h3 className="font-medium p-4 border-b">All Users</h3>
                                             <div className="overflow-x-auto">
-                                                <table className="w-full">
-                                                    <thead>
-                                                        <tr className="border-b">
-                                                            <th className="text-left py-2">Name</th>
-                                                            <th className="text-left py-2">Email</th>
-                                                            <th className="text-left py-2">Role</th>
-                                                            <th className="text-left py-2">Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>Name</TableHead>
+                                                            <TableHead>Email</TableHead>
+                                                            <TableHead>Role</TableHead>
+                                                            <TableHead className="text-right">Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
                                                         {users.map(user => (
-                                                            <tr key={user.id} className="border-b">
-                                                                <td className="py-2">{user.name}</td>
-                                                                <td className="py-2">{user.email}</td>
-                                                                <td className="py-2">{user.role || 'User'}</td>
-                                                                <td className="py-2">
-                                                                    <div className="flex space-x-2">
+                                                            <TableRow key={user.id}>
+                                                                <TableCell>{user.name}</TableCell>
+                                                                <TableCell>{user.email}</TableCell>
+                                                                <TableCell>{user.role || 'User'}</TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <div className="flex justify-end space-x-2">
                                                                         <Button
                                                                             size="sm"
                                                                             variant="outline"
@@ -800,6 +792,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                                             variant="outline"
                                                                             onClick={() => handleResetPassword(user.id)}
                                                                             disabled={resettingPassword}
+                                                                            className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
                                                                         >
                                                                             Reset Pass
                                                                         </Button>
@@ -812,22 +805,22 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                                             Delete
                                                                         </Button>
                                                                     </div>
-                                                                </td>
-                                                            </tr>
+                                                                </TableCell>
+                                                            </TableRow>
                                                         ))}
-                                                    </tbody>
-                                                </table>
+                                                    </TableBody>
+                                                </Table>
                                             </div>
                                         </div>
 
                                         {/* Edit User Form */}
                                         {editingUserId && (
-                                            <div className="border rounded-lg p-4 bg-yellow-50">
+                                            <div className="rounded-lg p-4 bg-background border">
                                                 <h3 className="font-medium mb-3">Edit User</h3>
                                                 <form onSubmit={handleUpdateUserProfile} className="space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="editUserName">Name</Label>
+                                                            <Label htmlFor="editUserName" className="font-medium">Name</Label>
                                                             <Input
                                                                 id="editUserName"
                                                                 value={editingUserName}
@@ -836,7 +829,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="editUserEmail">Email</Label>
+                                                            <Label htmlFor="editUserEmail" className="font-medium">Email</Label>
                                                             <Input
                                                                 id="editUserEmail"
                                                                 value={editingUserEmail}
@@ -845,12 +838,12 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="editUserRole">Role</Label>
+                                                            <Label htmlFor="editUserRole" className="font-medium">Role</Label>
                                                             <select
                                                                 id="editUserRole"
                                                                 value={editingUserRole}
                                                                 onChange={(e) => setEditingUserRole(e.target.value)}
-                                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                             >
                                                                 <option value="">Select role...</option>
                                                                 <option value="Hospital Admin">Hospital Admin</option>
@@ -863,16 +856,16 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     </div>
 
                                                     {userProfileError && (
-                                                        <Alert variant="destructive" className="border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
-                                                            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                                            <AlertDescription className="text-red-800 dark:text-red-200">{userProfileError}</AlertDescription>
+                                                        <Alert variant="destructive">
+                                                            <XCircle className="h-4 w-4" />
+                                                            <AlertDescription>{userProfileError}</AlertDescription>
                                                         </Alert>
                                                     )}
 
                                                     {userProfileMessage && showSuccessAnimation && (
-                                                        <Alert className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 animate-pulse">
-                                                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                                            <AlertDescription className="text-green-800 dark:text-green-200">{userProfileMessage}</AlertDescription>
+                                                        <Alert className="animate-pulse">
+                                                            <CheckCircle className="h-4 w-4" />
+                                                            <AlertDescription>{userProfileMessage}</AlertDescription>
                                                         </Alert>
                                                     )}
 
@@ -880,7 +873,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                         <Button
                                                             type="submit"
                                                             disabled={updatingUserProfile}
-                                                            className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="flex-1 bg-amber-600 hover:bg-amber-700"
                                                         >
                                                             {updatingUserProfile ? (
                                                                 <>
@@ -895,7 +888,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             type="button"
                                                             variant="outline"
                                                             onClick={() => setEditingUserId(null)}
-                                                            className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                            className="flex-1"
                                                         >
                                                             Cancel
                                                         </Button>
