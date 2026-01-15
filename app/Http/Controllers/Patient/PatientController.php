@@ -38,7 +38,6 @@ class PatientController extends Controller
      */
     public function store(Request $request)
     {
-        \Log::info('Patient creation request received', ['input' => $request->all()]);
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
@@ -47,19 +46,13 @@ class PatientController extends Controller
             'address' => 'nullable|string',
         ]);
 
-        \Log::info('Patient creation validation passed', ['input_data' => $request->all()]);
 
         DB::beginTransaction();
         try {
-            \Log::info('Starting patient creation transaction');
             
             // Create a user for the patient
             $username = strtolower($request->first_name . '.' . $request->last_name . '.' . time());
-            \Log::info('Creating patient user', [
-                'name' => $request->first_name . ' ' . $request->last_name,
-                'username' => $username,
-                'role' => 'patient',
-            ]);
+           
             $user = User::create([
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'username' => $username,
@@ -67,7 +60,6 @@ class PatientController extends Controller
                 'role' => 'patient',
             ]);
             
-            \Log::info('User created successfully', ['user_id' => $user->id]);
 
             // Generate a unique patient ID
             $year = date('Y');
@@ -84,15 +76,6 @@ class PatientController extends Controller
             
             $patientId = 'P' . $year . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
             
-            \Log::info('Creating patient record with data', [
-                'patient_id' => $patientId,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'gender' => $request->gender,
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'user_id' => $user->id,
-            ]);
             
             // Create patient record
             $patient = Patient::create([
@@ -105,17 +88,13 @@ class PatientController extends Controller
                 'user_id' => $user->id,
             ]);
             
-            \Log::info('Patient created successfully', ['patient_id' => $patient->patient_id, 'patient_id' => $patient->id]);
 
             DB::commit();
 
             return redirect()->route('patients.index')->with('success', 'Patient created successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Patient creation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+           
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to create patient: ' . $e->getMessage()]);
         }
     }

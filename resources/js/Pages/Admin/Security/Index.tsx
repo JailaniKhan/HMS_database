@@ -27,6 +27,7 @@ import HospitalLayout from '@/layouts/HospitalLayout';
 interface User {
     id: number;
     name: string;
+    username: string;
     email: string;
     role?: string;
     permissions?: string[];
@@ -51,7 +52,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
     // State for updating own profile
     const [ownName, setOwnName] = useState(auth.user.name);
-    const [ownEmail, setOwnEmail] = useState(auth.user.email);
+    const [ownUsername, setOwnUsername] = useState(auth.user.username);
     const [updatingOwnProfile, setUpdatingOwnProfile] = useState(false);
     const [ownProfileMessage, setOwnProfileMessage] = useState('');
     const [ownProfileError, setOwnProfileError] = useState('');
@@ -61,7 +62,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
     // State for user management
     const [userName, setUserName] = useState('');
-    const [userEmail, setUserEmail] = useState('');
+    const [userUsername, setUserUsername] = useState('');
     const [userRole, setUserRole] = useState('');
     const [creatingUser, setCreatingUser] = useState(false);
     const [deletingUser, setDeletingUser] = useState(false);
@@ -71,7 +72,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
     // State for user profile updates
     const [editingUserId, setEditingUserId] = useState<number | null>(null);
     const [editingUserName, setEditingUserName] = useState('');
-    const [editingUserEmail, setEditingUserEmail] = useState('');
+    const [editingUserUsername, setEditingUserUsername] = useState('');
     const [editingUserRole, setEditingUserRole] = useState('');
     const [updatingUserProfile, setUpdatingUserProfile] = useState(false);
     const [userProfileMessage, setUserProfileMessage] = useState('');
@@ -203,7 +204,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
         try {
             await axios.put('/api/v1/admin/update-profile', {
                 name: ownName,
-                email: ownEmail,
+                username: ownUsername,
             });
 
             setOwnProfileMessage('Profile updated successfully');
@@ -240,7 +241,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
         try {
             await axios.put(`/api/v1/admin/users/${editingUserId}/update-profile`, {
                 name: editingUserName,
-                email: editingUserEmail,
+                username: editingUserUsername,
                 role: editingUserRole,
             });
 
@@ -269,7 +270,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
         setUserManagementError('');
         setUserManagementMessage('');
 
-        if (!userName.trim() || !userEmail.trim() || !userRole.trim()) {
+        if (!userName.trim() || !userUsername.trim() || !userRole.trim()) {
             setUserManagementError('All fields are required');
             return;
         }
@@ -279,13 +280,13 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
         try {
             await axios.post('/api/v1/admin/users', {
                 name: userName,
-                email: userEmail,
+                username: userUsername,
                 role: userRole,
             });
 
             setUserManagementMessage('User created successfully');
             setUserName('');
-            setUserEmail('');
+            setUserUsername('');
             setUserRole('');
             fetchUsers();
         } catch (error: unknown) {
@@ -436,15 +437,15 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="ownEmail" className="font-medium">
-                                                        Email Address
+                                                    <Label htmlFor="ownUsername" className="font-medium">
+                                                        Username
                                                     </Label>
                                                     <Input
-                                                        id="ownEmail"
-                                                        type="email"
-                                                        value={ownEmail}
-                                                        onChange={(e) => setOwnEmail(e.target.value)}
-                                                        placeholder="Enter your email address"
+                                                        id="ownUsername"
+                                                        type="text"
+                                                        value={ownUsername}
+                                                        onChange={(e) => setOwnUsername(e.target.value)}
+                                                        placeholder="Enter your username"
                                                         className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                                     />
                                                 </div>
@@ -674,15 +675,15 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label htmlFor="userEmail" className="font-medium">
-                                                                Email Address
+                                                            <Label htmlFor="userUsername" className="font-medium">
+                                                                Username
                                                             </Label>
                                                             <Input
-                                                                id="userEmail"
-                                                                type="email"
-                                                                value={userEmail}
-                                                                onChange={(e) => setUserEmail(e.target.value)}
-                                                                placeholder="Enter user's email"
+                                                                id="userUsername"
+                                                                type="text"
+                                                                value={userUsername}
+                                                                onChange={(e) => setUserUsername(e.target.value)}
+                                                                placeholder="Enter user's username"
                                                                 className="bg-white border-gray-300 focus:ring-green-500 focus:border-green-500"
                                                             />
                                                         </div>
@@ -722,7 +723,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
 
                                                     <Button
                                                         type="submit"
-                                                        disabled={creatingUser || !userName.trim() || !userEmail.trim() || !userRole.trim()}
+                                                        disabled={creatingUser || !userName.trim() || !userUsername.trim() || !userRole.trim()}
                                                         className="w-full"
                                                     >
                                                         {creatingUser ? (
@@ -748,7 +749,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                         <thead>
                                                             <tr className="border-b border-input">
                                                                 <th className="text-left py-3 px-2 font-medium">Name</th>
-                                                                <th className="text-left py-3 px-2 font-medium">Email</th>
+                                                                <th className="text-left py-3 px-2 font-medium">Username</th>
                                                                 <th className="text-left py-3 px-2 font-medium">Role</th>
                                                                 <th className="text-left py-3 px-2 font-medium">Actions</th>
                                                             </tr>
@@ -757,7 +758,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             {users.map(user => (
                                                                 <tr key={user.id} className="border-b border-input hover:bg-muted/50">
                                                                     <td className="py-3 px-2">{user.name}</td>
-                                                                    <td className="py-3 px-2">{user.email}</td>
+                                                                    <td className="py-3 px-2">{user.username}</td>
                                                                     <td className="py-3 px-2">
                                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                                             user.role === 'Hospital Admin' ? 'bg-destructive/10 text-destructive-foreground' :
@@ -778,7 +779,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                 onClick={() => {
                                                                                     setEditingUserId(user.id);
                                                                                     setEditingUserName(user.name);
-                                                                                    setEditingUserEmail(user.email);
+                                                                                    setEditingUserUsername(user.username);
                                                                                     setEditingUserRole(user.role || '');
                                                                                 }}
                                                                                 className="text-primary border-primary/20 hover:bg-primary/10"
@@ -831,12 +832,12 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 />
                                                             </div>
                                                             <div className="space-y-2">
-                                                                <Label htmlFor="editUserEmail" className="text-gray-700 font-medium">Email</Label>
+                                                                <Label htmlFor="editUserUsername" className="text-gray-700 font-medium">Username</Label>
                                                                 <Input
-                                                                    id="editUserEmail"
-                                                                    value={editingUserEmail}
-                                                                    onChange={(e) => setEditingUserEmail(e.target.value)}
-                                                                    placeholder="Enter user email"
+                                                                    id="editUserUsername"
+                                                                    value={editingUserUsername}
+                                                                    onChange={(e) => setEditingUserUsername(e.target.value)}
+                                                                    placeholder="Enter user username"
                                                                     className="bg-white border-gray-300"
                                                                 />
                                                             </div>

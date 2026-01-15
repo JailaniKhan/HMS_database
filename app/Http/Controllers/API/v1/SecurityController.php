@@ -127,11 +127,9 @@ class SecurityController extends Controller
             ], 422);
         }
 
-        // Update the user's email/username (using email field as username for now)
-        // In Laravel with Fortify, typically email is used as the login field
-        // If you want to implement a separate username field, you'd need to modify the migration
+        // Update the user's username
         $user->update([
-            'email' => $request->username // Assuming email is used as the username/login field
+            'username' => $request->username
         ]);
 
         return response()->json([
@@ -146,7 +144,7 @@ class SecurityController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'username' => 'required|string|max:255|unique:users,username,' . $request->user()->id,
         ]);
 
         if ($validator->fails()) {
@@ -159,7 +157,7 @@ class SecurityController extends Controller
         $user = $request->user();
         $user->update([
             'name' => $request->name,
-            'email' => $request->email,
+            'username' => $request->username,
         ]);
 
         return response()->json([
@@ -183,7 +181,7 @@ class SecurityController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|max:255|unique:users,username',
             'role' => 'required|string|in:Hospital Admin,Doctor,Reception,Pharmacy Admin,Laboratory Admin',
         ]);
 
@@ -197,7 +195,7 @@ class SecurityController extends Controller
         // Create the user with a default password
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'username' => $request->username,
             'password' => Hash::make('password123'), // Default password, should be changed immediately
             'role' => $request->role,
         ]);
@@ -207,7 +205,7 @@ class SecurityController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
+                'username' => $user->username,
                 'role' => $user->role,
             ]
         ], 201);
@@ -236,7 +234,7 @@ class SecurityController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'role' => 'required|string|in:Hospital Admin,Doctor,Reception,Pharmacy Admin,Laboratory Admin',
         ]);
 
@@ -249,7 +247,7 @@ class SecurityController extends Controller
 
         $user->update([
             'name' => $request->name,
-            'email' => $request->email,
+            'username' => $request->username,
             'role' => $request->role,
         ]);
 
@@ -338,11 +336,11 @@ class SecurityController extends Controller
             ], 403);
         }
 
-        $users = User::select('id', 'name', 'email', 'role')->get()->map(function ($user) {
+        $users = User::select('id', 'name', 'username', 'role')->get()->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
+                'username' => $user->username,
                 'role' => $user->role,
             ];
         });
