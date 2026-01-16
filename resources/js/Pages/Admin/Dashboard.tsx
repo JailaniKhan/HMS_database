@@ -165,7 +165,7 @@ export default function AdminDashboard({ auth }: Props) {
                                     <CardHeader className="flex flex-row items-center justify-between pb-4">
                                         <div>
                                             <CardTitle className="text-lg">Security Center</CardTitle>
-                                            <CardDescription>Manage usernames, passwords & admin accounts</CardDescription>
+                                            <CardDescription>Manage users & admin accounts</CardDescription>
                                         </div>
                                         <div className="bg-yellow-100 p-3 rounded-full">
                                             <Shield className="h-6 w-6 text-yellow-600" />
@@ -185,7 +185,7 @@ export default function AdminDashboard({ auth }: Props) {
                                     <CardHeader className="flex flex-row items-center justify-between pb-4">
                                         <div>
                                             <CardTitle className="text-lg">Permissions</CardTitle>
-                                            <CardDescription>Manage user permissions</CardDescription>
+                                            <CardDescription>Manage users & admin permissions</CardDescription>
                                         </div>
                                         <div className="bg-purple-100 p-3 rounded-full">
                                             <KeyRound className="h-6 w-6 text-purple-600" />
