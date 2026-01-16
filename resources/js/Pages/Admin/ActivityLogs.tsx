@@ -14,7 +14,15 @@ interface AuditLog {
     time: string;
     severity: 'high' | 'low' | 'medium' | 'info' | 'critical';
     user_role?: string;
+    module?: string;
+    response_time?: number;
+    memory_usage?: number;
+    ip_address?: string;
+    request_method?: string;
+    request_url?: string;
 }
+
+
 
 export default function ActivityLogs() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -23,7 +31,9 @@ export default function ActivityLogs() {
         searchTerm: '',
         severity: '',
         dateFrom: '',
-        dateTo: ''
+        dateTo: '',
+        module: '',
+        per_page: '50'
     });
 
     useEffect(() => {
@@ -168,7 +178,9 @@ export default function ActivityLogs() {
                                         searchTerm: '',
                                         severity: '',
                                         dateFrom: '',
-                                        dateTo: ''
+                                        dateTo: '',
+                                        module: '',
+                                        per_page: '50'
                                     });
                                 }}>
                                     Clear Filters

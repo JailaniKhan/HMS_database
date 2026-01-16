@@ -41,8 +41,9 @@ Route::prefix('v1')->group(function () {
         Route::put('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
         Route::put('/appointments/{id}/complete', [AppointmentController::class, 'complete']);
         
-        // Admin audit logs route
+        // Admin audit logs routes
         Route::get('/admin/audit-logs', [AdminController::class, 'getAuditLogs']);
+        Route::get('/admin/audit-analytics', [AdminController::class, 'getAuditAnalytics']);
     });
     
 });
