@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, User, Settings, KeyRound, Activity, Users, AlertTriangle, Calendar, Stethoscope, TestTube, BarChart3 } from 'lucide-react';
+import { Shield, User, Settings, KeyRound, Activity,AlertTriangle, Calendar, Stethoscope, TestTube, BarChart3 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Badge } from '@/components/ui/badge';
@@ -203,7 +203,7 @@ export default function AdminDashboard({ auth }: Props) {
                     
 
                     
-                    <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
+                    {/* <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
                         <h3 className="text-lg font-semibold mb-4 flex items-center">
                             <Users className="mr-2 h-5 w-5" /> User Management
                         </h3>
@@ -220,7 +220,7 @@ export default function AdminDashboard({ auth }: Props) {
                                 Super Admin accounts cannot be deleted through the interface
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         <div className="bg-white rounded-lg p-6 shadow-sm">
