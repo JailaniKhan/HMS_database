@@ -30,7 +30,7 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -48,7 +48,7 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -64,9 +64,9 @@ class ReportController extends Controller
     public function appointmentReport()
     {
         $user = Auth::user();
-        
+
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
 
@@ -82,9 +82,9 @@ class ReportController extends Controller
     public function billingReport()
     {
         $user = Auth::user();
-        
+
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
 
@@ -138,10 +138,10 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
-        
+
         return Inertia::render('Reports/Index');
     }
 
@@ -153,10 +153,10 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
-        
+
         // Get today's date
         $today = now()->toDateString();
         
@@ -236,10 +236,10 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
-        
+
         $stats = $this->statsService->getDailyPatientStats();
         
         return Inertia::render('Reports/DailyStats', [
@@ -255,10 +255,10 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
-        
+
         $workload = $this->statsService->getDoctorWorkloadStats();
         
         return Inertia::render('Reports/DoctorWorkload', [
@@ -274,10 +274,10 @@ class ReportController extends Controller
         $user = Auth::user();
 
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Doctor'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Sub Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin'])) {
             abort(403, 'Unauthorized access');
         }
-        
+
         $trend = $this->statsService->getWeeklyPatientTrend();
         
         return Inertia::render('Reports/WeeklyTrend', [
