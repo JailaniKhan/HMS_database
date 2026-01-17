@@ -36,17 +36,7 @@ class AuditLogSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create some test users if they don't exist
-        if (!User::where('username', 'testadmin')->exists()) {
-            User::create([
-                'name' => 'Test Admin',
-                'username' => 'testadmin',
-                'password' => Hash::make('password'),
-                'role' => 'Super Admin',
-            ]);
-        }
-        
-        // Removed testuser with Reception role
+        // Removed testadmin
         
         // Create diverse audit log entries with performance metrics
         $users = User::all();

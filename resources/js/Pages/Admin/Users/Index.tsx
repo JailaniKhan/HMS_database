@@ -60,6 +60,10 @@ export default function UsersIndex({ users, auth }: UsersIndexProps) {
             alert('Super Admin accounts cannot be deleted for security reasons.');
             return;
         }
+        if (user.role === 'Sub Super Admin' && auth.user.role !== 'Super Admin') {
+            alert('Only Super Admin can delete Sub Super Admin accounts.');
+            return;
+        }
         if (confirm('Are you sure you want to delete this user?')) {
             router.delete(`/admin/users/${user.id}`);
         }

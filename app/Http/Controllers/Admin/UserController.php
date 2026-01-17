@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\RolePermission;
 use App\Models\Permission;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -155,7 +156,30 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Super Admin accounts cannot be deleted.');
         }
 
+        // Only Super Admin can delete Sub Super Admin accounts
+        if ($user->role === 'Sub Super Admin' && !\Illuminate\Support\Facades\Auth::user()->isSuperAdmin()) {
+            return redirect()->back()->with('error', 'Only Super Admin can delete Sub Super Admin accounts.');
+        }
+
         $user->delete();
+
+        // Log the deletion
+        AuditLog::create([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'user_name' => \Illuminate\Support\Facades\Auth::user()->name,
+            'user_role' => \Illuminate\Support\Facades\Auth::user()->role,
+            'action' => 'Delete User',
+            'description' => "Deleted user {$user->name} (ID: {$user->id}, Role: {$user->role})",
+            'module' => 'User Management',
+            'severity' => 'high',
+            'response_time' => 0.1, // placeholder
+            'memory_usage' => 1000000, // placeholder
+            'request_method' => 'DELETE',
+            'request_url' => request()->fullUrl(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'logged_at' => now(),
+        ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
