@@ -20,6 +20,7 @@ interface User {
     name: string;
     username: string;
     role: string;
+    isSuperAdmin: boolean;
 }
 
 interface EditPermissionsProps extends PageProps {

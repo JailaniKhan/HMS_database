@@ -182,7 +182,7 @@ class SecurityController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
-            'role' => 'required|string|in:Hospital Admin,Doctor,Reception,Pharmacy Admin,Laboratory Admin',
+            'role' => 'required|string|in:' . implode(',', $this->getAvailableRoles()),
         ]);
 
         if ($validator->fails()) {
@@ -235,7 +235,7 @@ class SecurityController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
-            'role' => 'required|string|in:Hospital Admin,Doctor,Reception,Pharmacy Admin,Laboratory Admin',
+            'role' => 'required|string|in:' . implode(',', $this->getAvailableRoles()),
         ]);
 
         if ($validator->fails()) {
@@ -346,5 +346,24 @@ class SecurityController extends Controller
         });
 
         return response()->json($users);
+    }
+
+    /**
+     * Get available roles excluding Super Admin
+     */
+    private function getAvailableRoles(): array
+    {
+        $roles = \App\Models\RolePermission::select('role')
+                             ->distinct()
+                             ->where('role', '!=', 'Super Admin')
+                             ->pluck('role')
+                             ->toArray();
+                             
+        // Add fallback roles if no role permissions exist
+        if (empty($roles)) {
+            return ['Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin','Sub Super Admin'];
+        }
+        
+        return $roles;
     }
 }
