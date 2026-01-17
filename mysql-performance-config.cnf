@@ -1,0 +1,114 @@
+# MySQL Performance Configuration for HMS Database
+# Copy this to /etc/mysql/mysql.conf.d/ or your MySQL config directory
+# Adjust values based on your server resources
+
+[mysqld]
+
+# === Basic Settings ===
+bind-address = 127.0.0.1
+port = 3306
+socket = /var/run/mysqld/mysqld.sock
+
+# === Connection Settings ===
+max_connections = 200
+max_connect_errors = 100000
+wait_timeout = 28800
+interactive_timeout = 28800
+connect_timeout = 10
+
+# === Memory Settings ===
+# Set innodb_buffer_pool_size to 70-80% of available RAM
+# For 8GB RAM: 6GB (6291456000)
+# For 16GB RAM: 12GB (12884901888)
+# For 32GB RAM: 24GB (25769803776)
+innodb_buffer_pool_size = 6G
+
+# Additional memory pools
+innodb_log_buffer_size = 64M
+innodb_additional_mem_pool_size = 32M
+key_buffer_size = 256M
+query_cache_size = 256M
+query_cache_type = ON
+query_cache_limit = 4M
+
+# === InnoDB Settings ===
+innodb_log_file_size = 256M
+innodb_log_files_in_group = 2
+innodb_flush_log_at_trx_commit = 2
+innodb_flush_method = O_DIRECT
+innodb_thread_concurrency = 16
+
+# File format and features
+innodb_file_per_table = ON
+innodb_file_format = Barracuda
+innodb_file_format_max = Barracuda
+
+# === Performance Settings ===
+# Slow query log
+slow_query_log = ON
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 1
+
+# General query log (disable in production for performance)
+# general_log = OFF
+# general_log_file = /var/log/mysql/mysql.log
+
+# Binary log (enable if replication is needed)
+# log_bin = /var/log/mysql/mysql-bin.log
+# binlog_format = ROW
+# expire_logs_days = 7
+# max_binlog_size = 100M
+
+# === Security Settings ===
+sql_mode = STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
+
+# Disable remote root login
+# skip-networking (if you only need local connections)
+
+# === Table Settings ===
+table_open_cache = 4096
+table_definition_cache = 4096
+open_files_limit = 65536
+
+# === Thread Settings ===
+thread_cache_size = 50
+thread_stack = 192K
+
+# === Temporary Tables ===
+tmp_table_size = 128M
+max_heap_table_size = 128M
+
+# === MyISAM Settings (if still using MyISAM tables) ===
+concurrent_insert = AUTO
+delay_key_write = ALL
+
+[mysql]
+# Client settings
+default-character-set = utf8mb4
+
+[mysqladmin]
+# Admin client settings
+default-character-set = utf8mb4
+
+# === Monitoring and Maintenance ===
+# Enable performance schema for detailed monitoring
+performance_schema = ON
+
+# InnoDB monitor (uncomment to enable)
+# innodb_monitor_enable = all
+
+# === Backup Settings ===
+# For mysqldump performance
+quick
+quote-names
+max_allowed_packet = 64M
+
+# === Replication Settings (uncomment if using replication) ===
+# server-id = 1
+# log_slave_updates = ON
+# relay_log = /var/log/mysql/mysql-relay-bin.log
+# read_only = OFF
+
+# === Memory Usage Monitoring ===
+# These settings help monitor memory usage
+# innodb_monitor_enable = all

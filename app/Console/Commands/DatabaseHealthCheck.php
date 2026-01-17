@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\DatabaseErrorHandler;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,30 +14,45 @@ class DatabaseHealthCheck extends Command
      *
      * @var string
      */
-    protected $signature = 'db:health-check {--slow-queries : Check for slow queries}';
+    protected $signature = 'db:health-check
+                          {--slow-queries : Check for slow queries}
+                          {--performance : Show performance metrics}
+                          {--connections : Check connection health}
+                          {--optimize : Run optimization suggestions}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Perform database health check and optimization suggestions';
+    protected $description = 'Perform comprehensive database health check and optimization';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Starting Database Health Check...');
+        $this->info('🔍 Starting Comprehensive Database Health Check...');
+        $this->line('');
 
-        // Check table sizes
+        // Check connection health
+        if ($this->option('connections') || !$this->option('slow-queries') && !$this->option('performance')) {
+            $this->checkConnectionHealth();
+        }
+
+        // Check table sizes and structure
         $this->checkTableSizes();
 
-        // Check index usage
+        // Check index usage and effectiveness
         $this->checkIndexUsage();
 
         // Check for missing indexes
         $this->checkMissingIndexes();
+
+        // Performance metrics
+        if ($this->option('performance') || !$this->option('slow-queries') && !$this->option('connections')) {
+            $this->showPerformanceMetrics();
+        }
 
         // Performance recommendations
         $this->performanceRecommendations();
@@ -45,7 +61,12 @@ class DatabaseHealthCheck extends Command
             $this->checkSlowQueries();
         }
 
-        $this->info('Database Health Check completed.');
+        if ($this->option('optimize')) {
+            $this->runOptimizations();
+        }
+
+        $this->line('');
+        $this->info('✅ Database Health Check completed.');
     }
 
     private function checkTableSizes()
@@ -116,10 +137,111 @@ class DatabaseHealthCheck extends Command
         $this->line('- Optimize query patterns with eager loading');
     }
 
+    private function checkConnectionHealth()
+    {
+        $this->info('🔗 Connection Health Check:');
+
+        $handler = app(DatabaseErrorHandler::class);
+        $isConnected = $handler->checkConnection();
+
+        if ($isConnected) {
+            $this->line('   ✅ Database connection: Healthy');
+        } else {
+            $this->error('   ❌ Database connection: Failed');
+            return;
+        }
+
+        $metrics = $handler->getPerformanceMetrics();
+        $this->line("   📊 Active connections: {$metrics['active_connections'] ?? 'N/A'}");
+        $this->line("   📈 Query log count: {$metrics['query_log_count'] ?? 'N/A'}");
+        $this->line("   🐌 Slow queries (>100ms): {$metrics['slow_queries'] ?? 'N/A'}");
+
+        $this->line('');
+    }
+
+    private function showPerformanceMetrics()
+    {
+        $this->info('📊 Performance Metrics:');
+
+        $handler = app(DatabaseErrorHandler::class);
+        $metrics = $handler->getPerformanceMetrics();
+
+        $this->line("   🔄 Connection Status: " . ($metrics['connection_status'] ? '✅ Healthy' : '❌ Issues'));
+        $this->line("   📊 Query Count: {$metrics['query_log_count']}");
+        $this->line("   🐌 Slow Queries: {$metrics['slow_queries']}");
+
+        // Check MySQL status if available
+        try {
+            $status = DB::select('SHOW PROCESSLIST');
+            $this->line("   👥 Active MySQL Threads: " . count($status));
+
+            $waitingQueries = collect($status)->where('Command', 'Query')->count();
+            $this->line("   ⏳ Waiting Queries: {$waitingQueries}");
+        } catch (\Exception $e) {
+            $this->warn("   ⚠️  Could not retrieve MySQL process list: " . $e->getMessage());
+        }
+
+        $this->line('');
+    }
+
+    private function runOptimizations()
+    {
+        $this->info('🔧 Running Database Optimizations:');
+
+        if ($this->confirm('Analyze and optimize tables? This may take some time.')) {
+            $tables = ['users', 'patients', 'doctors', 'appointments', 'bills', 'medicines'];
+            $bar = $this->output->createProgressBar(count($tables));
+
+            $this->line('Optimizing tables...');
+            $bar->start();
+
+            foreach ($tables as $table) {
+                try {
+                    DB::statement("OPTIMIZE TABLE {$table}");
+                    $bar->advance();
+                } catch (\Exception $e) {
+                    $this->warn("Failed to optimize {$table}: " . $e->getMessage());
+                }
+            }
+
+            $bar->finish();
+            $this->line('');
+            $this->info('✅ Table optimization completed.');
+        }
+
+        $this->line('');
+    }
+
     private function checkSlowQueries()
     {
-        $this->info('Checking for slow queries (requires slow query log enabled)...');
-        $this->line('Enable slow query log in MySQL config for detailed analysis.');
-        $this->line('Set long_query_time = 1 in my.cnf');
+        $this->info('🐌 Slow Query Analysis:');
+
+        // Check if slow query log is enabled
+        try {
+            $variables = DB::select("SHOW VARIABLES LIKE 'slow_query_log%'");
+            $slowLogEnabled = collect($variables)->firstWhere('Variable_name', 'slow_query_log');
+
+            if ($slowLogEnabled && $slowLogEnabled->Value === 'ON') {
+                $this->line('   ✅ Slow query log is enabled');
+
+                $logFile = collect($variables)->firstWhere('Variable_name', 'slow_query_log_file');
+                if ($logFile) {
+                    $this->line("   📁 Log file: {$logFile->Value}");
+                }
+
+                $longQueryTime = collect($variables)->firstWhere('Variable_name', 'long_query_time');
+                if ($longQueryTime) {
+                    $this->line("   ⏱️  Long query threshold: {$longQueryTime->Value}s");
+                }
+            } else {
+                $this->warn('   ⚠️  Slow query log is not enabled');
+                $this->line('   💡 Enable with: SET GLOBAL slow_query_log = \'ON\';');
+                $this->line('   💡 Set threshold: SET GLOBAL long_query_time = 1;');
+            }
+        } catch (\Exception $e) {
+            $this->warn("   ⚠️  Could not check slow query log status: " . $e->getMessage());
+        }
+
+        $this->line('');
     }
 }
