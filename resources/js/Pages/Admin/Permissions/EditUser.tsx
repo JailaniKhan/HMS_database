@@ -24,10 +24,27 @@ interface Props {
     user: User;
     allPermissions: Permission[];
     userPermissionIds: number[];
+    auth: {
+        user: {
+            role?: string;
+            permissions?: string[];
+        };
+    };
 }
 
-export default function EditUserPermissions({ user, allPermissions, userPermissionIds }: Props) {
+export default function EditUserPermissions({ user, allPermissions, userPermissionIds, auth }: Props) {
     const [selectedPermissions, setSelectedPermissions] = useState<number[]>(userPermissionIds);
+
+    if (!(auth.user.role === 'Super Admin' || auth.user.permissions?.includes('manage-permissions'))) {
+        return (
+            <HospitalLayout>
+                <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-red-600">Access Denied</h2>
+                    <p className="text-gray-600">You do not have permission to edit user permissions.</p>
+                </div>
+            </HospitalLayout>
+        );
+    }
     
     const togglePermission = (permissionId: number) => {
         setSelectedPermissions(prev => 

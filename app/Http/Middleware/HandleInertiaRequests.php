@@ -56,8 +56,8 @@ class HandleInertiaRequests extends Middleware
         $permissions = [];
         
         // Get role-based permissions
-        if ($user->role === 'Hospital Admin') {
-            // Hospital Admin has all permissions
+        if ($user->role === 'Super Admin') {
+            // Super Admin has all permissions
             $allPermissions = \App\Models\Permission::all();
             foreach ($allPermissions as $permission) {
                 $permissions[] = $permission->name;

@@ -43,16 +43,30 @@ interface UsersIndexProps extends PageProps {
     };
 }
 
-export default function UsersIndex({ users }: UsersIndexProps) {
-    const deleteUser = (id: number) => {
+export default function UsersIndex({ users, auth }: UsersIndexProps) {
+    if (!(auth.user.role === 'Super Admin' || auth.user.permissions?.includes('manage-users'))) {
+        return (
+            <HospitalLayout header="User Management">
+                <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-red-600">Access Denied</h2>
+                    <p className="text-gray-600">You do not have permission to manage users.</p>
+                </div>
+            </HospitalLayout>
+        );
+    }
+
+    const deleteUser = (user: UserWithDetails) => {
+        if (user.role === 'Super Admin') {
+            alert('Super Admin accounts cannot be deleted for security reasons.');
+            return;
+        }
         if (confirm('Are you sure you want to delete this user?')) {
-            router.delete(`/admin/users/${id}`);
+            router.delete(`/admin/users/${user.id}`);
         }
     };
 
     const getRoleBadge = (role: string) => {
         switch(role.toLowerCase()) {
-            case 'hospital admin':
             case 'super admin':
                 return (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -62,12 +76,6 @@ export default function UsersIndex({ users }: UsersIndexProps) {
             case 'doctor':
                 return (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {role.toUpperCase()}
-                    </span>
-                );
-            case 'reception':
-                return (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {role.toUpperCase()}
                     </span>
                 );
@@ -159,8 +167,8 @@ export default function UsersIndex({ users }: UsersIndexProps) {
                                                         Edit
                                                     </Link>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem 
-                                                    onClick={() => deleteUser(user.id)}
+                                                <DropdownMenuItem
+                                                    onClick={() => deleteUser(user)}
                                                     className="text-red-600 focus:text-red-700"
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />

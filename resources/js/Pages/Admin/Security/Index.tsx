@@ -86,7 +86,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
     const [activeTab, setActiveTab] = useState<'my-account' | 'admin-management'>('my-account');
 
     // State for confirmation dialogs
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<number | null>(null);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<User | null>(null);
 
     // Loading states
     const [loadingUsers, setLoadingUsers] = useState(false);
@@ -311,11 +311,17 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
         }
     };
 
-    const handleDeleteUser = async (userId: number) => {
+    const handleDeleteUser = async (user: User) => {
+        if (user.role === 'Super Admin') {
+            alert('Super Admin accounts cannot be deleted for security reasons.');
+            setShowDeleteConfirmation(null);
+            return;
+        }
+
         setDeletingUser(true);
 
         try {
-            await axios.delete(`/api/v1/admin/users/${userId}`);
+            await axios.delete(`/api/v1/admin/users/${user.id}`);
 
             setUserManagementMessage('User deleted successfully');
             fetchUsers();
@@ -696,7 +702,6 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 <option value="Super Admin">👑 Super Admin</option>
                                                                 <option value="Sub Super Admin">🎩 Sub Super Admin</option>
                                                                 <option value="Reception Admin">📋 Reception Admin</option>
-                                                                <option value="Reception">👥 Reception</option>
                                                                 <option value="Pharmacy Admin">💊 Pharmacy Admin</option>
                                                                 <option value="Laboratory Admin">🧪 Laboratory Admin</option>
                                                             </select>
@@ -760,7 +765,6 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                             user.role === 'Super Admin' ? 'bg-purple-100 text-purple-600' :
                                                                             user.role === 'Sub Super Admin' ? 'bg-blue-100 text-blue-600' :
                                                                             user.role === 'Doctor' ? 'bg-red-100 text-red-600' :
-                                                                            user.role === 'Reception' ? 'bg-green-100 text-green-600' :
                                                                             user.role === 'Pharmacy Admin' ? 'bg-indigo-100 text-indigo-600' :
                                                                             user.role === 'Laboratory Admin' ? 'bg-yellow-100 text-yellow-600' :
                                                                             'bg-muted text-muted-foreground'
@@ -795,7 +799,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="destructive"
-                                                                                onClick={() => setShowDeleteConfirmation(user.id)}
+                                                                                onClick={() => setShowDeleteConfirmation(user)}
                                                                                 disabled={deletingUser}
                                                                             >
                                                                                 <Trash2 className="h-3 w-3" />
@@ -848,7 +852,6 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                     <option value="Super Admin">Super Admin</option>
                                                                     <option value="Sub Super Admin">Sub Super Admin</option>
                                                                     <option value="Reception Admin">Reception Admin</option>
-                                                                    <option value="Reception">Reception</option>
                                                                     <option value="Pharmacy Admin">Pharmacy Admin</option>
                                                                     <option value="Laboratory Admin">Laboratory Admin</option>
                                                                 </select>
@@ -919,7 +922,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             </Button>
                                                             <Button
                                                                 variant="destructive"
-                                                                onClick={() => handleDeleteUser(showDeleteConfirmation)}
+                                                                onClick={() => handleDeleteUser(showDeleteConfirmation!)}
                                                                 disabled={deletingUser}
                                                             >
                                                                 {deletingUser ? (

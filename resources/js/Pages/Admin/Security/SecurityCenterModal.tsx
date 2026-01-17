@@ -89,7 +89,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
     const [activeTab, setActiveTab] = useState<'my-account' | 'admin-management'>('my-account');
     
     // State for confirmation dialogs
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<number | null>(null);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<User | null>(null);
 
     // Loading states
     const [loadingUsers, setLoadingUsers] = useState(false);
@@ -320,17 +320,23 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
         }
     };
     
-    const handleDeleteUser = async (userId: number) => {
+    const handleDeleteUser = async (user: User) => {
+        if (user.role === 'Super Admin') {
+            alert('Super Admin accounts cannot be deleted for security reasons.');
+            setShowDeleteConfirmation(null);
+            return;
+        }
+
         setDeletingUser(true);
-        
+
         try {
-            await axios.delete(`/api/v1/admin/users/${userId}`);
-            
+            await axios.delete(`/api/v1/admin/users/${user.id}`);
+
             setUserManagementMessage('User deleted successfully');
-            
+
             // Refresh users list
             fetchUsers();
-            
+
             // Close confirmation dialog
             setShowDeleteConfirmation(null);
         } catch (error: unknown) {
@@ -714,7 +720,6 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                             <option value="Super Admin">👑 Super Admin</option>
                                                             <option value="Sub Super Admin">🎩 Sub Super Admin</option>
                                                             <option value="Reception Admin">📋 Reception Admin</option>
-                                                            <option value="Reception">👥 Reception</option>
                                                             <option value="Pharmacy Admin">💊 Pharmacy Admin</option>
                                                             <option value="Laboratory Admin">🧪 Laboratory Admin</option>
                                                         </select>
@@ -801,7 +806,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                                         <Button
                                                                             size="sm"
                                                                             variant="destructive"
-                                                                            onClick={() => setShowDeleteConfirmation(user.id)}
+                                                                            onClick={() => setShowDeleteConfirmation(user)}
                                                                             disabled={deletingUser}
                                                                         >
                                                                             Delete
@@ -851,7 +856,6 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                                 <option value="Super Admin">Super Admin</option>
                                                                 <option value="Sub Super Admin">Sub Super Admin</option>
                                                                 <option value="Reception Admin">Reception Admin</option>
-                                                                <option value="Reception">Reception</option>
                                                                 <option value="Pharmacy Admin">Pharmacy Admin</option>
                                                                 <option value="Laboratory Admin">Laboratory Admin</option>
                                                             </select>
@@ -918,7 +922,7 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
                                                     </Button>
                                                     <Button
                                                         variant="destructive"
-                                                        onClick={() => handleDeleteUser(showDeleteConfirmation!)}
+                                                        onClick={() => showDeleteConfirmation && handleDeleteUser(showDeleteConfirmation)}
                                                         disabled={deletingUser}
                                                     >
                                                         {deletingUser ? 'Deleting...' : 'Delete'}

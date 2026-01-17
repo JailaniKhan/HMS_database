@@ -22,11 +22,28 @@ interface Props {
     permissions: Permission[];
     roles: string[];
     rolePermissions: RolePermission;
+    auth: {
+        user: {
+            role?: string;
+            permissions?: string[];
+        };
+    };
 }
 
-export default function PermissionsIndex({ permissions, roles, rolePermissions }: Props) {
+export default function PermissionsIndex({ permissions, roles, rolePermissions, auth }: Props) {
     const [selectedRole, setSelectedRole] = useState<string>(roles[0] || '');
     const [rolePerms, setRolePerms] = useState<RolePermission>(rolePermissions);
+
+    if (!(auth.user.role === 'Super Admin' || auth.user.permissions?.includes('manage-permissions'))) {
+        return (
+            <HospitalLayout>
+                <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-red-600">Access Denied</h2>
+                    <p className="text-gray-600">You do not have permission to manage permissions.</p>
+                </div>
+            </HospitalLayout>
+        );
+    }
     
     const togglePermission = (permissionId: number) => {
         setRolePerms(prev => {
@@ -42,10 +59,29 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
         });
     };
 
-    const saveRolePermissions = () => {
-        // In a real implementation, this would make an API call
-        console.log(`Saving permissions for role: ${selectedRole}`, rolePerms[selectedRole]);
-        alert(`Permissions for ${selectedRole} saved successfully!`);
+    const saveRolePermissions = async () => {
+        try {
+            const response = await fetch(`/admin/permissions/roles/${encodeURIComponent(selectedRole)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({
+                    permissions: rolePerms[selectedRole] || []
+                })
+            });
+
+            if (response.ok) {
+                alert(`Permissions for ${selectedRole} saved successfully!`);
+            } else {
+                alert('Failed to save permissions');
+            }
+        } catch (error) {
+            console.error('Error saving role permissions:', error);
+            alert('An error occurred while saving permissions');
+        }
     };
 
     return (

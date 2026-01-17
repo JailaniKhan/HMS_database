@@ -20,7 +20,7 @@ class InertiaControllerTest extends TestCase
         
         // Create a user with admin role for testing
         $this->user = User::factory()->create([
-            'role' => 'Hospital Admin'
+            'role' => 'Super Admin'
         ]);
     }
     

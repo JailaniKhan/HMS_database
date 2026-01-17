@@ -217,7 +217,33 @@ class PermissionSeeder extends Seeder
                 'resource' => 'settings',
                 'action' => 'view'
             ],
-            
+
+            // Admin Management Permissions
+            [
+                'name' => 'manage-users',
+                'description' => 'Full user management access',
+                'resource' => 'admin',
+                'action' => 'manage'
+            ],
+            [
+                'name' => 'manage-permissions',
+                'description' => 'Manage user permissions and roles',
+                'resource' => 'admin',
+                'action' => 'manage'
+            ],
+            [
+                'name' => 'view-activity-logs',
+                'description' => 'View system activity logs',
+                'resource' => 'admin',
+                'action' => 'view'
+            ],
+            [
+                'name' => 'manage-departments',
+                'description' => 'Manage hospital departments',
+                'resource' => 'departments',
+                'action' => 'manage'
+            ],
+
             // Department Management Permissions
             [
                 'name' => 'view-departments',

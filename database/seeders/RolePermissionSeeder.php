@@ -22,6 +22,8 @@ class RolePermissionSeeder extends Seeder
                 'view-pharmacy', 'create-medicines', 'edit-medicines', 'delete-medicines',
                 'view-laboratory', 'create-lab-tests', 'edit-lab-tests', 'delete-lab-tests',
                 'view-dashboard', 'view-reports', 'view-settings',
+                'manage-users', 'manage-permissions', 'view-activity-logs', 'manage-departments',
+                'view-departments', 'create-departments', 'edit-departments', 'delete-departments',
             ],
             'Sub Super Admin' => [
                 'view-users',
@@ -49,10 +51,7 @@ class RolePermissionSeeder extends Seeder
                 'view-billing', 'create-billing', 'edit-billing', 'delete-billing',
                 'view-reports',
             ],
-            'Reception' => [
-                'view-patients', 'create-patients', 'edit-patients',
-                'view-appointments', 'create-appointments',
-            ],
+
         ];
         
         foreach ($rolePermissions as $role => $permissions) {
