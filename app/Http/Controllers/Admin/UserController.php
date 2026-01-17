@@ -100,6 +100,15 @@ class UserController extends Controller
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
                 'rolePermissions' => $user->rolePermissions,
+                'userPermissions' => $user->userPermissions->map(function ($userPermission) {
+                    return [
+                        'id' => $userPermission->permission->id,
+                        'name' => $userPermission->permission->name,
+                        'description' => $userPermission->permission->description,
+                        'resource' => $userPermission->permission->resource,
+                        'action' => $userPermission->permission->action,
+                    ];
+                }),
             ],
             'canDelete' => $canDelete,
             'canEdit' => $canEdit,

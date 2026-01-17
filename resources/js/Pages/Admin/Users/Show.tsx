@@ -28,6 +28,7 @@ interface User {
     rolePermissions: {
         permission: UserPermission;
     }[];
+    userPermissions: UserPermission[];
 }
 
 interface ShowUserProps extends PageProps {
@@ -304,52 +305,103 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                 </div>
 
                 {/* User Permissions Section */}
-                <Card className="mt-8 shadow-lg border-0">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Key className="h-5 w-5 text-purple-600" />
-                            Assigned Permissions
-                        </CardTitle>
-                        <CardDescription>
-                            Permissions granted to this user based on their role and individual assignments
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {user.rolePermissions && user.rolePermissions.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {user.rolePermissions.map((rolePermission) => (
-                                    <div 
-                                        key={rolePermission.permission.id} 
-                                        className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <h4 className="font-semibold text-gray-900">{rolePermission.permission.name}</h4>
-                                            <Badge variant="outline" className="text-xs">
-                                                {rolePermission.permission.action}
-                                            </Badge>
+                <div className="space-y-8">
+                    {/* Role-Based Permissions */}
+                    <Card className="mt-8 shadow-lg border-0">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Key className="h-5 w-5 text-purple-600" />
+                                Role-Based Permissions
+                            </CardTitle>
+                            <CardDescription>
+                                Permissions granted to this user based on their role ({user.role})
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {user.rolePermissions && user.rolePermissions.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {user.rolePermissions.map((rolePermission) => (
+                                        <div 
+                                            key={`role-${rolePermission.permission.id}`} 
+                                            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h4 className="font-semibold text-gray-900">{rolePermission.permission.name}</h4>
+                                                <Badge variant="outline" className="text-xs">
+                                                    {rolePermission.permission.action}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-3">
+                                                {rolePermission.permission.description}
+                                            </p>
+                                            <div className="flex flex-wrap gap-1">
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {rolePermission.permission.resource}
+                                                </Badge>
+                                            </div>
                                         </div>
-                                        <p className="text-sm text-gray-600 mb-3">
-                                            {rolePermission.permission.description}
-                                        </p>
-                                        <div className="flex flex-wrap gap-1">
-                                            <Badge variant="secondary" className="text-xs">
-                                                {rolePermission.permission.resource}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <div className="mx-auto h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                    <Key className="h-6 w-6 text-gray-400" />
+                                    ))}
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-1">No Permissions Assigned</h3>
-                                <p className="text-gray-500">This user currently has no specific permissions assigned.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="mx-auto h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                        <Key className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-1">No Role-Based Permissions</h3>
+                                    <p className="text-gray-500">This user has no permissions assigned through their role.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* User-Specific Permissions */}
+                    <Card className="shadow-lg border-0">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Key className="h-5 w-5 text-green-600" />
+                                User-Specific Permissions
+                            </CardTitle>
+                            <CardDescription>
+                                Individual permissions granted specifically to this user
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {user.userPermissions && user.userPermissions.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {user.userPermissions.map((permission) => (
+                                        <div 
+                                            key={`user-${permission.id}`} 
+                                            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white border-green-200"
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h4 className="font-semibold text-gray-900">{permission.name}</h4>
+                                                <Badge variant="outline" className="text-xs bg-green-100 border-green-300">
+                                                    {permission.action}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-3">
+                                                {permission.description}
+                                            </p>
+                                            <div className="flex flex-wrap gap-1">
+                                                <Badge variant="secondary" className="text-xs bg-green-50">
+                                                    {permission.resource}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="mx-auto h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                        <Key className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-1">No User-Specific Permissions</h3>
+                                    <p className="text-gray-500">This user has no individually assigned permissions.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </HospitalLayout>
     );
