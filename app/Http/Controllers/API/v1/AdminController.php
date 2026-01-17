@@ -24,7 +24,7 @@ class AdminController extends Controller
             }
             
             // Check if user has permission to view admin data
-            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-admin-dashboard')) {
+            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-dashboard')) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             // Get recent audit log entries
@@ -77,7 +77,7 @@ class AdminController extends Controller
             }
 
             // Check if user has permission to view audit logs
-            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-audit-logs')) {
+            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-activity-logs')) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
@@ -138,7 +138,7 @@ class AdminController extends Controller
     public function getAuditAnalytics(Request $request)
     {
         try {
-            if (!$request->user() || (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-audit-logs'))) {
+            if (!$request->user() || (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-activity-logs'))) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
@@ -200,7 +200,7 @@ class AdminController extends Controller
             }
             
             // Check if user has permission to view admin stats
-            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-admin-dashboard')) {
+            if (!$request->user()->isSuperAdmin() && !$request->user()->hasPermission('view-dashboard')) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             $stats = [

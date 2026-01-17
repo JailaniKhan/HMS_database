@@ -57,16 +57,6 @@ class DefaultUsersSeeder extends Seeder
             ]
         );
 
-        // Create or update a Doctor
-        $user = \App\Models\User::firstOrCreate(
-            ['username' => 'dr_john_doe'],
-            [
-                'name' => 'Dr. John Doe',
-                'password' => 'password', // Will be automatically hashed by model cast
-                'role' => 'Doctor',
-            ]
-        );
-        
-
+        // Removed Doctor role creation
     }
 }

@@ -42,18 +42,11 @@ class AuditLogSeeder extends Seeder
                 'name' => 'Test Admin',
                 'username' => 'testadmin',
                 'password' => Hash::make('password'),
-                'role' => 'Hospital Admin',
+                'role' => 'Super Admin',
             ]);
         }
         
-        if (!User::where('username', 'testuser')->exists()) {
-            User::create([
-                'name' => 'Test User',
-                'username' => 'testuser',
-                'password' => Hash::make('password'),
-                'role' => 'Reception',
-            ]);
-        }
+        // Removed testuser with Reception role
         
         // Create diverse audit log entries with performance metrics
         $users = User::all();
@@ -102,7 +95,7 @@ class AuditLogSeeder extends Seeder
             }
 
             // Admin-specific actions
-            if ($user->role === 'Hospital Admin') {
+            if ($user->role === 'Super Admin') {
                 AuditLog::create([
                     'user_id' => $user->id,
                     'user_name' => $user->name,

@@ -18,7 +18,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Syringe,
+  TestTube
 } from 'lucide-react';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
@@ -470,7 +472,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                 <Button
                                                     type="submit"
                                                     disabled={updatingOwnProfile}
-                                                    className="w-full"
+                                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
                                                 >
                                                     {updatingOwnProfile ? (
                                                         <>
@@ -616,7 +618,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                 <Button
                                                     type="submit"
                                                     disabled={updatingOwnPassword || !currentPassword || !newPassword || !confirmNewPassword || newPassword !== confirmNewPassword}
-                                                    className="w-full"
+                                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
                                                 >
                                                     {updatingOwnPassword ? (
                                                         <>
@@ -696,14 +698,24 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 id="userRole"
                                                                 value={userRole}
                                                                 onChange={(e) => setUserRole(e.target.value)}
-                                                                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring transition-colors"
+                                                                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring transition-colors flex items-center"
                                                             >
-                                                                <option value="">Select a role...</option>
-                                                                <option value="Super Admin">👑 Super Admin</option>
-                                                                <option value="Sub Super Admin">🎩 Sub Super Admin</option>
-                                                                <option value="Reception Admin">📋 Reception Admin</option>
-                                                                <option value="Pharmacy Admin">💊 Pharmacy Admin</option>
-                                                                <option value="Laboratory Admin">🧪 Laboratory Admin</option>
+                                                                <option value="" className="flex items-center">
+                                                                    <User className="h-4 w-4 mr-2" /> Select a role...
+                                                                </option>
+                                                                
+                                                                <option value="Sub Super Admin" className="flex items-center">
+                                                                    <User className="h-4 w-4 mr-2" /> Sub Super Admin
+                                                                </option>
+                                                                <option value="Reception Admin" className="flex items-center">
+                                                                    <User className="h-4 w-4 mr-2" /> Reception Admin
+                                                                </option>
+                                                                <option value="Pharmacy Admin" className="flex items-center">
+                                                                    <Syringe className="h-4 w-4 mr-2" /> Pharmacy Admin
+                                                                </option>
+                                                                <option value="Laboratory Admin" className="flex items-center">
+                                                                    <TestTube className="h-4 w-4 mr-2" /> Laboratory Admin
+                                                                </option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -725,7 +737,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                     <Button
                                                         type="submit"
                                                         disabled={creatingUser || !userName.trim() || !userUsername.trim() || !userRole.trim()}
-                                                        className="w-full bg-green-600 hover:bg-green-700"
+                                                        className="w-full bg-green-600 hover:bg-green-700 text-white transition-colors"
                                                     >
                                                         {creatingUser ? (
                                                             <>
@@ -764,9 +776,9 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                                             user.role === 'Super Admin' ? 'bg-purple-100 text-purple-600' :
                                                                             user.role === 'Sub Super Admin' ? 'bg-blue-100 text-blue-600' :
-                                                                            user.role === 'Doctor' ? 'bg-red-100 text-red-600' :
                                                                             user.role === 'Pharmacy Admin' ? 'bg-indigo-100 text-indigo-600' :
                                                                             user.role === 'Laboratory Admin' ? 'bg-yellow-100 text-yellow-600' :
+                                                                            user.role === 'Reception Admin' ? 'bg-green-100 text-green-600' :
                                                                             'bg-muted text-muted-foreground'
                                                                         }`}>
                                                                             {user.role || 'User'}
@@ -783,7 +795,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                     setEditingUserUsername(user.username);
                                                                                     setEditingUserRole(user.role || '');
                                                                                 }}
-                                                                                className="text-primary border-primary/20 hover:bg-primary/10"
+                                                                                className="text-primary border-primary hover:bg-primary/10 transition-colors"
                                                                             >
                                                                                 <Edit3 className="h-3 w-3" />
                                                                             </Button>
@@ -792,7 +804,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                 variant="outline"
                                                                                 onClick={() => handleResetPassword(user.id)}
                                                                                 disabled={resettingPassword}
-                                                                                className="text-yellow-600 border-yellow-200 hover:bg-yellow-100"
+                                                                                className="text-yellow-600 border-yellow-200 hover:bg-yellow-100 transition-colors"
                                                                             >
                                                                                 <KeyRound className="h-3 w-3" />
                                                                             </Button>
@@ -801,6 +813,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                                 variant="destructive"
                                                                                 onClick={() => setShowDeleteConfirmation(user)}
                                                                                 disabled={deletingUser}
+                                                                                className="transition-colors"
                                                                             >
                                                                                 <Trash2 className="h-3 w-3" />
                                                                             </Button>
@@ -846,14 +859,26 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                     id="editUserRole"
                                                                     value={editingUserRole}
                                                                     onChange={(e) => setEditingUserRole(e.target.value)}
-                                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors"
+                                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors flex items-center"
                                                                 >
-                                                                    <option value="">Select role...</option>
-                                                                    <option value="Super Admin">Super Admin</option>
-                                                                    <option value="Sub Super Admin">Sub Super Admin</option>
-                                                                    <option value="Reception Admin">Reception Admin</option>
-                                                                    <option value="Pharmacy Admin">Pharmacy Admin</option>
-                                                                    <option value="Laboratory Admin">Laboratory Admin</option>
+                                                                    <option value="" className="flex items-center">
+                                                                        <User className="h-4 w-4 mr-2" /> Select role...
+                                                                    </option>
+                                                                    <option value="Super Admin" className="flex items-center">
+                                                                        <KeyRound className="h-4 w-4 mr-2" /> Super Admin
+                                                                    </option>
+                                                                    <option value="Sub Super Admin" className="flex items-center">
+                                                                        <User className="h-4 w-4 mr-2" /> Sub Super Admin
+                                                                    </option>
+                                                                    <option value="Reception Admin" className="flex items-center">
+                                                                        <User className="h-4 w-4 mr-2" /> Reception Admin
+                                                                    </option>
+                                                                    <option value="Pharmacy Admin" className="flex items-center">
+                                                                        <Syringe className="h-4 w-4 mr-2" /> Pharmacy Admin
+                                                                    </option>
+                                                                    <option value="Laboratory Admin" className="flex items-center">
+                                                                        <TestTube className="h-4 w-4 mr-2" /> Laboratory Admin
+                                                                    </option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -876,7 +901,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                             <Button
                                                                 type="submit"
                                                                 disabled={updatingUserProfile}
-                                                                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white transition-colors"
                                                             >
                                                                 {updatingUserProfile ? (
                                                                     <>
@@ -891,7 +916,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 type="button"
                                                                 variant="outline"
                                                                 onClick={() => setEditingUserId(null)}
-                                                                className="flex-1 border-input text-foreground hover:bg-muted/50"
+                                                                className="flex-1 border-input text-foreground hover:bg-muted transition-colors"
                                                             >
                                                                 Cancel
                                                             </Button>
@@ -903,7 +928,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                             {/* Delete Confirmation Dialog */}
                                             {showDeleteConfirmation && (
                                                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                                                    <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 border border-input">
+                                                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 border border-input">
                                                         <div className="flex items-center gap-3 mb-4">
                                                             <AlertTriangle className="h-6 w-6 text-red-600" />
                                                             <h3 className="text-lg font-semibold">Confirm Deletion</h3>
@@ -916,7 +941,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 variant="outline"
                                                                 onClick={() => setShowDeleteConfirmation(null)}
                                                                 disabled={deletingUser}
-                                                                className="border-input text-foreground hover:bg-muted/50"
+                                                                className="border-input text-foreground hover:bg-muted transition-colors"
                                                             >
                                                                 Cancel
                                                             </Button>
@@ -924,6 +949,7 @@ export default function SecurityCenter({ auth }: SecurityCenterProps) {
                                                                 variant="destructive"
                                                                 onClick={() => handleDeleteUser(showDeleteConfirmation!)}
                                                                 disabled={deletingUser}
+                                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                             >
                                                                 {deletingUser ? (
                                                                     <>
