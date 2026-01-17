@@ -134,7 +134,7 @@ export default function AdminDashboard({ auth }: Props) {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <Button variant="outline" className="w-full">
+                                    <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                         Manage Users
                                     </Button>
                                 </CardContent>
@@ -153,7 +153,7 @@ export default function AdminDashboard({ auth }: Props) {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <Button variant="outline" className="w-full">
+                                    <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                         Configure
                                     </Button>
                                 </CardContent>
@@ -172,7 +172,7 @@ export default function AdminDashboard({ auth }: Props) {
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <Button variant="outline" className="w-full">
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                             Access Security Center
                                         </Button>
                                     </CardContent>
@@ -192,7 +192,7 @@ export default function AdminDashboard({ auth }: Props) {
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <Button variant="outline" className="w-full">
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                             Set Permissions
                                         </Button>
                                     </CardContent>
@@ -328,20 +328,20 @@ export default function AdminDashboard({ auth }: Props) {
                     <div className="bg-white rounded-lg p-6 shadow-sm">
                         <h2 className="text-xl font-semibold mb-4">Administrative Functions</h2>
                         <p className="text-gray-600 mb-4">
-                            As an administrator, you have access to advanced system management features including 
+                            As an administrator, you have access to advanced system management features including
                             user management, role assignments, and system configuration.
                         </p>
                         <div className="flex flex-wrap gap-4">
                             <Link href="/admin/users">
-                                <Button>Go to User Management</Button>
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors">Go to User Management</Button>
                             </Link>
                             {(auth.user.role === 'Hospital Admin' || auth.user.role === 'Super Admin' || auth.user.permissions?.includes('view-activity-logs')) && (
                                 <Link href="/admin/activity-logs">
-                                    <Button variant="outline">View Activity Logs</Button>
+                                    <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors">View Activity Logs</Button>
                                 </Link>
                             )}
                             <Link href="/admin/backup">
-                                <Button variant="outline">System Backup</Button>
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors">System Backup</Button>
                             </Link>
                         </div>
                     </div>

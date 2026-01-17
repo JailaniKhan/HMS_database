@@ -110,7 +110,7 @@ export default function UsersIndex({ users }: UsersIndexProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold text-gray-900">Users</h1>
                     <Link href="/admin/users/create">
-                        <Button>
+                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                             <Plus className="mr-2 h-4 w-4" />
                             Add New User
                         </Button>
@@ -142,7 +142,7 @@ export default function UsersIndex({ users }: UsersIndexProps) {
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 h-8 w-8 p-0 rounded-lg hover:bg-blue-100 transition-colors">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>

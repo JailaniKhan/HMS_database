@@ -49,7 +49,7 @@ export default function UserShow({ user }: ShowUserProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold text-gray-900">User Details</h1>
                     <Link href="/admin/users">
-                        <Button variant="outline">
+                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to Users
                         </Button>
@@ -125,20 +125,20 @@ export default function UserShow({ user }: ShowUserProps) {
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Link href={`/admin/users/${user.id}/edit`}>
-                                <Button className="w-full">
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                     <User className="mr-2 h-4 w-4" />
                                     Edit User
                                 </Button>
                             </Link>
                             
                             <Link href={`/admin/users/${user.id}/permissions`}>
-                                <Button variant="outline" className="w-full">
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                     Manage Permissions
                                 </Button>
                             </Link>
                             
                             <Link href="/admin/users">
-                                <Button variant="outline" className="w-full">
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 w-full rounded-lg font-medium hover:bg-blue-100 transition-colors py-2">
                                     <ArrowLeft className="mr-2 h-4 w-4" />
                                     Back to Users
                                 </Button>

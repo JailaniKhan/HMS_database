@@ -34,7 +34,7 @@ export default function UserCreate({ roles }: CreateUserProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold text-gray-900">Create New User</h1>
                     <a href="/admin/users">
-                        <Button variant="outline">
+                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to Users
                         </Button>
@@ -115,11 +115,11 @@ export default function UserCreate({ roles }: CreateUserProps) {
                             
                             <div className="flex justify-end space-x-4">
                                 <a href="/admin/users">
-                                    <Button type="button" variant="outline">
+                                    <Button type="button" className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                         Cancel
                                     </Button>
                                 </a>
-                                <Button type="submit">
+                                <Button type="submit" className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                     <Save className="mr-2 h-4 w-4" />
                                     Create User
                                 </Button>

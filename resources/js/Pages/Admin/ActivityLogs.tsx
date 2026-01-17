@@ -176,7 +176,7 @@ export default function ActivityLogs() {
                             </div>
                             
                             <div className="mt-4 flex justify-end">
-                                <Button onClick={() => {
+                                <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={() => {
                                     setFilters({
                                         searchTerm: '',
                                         severity: '',
@@ -226,8 +226,7 @@ export default function ActivityLogs() {
                                                 <p className="text-sm text-gray-500">{log.time}</p>
                                                 <Button
                                                     size="sm"
-                                                    variant="ghost"
-                                                    className="mt-2"
+                                                    className="bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-medium hover:bg-blue-100 transition-colors mt-2"
                                                     onClick={() => {
                                                         setSelectedLog(log);
                                                         setIsDetailsOpen(true);

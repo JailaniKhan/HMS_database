@@ -52,7 +52,7 @@ export default function UserEditPermissions({ user, allPermissions, userPermissi
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 className="text-2xl font-bold text-gray-900">Manage User Permissions</h1>
                     <a href={`/admin/users/${user.id}`}>
-                        <Button variant="outline">
+                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to User
                         </Button>
@@ -76,10 +76,10 @@ export default function UserEditPermissions({ user, allPermissions, userPermissi
                                 
                                 {allPermissions.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {allPermissions.map((permission) => (
-                                            <div 
-                                                key={permission.id} 
-                                                className="border rounded-lg p-4 flex items-start space-x-3"
+                                        {allPermissions.filter(permission => permission.name !== 'view-server-management').map((permission) => (
+                                            <div
+                                                key={permission.id}
+                                                className={`border rounded-lg p-4 flex items-start space-x-3 ${userPermissionIds.includes(permission.id) ? 'border-blue-500 bg-blue-50' : 'border-blue-200'}`}
                                             >
                                                 <Checkbox 
                                                     id={`permission-${permission.id}`}
@@ -115,11 +115,11 @@ export default function UserEditPermissions({ user, allPermissions, userPermissi
                             
                             <div className="flex justify-end space-x-4">
                                 <a href={`/admin/users/${user.id}`}>
-                                    <Button type="button" variant="outline">
+                                    <Button type="button" className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                         Cancel
                                     </Button>
                                 </a>
-                                <Button type="submit">
+                                <Button type="submit" className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                     <Save className="mr-2 h-4 w-4" />
                                     Update Permissions
                                 </Button>

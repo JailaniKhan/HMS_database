@@ -69,8 +69,7 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
                                     {roles.map(role => (
                                         <Button
                                             key={role}
-                                            variant={selectedRole === role ? "default" : "ghost"}
-                                            className={`w-full justify-start ${selectedRole === role ? '' : 'hover:bg-accent'}`}
+                                            className={`w-full justify-start rounded-lg font-medium hover:bg-blue-100 transition-colors ${selectedRole === role ? 'border-blue-500 bg-blue-50 text-blue-800' : 'bg-blue-50 text-blue-800 border border-blue-200'}`}
                                             onClick={() => setSelectedRole(role)}
                                         >
                                             <User className="h-4 w-4 mr-2" />
@@ -91,14 +90,14 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
                                         <CardDescription>Manage permissions assigned to this role</CardDescription>
                                     </div>
                                     <div className="flex space-x-2">
-                                        <Button variant="outline" onClick={() => {
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={() => {
                                             // Reset to initial state
                                             setRolePerms(rolePermissions);
                                         }}>
                                             <RotateCcw className="h-4 w-4 mr-2" />
                                             Reset
                                         </Button>
-                                        <Button onClick={saveRolePermissions}>
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={saveRolePermissions}>
                                             <Save className="h-4 w-4 mr-2" />
                                             Save Changes
                                         </Button>
@@ -107,13 +106,13 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {permissions.map(permission => (
+                                    {permissions.filter(permission => permission.name !== 'view-server-management').map(permission => (
                                         <div 
                                             key={permission.id}
                                             className={`p-4 border rounded-md cursor-pointer transition-colors ${
                                                 (rolePerms[selectedRole] || []).includes(permission.id)
-                                                    ? 'border-primary bg-primary/10'
-                                                    : 'border-input hover:bg-accent'
+                                                    ? 'border-blue-500 bg-blue-50'
+                                                    : 'border-blue-200 hover:bg-blue-50'
                                             }`}
                                             onClick={() => togglePermission(permission.id)}
                                         >
@@ -124,13 +123,13 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
                                                         : 'text-muted-foreground'
                                                 }`}>
                                                     {(rolePerms[selectedRole] || []).includes(permission.id) ? (
-                                                        <div className="w-4 h-4 bg-primary rounded-sm flex items-center justify-center">
-                                                            <svg className="w-3 h-3 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <div className="w-4 h-4 bg-blue-50 border border-blue-500 rounded-sm flex items-center justify-center">
+                                                            <svg className="w-3 h-3 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                                             </svg>
                                                         </div>
                                                     ) : (
-                                                        <div className="w-4 h-4 border border-input rounded-sm"></div>
+                                                        <div className="w-4 h-4 border border-blue-200 rounded-sm"></div>
                                                     )}
                                                 </div>
                                                 <div className="ml-3">
@@ -151,13 +150,13 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions }
                                     <h3 className="text-lg font-medium mb-3">Quick Actions</h3>
                                     <div className="flex flex-wrap gap-2">
                                         <Link href={`/admin/permissions/roles/${encodeURIComponent(selectedRole)}`}>
-                                            <Button variant="outline">
+                                            <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                                 <Edit className="h-4 w-4 mr-2" />
                                                 Edit Role Permissions
                                             </Button>
                                         </Link>
                                         <Link href="/admin/users">
-                                            <Button variant="outline">
+                                            <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                                 <User className="h-4 w-4 mr-2" />
                                                 Manage Users
                                             </Button>

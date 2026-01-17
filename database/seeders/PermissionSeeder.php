@@ -244,13 +244,7 @@ class PermissionSeeder extends Seeder
                 'action' => 'delete'
             ],
             
-            // Server Management Permissions
-            [
-                'name' => 'view-server-management',
-                'description' => 'View server management panel',
-                'resource' => 'server-management',
-                'action' => 'view'
-            ],
+
         ];
         
         foreach ($permissions as $permission) {

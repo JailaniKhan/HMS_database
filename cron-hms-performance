@@ -1,0 +1,34 @@
+# HMS Performance Monitoring Cron Jobs
+# Install this file to /etc/cron.d/hms-performance
+# Replace /path/to/your/hms/project with your actual project path
+# Replace www-data with your web server user
+
+# Run Laravel scheduler every minute (required for all scheduled tasks)
+* * * * * www-data cd /path/to/your/hms/project && php artisan schedule:run >> /dev/null 2>&1
+
+# Database health check every hour at minute 30
+30 * * * * www-data cd /path/to/your/hms/project && php artisan db:health-check --performance >> /path/to/your/hms/project/storage/logs/health-check.log 2>&1
+
+# Database optimization weekly (Sundays at 3 AM)
+0 3 * * 0 www-data cd /path/to/your/hms/project && php artisan db:health-check --optimize >> /path/to/your/hms/project/storage/logs/weekly-maintenance.log 2>&1
+
+# Cache warming daily at 1 AM
+0 1 * * * www-data cd /path/to/your/hms/project && php artisan cache:warmup >> /path/to/your/hms/project/storage/logs/cache-warmup.log 2>&1
+
+# Monthly report generation on 1st of each month at 2 AM
+0 2 1 * * www-data cd /path/to/your/hms/project && php artisan reports:generate --email=admin@hospital.com >> /path/to/your/hms/project/storage/logs/monthly-reports.log 2>&1
+
+# Performance monitoring every 15 minutes
+*/15 * * * * www-data cd /path/to/your/hms/project && /path/to/your/hms/project/scripts/monitor-performance.sh
+
+# Clean up old audit logs monthly (1st at 4 AM)
+0 4 1 * * www-data cd /path/to/your/hms/project && php artisan db:monitor-queries --cleanup >> /path/to/your/hms/project/storage/logs/audit-cleanup.log 2>&1
+
+# Backup cache statistics daily at 6 AM (for trending analysis)
+0 6 * * * www-data cd /path/to/your/hms/project && php artisan monitor:system-health --cache >> /path/to/your/hms/project/storage/logs/daily-cache-stats.log 2>&1
+
+# Check for failed queue jobs every 30 minutes
+*/30 * * * * www-data cd /path/to/your/hms/project && php artisan queue:failed | grep -q "failed jobs table" || echo "$(date): Queue system issue detected" >> /path/to/your/hms/project/storage/logs/queue-health.log 2>&1
+
+# Memory usage monitoring every 10 minutes (alert if PHP uses >80% memory)
+*/10 * * * * www-data cd /path/to/your/hms/project && memory_usage=$(ps aux --no-headers -o pmem -C php | awk '{sum+=$1} END {print int(sum)}' 2>/dev/null || echo "0"); if [ "$memory_usage" -gt 80 ]; then echo "$(date): High memory usage detected: ${memory_usage}%" >> /path/to/your/hms/project/storage/logs/memory-alerts.log; fi

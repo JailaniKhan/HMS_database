@@ -63,12 +63,12 @@ export default function EditRolePermissions({ role, permissions, assignedPermiss
                                 </div>
                                 <div className="flex space-x-2">
                                     <Link href="/admin/permissions">
-                                        <Button variant="outline">
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
                                             <RotateCcw className="h-4 w-4 mr-2" />
                                             Back to Roles
                                         </Button>
                                     </Link>
-                                    <Button onClick={saveRolePermissions}>
+                                    <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={saveRolePermissions}>
                                         <Save className="h-4 w-4 mr-2" />
                                         Save Changes
                                     </Button>
@@ -77,13 +77,13 @@ export default function EditRolePermissions({ role, permissions, assignedPermiss
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {permissions.map(permission => (
+                                {permissions.filter(permission => permission.name !== 'view-server-management').map(permission => (
                                     <div 
                                         key={permission.id}
                                         className={`p-4 border rounded-md cursor-pointer ${
                                             selectedPermissions.includes(permission.id)
                                                 ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:bg-gray-50'
+                                                : 'border-blue-200 hover:bg-blue-50'
                                         }`}
                                         onClick={() => togglePermission(permission.id)}
                                     >
@@ -94,13 +94,13 @@ export default function EditRolePermissions({ role, permissions, assignedPermiss
                                                     : 'text-gray-400'
                                             }`}>
                                                 {selectedPermissions.includes(permission.id) ? (
-                                                    <div className="w-4 h-4 bg-blue-600 rounded-sm flex items-center justify-center">
-                                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <div className="w-4 h-4 bg-blue-50 border border-blue-500 rounded-sm flex items-center justify-center">
+                                                        <svg className="w-3 h-3 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                                                         </svg>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-4 h-4 border border-gray-300 rounded-sm"></div>
+                                                    <div className="w-4 h-4 border border-blue-200 rounded-sm"></div>
                                                 )}
                                             </div>
                                             <div className="ml-3">
