@@ -188,6 +188,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\PermissionsController::class, 'index'])->name('admin.permissions.index')->middleware('auth');
             Route::get('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'editRolePermissions'])->name('admin.permissions.roles.edit')->middleware('auth');
             Route::put('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'updateRolePermissions'])->name('admin.permissions.roles.update')->middleware('auth');
+            Route::post('/roles/{role}/reset', [App\Http\Controllers\Admin\PermissionsController::class, 'resetRolePermissions'])->name('admin.permissions.roles.reset')->middleware('auth');
             Route::get('/users/{user}/edit', [App\Http\Controllers\Admin\PermissionsController::class, 'editUserPermissions'])->name('admin.permissions.users.edit')->middleware('auth');
             Route::put('/users/{user}', [App\Http\Controllers\Admin\PermissionsController::class, 'updateUserPermissions'])->name('admin.permissions.users.update')->middleware('auth');
         });

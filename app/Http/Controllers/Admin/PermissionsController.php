@@ -91,6 +91,42 @@ class PermissionsController extends Controller
     }
 
     /**
+     * Reset role permissions to default state.
+     */
+    public function resetRolePermissions(string $role)
+    {
+        // Define default permissions for each role
+        $defaultPermissions = [
+            'Super Admin' => [], // Super Admin gets all permissions implicitly
+            'Reception Admin' => ['view-patients', 'create-patients', 'view-appointments', 'create-appointments'],
+            'Pharmacy Admin' => ['view-medicines', 'create-medicines', 'view-sales'],
+            'Laboratory Admin' => ['view-lab-tests', 'create-lab-tests', 'view-patients'],
+            'Sub Super Admin' => ['view-users', 'manage-users', 'view-permissions'],
+        ];
+        
+        // Validate the role
+        if (!isset($defaultPermissions[$role])) {
+            return response()->json(['error' => 'Invalid role specified.'], 400);
+        }
+        
+        // Clear existing role permissions
+        RolePermission::where('role', $role)->delete();
+        
+        // Get permission IDs for default permissions
+        $permissionIds = Permission::whereIn('name', $defaultPermissions[$role])->pluck('id')->toArray();
+        
+        // Add default permissions
+        foreach ($permissionIds as $permissionId) {
+            RolePermission::create([
+                'role' => $role,
+                'permission_id' => $permissionId,
+            ]);
+        }
+        
+        return response()->json(['success' => 'Role permissions reset to default successfully.']);
+    }
+    
+    /**
      * Display the user permissions management page.
      */
     public function editUserPermissions(string $userId): Response

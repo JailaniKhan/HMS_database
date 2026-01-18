@@ -59,6 +59,35 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions, 
         });
     };
 
+    const resetRolePermissions = async () => {
+        if (!confirm(`Are you sure you want to reset permissions for ${selectedRole} to default values?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/admin/permissions/roles/${encodeURIComponent(selectedRole)}/reset`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Refresh the page to get updated permissions
+                window.location.reload();
+            } else {
+                alert(result.error || 'Failed to reset permissions');
+            }
+        } catch (error) {
+            console.error('Error resetting role permissions:', error);
+            alert('An error occurred while resetting permissions');
+        }
+    };
+    
     const saveRolePermissions = async () => {
         try {
             const response = await fetch(`/admin/permissions/roles/${encodeURIComponent(selectedRole)}`, {
@@ -126,12 +155,9 @@ export default function PermissionsIndex({ permissions, roles, rolePermissions, 
                                         <CardDescription>Manage permissions assigned to this role</CardDescription>
                                     </div>
                                     <div className="flex space-x-2">
-                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={() => {
-                                            // Reset to initial state
-                                            setRolePerms(rolePermissions);
-                                        }}>
+                                        <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={resetRolePermissions}>
                                             <RotateCcw className="h-4 w-4 mr-2" />
-                                            Reset
+                                            Reset to Default
                                         </Button>
                                         <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors" onClick={saveRolePermissions}>
                                             <Save className="h-4 w-4 mr-2" />
