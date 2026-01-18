@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens();
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-        
+
         $middleware->alias([
             'check.permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
@@ -35,4 +35,21 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->withSchedule(function ($schedule) {
+        // Permission maintenance tasks
+        $schedule->command('permission:maintenance --cleanup --health-check')
+            ->dailyAt('02:00')
+            ->description('Clean up expired permissions and perform health checks');
+
+        // Health checks every 15 minutes
+        $schedule->command('permission:maintenance --health-check')
+            ->everyFifteenMinutes()
+            ->description('Perform permission system health checks');
+
+        // Weekly reports on Sundays
+        $schedule->command('permission:maintenance --all')
+            ->weeklyOn(0, '03:00')
+            ->description('Full permission maintenance including reports');
+    })
+    ->create();

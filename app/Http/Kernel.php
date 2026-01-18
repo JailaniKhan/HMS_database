@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'permission.ip.restriction' => \App\Http\Middleware\PermissionIpRestrictionMiddleware::class,
         'permission.rate.limit' => \App\Http\Middleware\PermissionRateLimitMiddleware::class,
         'permission.session' => \App\Http\Middleware\PermissionSessionMiddleware::class,
+        'permission.monitoring' => \App\Http\Middleware\PermissionMonitoringMiddleware::class,
     ];
 }

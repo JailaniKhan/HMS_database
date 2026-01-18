@@ -1,0 +1,502 @@
+openapi: 3.0.3
+info:
+  title: HMS Permissions Management API
+  description: |
+    Comprehensive API for managing permissions, roles, temporary permissions, and approval workflows in the Hospital Management System.
+
+    ## Authentication
+    All API endpoints require authentication via Sanctum tokens. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer {token}
+    ```
+
+    ## Security Middleware
+    Permission endpoints are protected by additional security middleware:
+    - `permission.ip.restriction`: IP-based access control
+    - `permission.rate.limit`: Rate limiting for API calls
+    - `permission.session`: Session tracking and audit logging
+
+  version: 1.0.0
+  contact:
+    name: HMS Development Team
+    email: dev@hms.local
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.hms.local/api/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /admin/permissions/temporary-permissions:
+    get:
+      summary: List active temporary permissions
+      description: Retrieve all currently active temporary permissions with filtering options.
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by user ID
+        - name: permission_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by permission ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  temporary_permissions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TemporaryPermission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /admin/permissions/grant-temporary:
+    post:
+      summary: Grant temporary permission
+      description: Grant a time-limited permission to a user for specific actions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - permission_id
+                - expires_at
+                - reason
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user to grant permission to
+                permission_id:
+                  type: integer
+                  description: ID of the permission to grant
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: ISO 8601 datetime when permission expires
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Reason for granting temporary permission
+      responses:
+        '200':
+          description: Permission granted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: "Temporary permission granted successfully."
+                  permission:
+                    type: string
+                    example: "delete-users"
+                  user:
+                    type: string
+                    example: "john.doe"
+        '400':
+          description: Validation error or user already has active permission
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /admin/permissions/revoke-temporary/{tempPermissionId}:
+    delete:
+      summary: Revoke temporary permission
+      description: Revoke an active temporary permission. Only the granter or super admin can revoke.
+      parameters:
+        - name: tempPermissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the temporary permission to revoke
+      responses:
+        '200':
+          description: Permission revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                    example: "Temporary permission revoked successfully."
+        '403':
+          description: Unauthorized to revoke this permission
+        '404':
+          description: Temporary permission not found
+
+  /admin/permissions/check-temporary-permission:
+    post:
+      summary: Check temporary permission status
+      description: Check if a user currently has a specific temporary permission active.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - permission_name
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user to check
+                permission_name:
+                  type: string
+                  description: Name of the permission to check
+      responses:
+        '200':
+          description: Permission status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_permission:
+                    type: boolean
+                  temporary_permission:
+                    $ref: '#/components/schemas/TemporaryPermission'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /admin/permissions/change-requests:
+    get:
+      summary: List permission change requests
+      description: Retrieve permission change requests with optional filtering.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: Filter by request status
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by user ID
+        - name: requested_by
+          in: query
+          schema:
+            type: integer
+          description: Filter by requester ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permission_change_requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermissionChangeRequest'
+
+    post:
+      summary: Create permission change request
+      description: Create a new permission change request for approval workflow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user whose permissions to change
+                permissions_to_add:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of permission IDs to add
+                permissions_to_remove:
+                  type: array
+                  items:
+                    type: integer
+                  description: Array of permission IDs to remove
+                reason:
+                  type: string
+                  maxLength: 1000
+                  description: Reason for the change request
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: Optional expiration date for the request
+              required:
+                - user_id
+                - reason
+      responses:
+        '201':
+          description: Request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+                  request:
+                    $ref: '#/components/schemas/PermissionChangeRequest'
+        '400':
+          description: Validation error or dependency violation
+
+  /admin/permissions/change-requests/{requestId}:
+    get:
+      summary: Get permission change request details
+      description: Retrieve detailed information about a specific change request.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the change request
+      responses:
+        '200':
+          description: Request details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permission_change_request:
+                    $ref: '#/components/schemas/PermissionChangeRequest'
+        '404':
+          description: Request not found
+
+    post:
+      summary: Approve permission change request
+      description: Approve a pending permission change request and apply the changes.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the request to approve
+      responses:
+        '200':
+          description: Request approved successfully
+        '400':
+          description: Request is no longer valid
+        '404':
+          description: Request not found
+
+  /admin/permissions/change-requests/{requestId}/reject:
+    post:
+      summary: Reject permission change request
+      description: Reject a pending permission change request.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the request to reject
+      responses:
+        '200':
+          description: Request rejected successfully
+        '400':
+          description: Request is no longer valid
+        '404':
+          description: Request not found
+
+  /admin/permissions/change-requests/{requestId}/cancel:
+    delete:
+      summary: Cancel permission change request
+      description: Cancel a pending permission change request. Only the requester or super admin can cancel.
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the request to cancel
+      responses:
+        '200':
+          description: Request cancelled successfully
+        '400':
+          description: Only pending requests can be cancelled
+        '403':
+          description: Unauthorized to cancel this request
+        '404':
+          description: Request not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TemporaryPermission:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        permission_id:
+          type: integer
+        granted_by:
+          type: integer
+        granted_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+        permission:
+          $ref: '#/components/schemas/Permission'
+        granted_by_user:
+          $ref: '#/components/schemas/User'
+
+    PermissionChangeRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        requested_by:
+          type: integer
+        permissions_to_add:
+          type: array
+          items:
+            type: integer
+        permissions_to_remove:
+          type: array
+          items:
+            type: integer
+        reason:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        approved_by:
+          type: integer
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+        requested_by_user:
+          $ref: '#/components/schemas/User'
+        approved_by_user:
+          $ref: '#/components/schemas/User'
+        permissions_to_add_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        permissions_to_remove_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        resource:
+          type: string
+        action:
+          type: string
+        category:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthenticated."
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "The given data was invalid."
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+tags:
+  - name: Temporary Permissions
+    description: Endpoints for managing temporary permissions
+  - name: Permission Change Requests
+    description: Endpoints for the permission approval workflow

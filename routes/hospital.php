@@ -167,7 +167,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('admin.dashboard')->middleware('auth');
 
     // Admin User Management Routes
-    Route::middleware('check.permission:view-users')->prefix('admin')->group(function () {
+    Route::middleware(['check.permission:view-users', 'permission.monitoring'])->prefix('admin')->group(function () {
         Route::prefix('users')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index')->middleware('auth');
             Route::get('/create', [App\Http\Controllers\Admin\UserController::class, 'create'])->name('admin.users.create')->middleware('auth');
@@ -189,7 +189,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Permissions Management Routes
-        Route::prefix('permissions')->group(function () {
+        Route::middleware('permission.monitoring')->prefix('permissions')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\PermissionsController::class, 'index'])->name('admin.permissions.index')->middleware('auth');
             Route::get('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'editRolePermissions'])->name('admin.permissions.roles.edit')->middleware('auth');
             Route::put('/roles/{role}', [App\Http\Controllers\Admin\PermissionsController::class, 'updateRolePermissions'])->name('admin.permissions.roles.update')->middleware('auth');

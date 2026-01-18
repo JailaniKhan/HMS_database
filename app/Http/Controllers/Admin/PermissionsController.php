@@ -14,9 +14,16 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\PermissionMonitoringService;
 
 class PermissionsController extends Controller
 {
+    protected $monitoringService;
+
+    public function __construct(PermissionMonitoringService $monitoringService)
+    {
+        $this->monitoringService = $monitoringService;
+    }
     /**
      * Display the permissions management page.
      */
@@ -86,6 +93,14 @@ class PermissionsController extends Controller
                 }
             }
         }
+
+        // Log permission change for monitoring
+        $this->monitoringService->logMetric('permission_change', count($request->permissions ?? []), [
+            'action' => 'role_permissions_updated',
+            'role' => $role,
+            'user_id' => Auth::id(),
+            'permissions_count' => count($request->permissions ?? []),
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json(['success' => 'Role permissions updated successfully.']);
@@ -171,6 +186,14 @@ class PermissionsController extends Controller
             }
         }
 
+        // Log permission change for monitoring
+        $this->monitoringService->logMetric('permission_change', count($request->permissions ?? []), [
+            'action' => 'user_permissions_updated',
+            'user_id' => $userId,
+            'changed_by' => Auth::id(),
+            'permissions_count' => count($request->permissions ?? []),
+        ]);
+
         return redirect()->route('admin.users.index')->with('success', 'User permissions updated successfully.');
     }
 
@@ -212,6 +235,14 @@ class PermissionsController extends Controller
                 'is_active' => true,
             ]);
         });
+
+        // Log temporary permission grant for monitoring
+        $this->monitoringService->logMetric('temporary_permission_granted', 1, [
+            'user_id' => $request->user_id,
+            'permission_id' => $request->permission_id,
+            'granted_by' => Auth::id(),
+            'expires_at' => $request->expires_at,
+        ]);
 
         return response()->json([
             'success' => 'Temporary permission granted successfully.',
