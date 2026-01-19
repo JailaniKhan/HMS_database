@@ -199,16 +199,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Security Center Route
-        Route::get('/security', function () {
-            $user = Auth::user();
-
-            // Check if user has permission to access security center
-            if (!$user->hasPermission('manage-users') && !$user->isSuperAdmin()) {
-                abort(403, 'Unauthorized access');
-            }
-
-            return inertia('Admin/Security/Index');
-        })->name('admin.security')->middleware('auth');
+        Route::get('/security', [App\Http\Controllers\Admin\SecurityController::class, 'index'])->name('admin.security')->middleware('auth');
 
         // Activity Logs Route for Super Admins
         Route::get('/activity-logs', function () {

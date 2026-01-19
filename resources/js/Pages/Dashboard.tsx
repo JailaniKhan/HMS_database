@@ -11,7 +11,7 @@ import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
 import { motion } from 'framer-motion';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Activity {
     id: number;
@@ -80,6 +80,9 @@ export default function Dashboard(props: DashboardProps) {
     });
     const [updated, setUpdated] = useState(false);
 
+    const barChartRef = useRef<HTMLDivElement>(null);
+    const pieChartRef = useRef<HTMLDivElement>(null);
+
     const { lastMessage } = useWebSocket(liveMode ? 'ws://localhost:6001/dashboard' : null, { shouldReconnect: () => true });
 
     useEffect(() => {
@@ -90,6 +93,11 @@ export default function Dashboard(props: DashboardProps) {
             setTimeout(() => setUpdated(false), 2000);
         }
     }, [lastMessage]);
+
+    useEffect(() => {
+        console.log('Bar chart container width:', barChartRef.current?.offsetWidth, 'height:', barChartRef.current?.offsetHeight);
+        console.log('Pie chart container width:', pieChartRef.current?.offsetWidth, 'height:', pieChartRef.current?.offsetHeight);
+    }, []);
 
     // Calculate percentage changes (would come from API in real implementation)
     const calculateChange = (current: number, previous: number) => {
@@ -156,7 +164,7 @@ export default function Dashboard(props: DashboardProps) {
                             {liveMode ? 'Disable Live Mode' : 'Enable Live Mode'}
                         </Button>
                     </div>
-                    
+
                     {/* Stats Cards */}
                     <ResponsiveGridLayout layouts={layouts} breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480}} cols={{lg: 12, md: 10, sm: 6, xs: 4}} rowHeight={120} isDraggable={true} isResizable={false} className="mb-8">
                         <div key="patients">
@@ -271,7 +279,7 @@ export default function Dashboard(props: DashboardProps) {
                             </motion.div>
                         </div>
                     </ResponsiveGridLayout>
-                    
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                         {/* Charts Section */}
                         <div className="space-y-6">
@@ -281,8 +289,8 @@ export default function Dashboard(props: DashboardProps) {
                                     <CardDescription>Monthly patient visits trend</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="h-80">
-                                        <ResponsiveContainer width="100%" height="100%">
+                                    <div className="h-80" ref={barChartRef}>
+                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                             <BarChart
                                                 data={monthly_data}
                                                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -298,15 +306,15 @@ export default function Dashboard(props: DashboardProps) {
                                     </div>
                                 </CardContent>
                             </Card>
-                            
+
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg">Departments Patient Distribution</CardTitle>
                                     <CardDescription>Percentage of patients per department</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="h-80">
-                                        <ResponsiveContainer width="100%" height="100%">
+                                    <div className="h-80" ref={pieChartRef}>
+                                        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                             <PieChart>
                                                 <Pie
                                                     data={department_data}
@@ -334,7 +342,7 @@ export default function Dashboard(props: DashboardProps) {
                                 </CardContent>
                             </Card>
                         </div>
-                        
+
                         {/* Recent Activity and Quick Access */}
                         <div className="space-y-6">
                             {/* Recent Activity */}
@@ -363,7 +371,7 @@ export default function Dashboard(props: DashboardProps) {
                                     </div>
                                 </CardContent>
                             </Card>
-                            
+
                             {/* Quick Access Buttons */}
                             <Card>
                                 <CardHeader>

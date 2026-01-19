@@ -53,11 +53,11 @@ class RolePermissionSeeder extends Seeder
             ],
 
         ];
-        
+
         foreach ($rolePermissions as $role => $permissions) {
             foreach ($permissions as $permissionName) {
                 $permission = \App\Models\Permission::where('name', $permissionName)->first();
-                
+
                 if ($permission) {
                     \App\Models\RolePermission::firstOrCreate(
                         [
