@@ -26,7 +26,14 @@ class UserController extends Controller
         Log::debug('UserController index method called');
 
         try {
+            // Verify that we can access the authenticated user
+            $currentUser = \Illuminate\Support\Facades\Auth::user();
+            if (!$currentUser) {
+                abort(401, 'Authentication required');
+            }
+            
             $users = User::select('id', 'name', 'username', 'role', 'created_at', 'updated_at')
+                         ->orderBy('id', 'asc') // Add explicit ordering to prevent potential issues
                          ->paginate(10);
 
             Log::debug('User query executed successfully', ['user_count' => $users->count()]);
@@ -39,7 +46,20 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw $e;
+            
+            // Return a safe fallback response to prevent Inertia errors
+            $emptyPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                [], // Empty collection
+                0,  // Total items
+                10, // Per page
+                1,  // Current page
+                []  // Options
+            );
+            $emptyPaginator->withPath('/admin/users'); // Maintain the path for proper pagination links
+            
+            return Inertia::render('Admin/Users/Index', [
+                'users' => $emptyPaginator,
+            ]);
         }
     }
 

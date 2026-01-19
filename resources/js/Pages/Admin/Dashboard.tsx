@@ -1,8 +1,7 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, User, Settings, KeyRound, Activity,AlertTriangle, Calendar, Stethoscope, TestTube, BarChart3 } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';

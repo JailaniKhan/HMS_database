@@ -1,9 +1,8 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, Calendar, Stethoscope, DollarSign, AlertCircle, TrendingUp, TrendingDown, Zap, ZapOff } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import useWebSocket from 'react-use-websocket';
