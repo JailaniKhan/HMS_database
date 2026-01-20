@@ -765,7 +765,7 @@ class UserController extends Controller
     /**
      * Revoke a specific permission from a user.
      */
-    public function revokePermission(Request $request, string $userId, string $permissionId): \Illuminate\Http\JsonResponse
+    public function revokePermission(Request $request, string $userId, string $permissionId): RedirectResponse
     {
         $startTime = microtime(true);
         $startMemory = memory_get_usage();
@@ -774,7 +774,7 @@ class UserController extends Controller
 
         // Authorization check
         if (!$currentUser->isSuperAdmin() && !$currentUser->hasPermission('manage-users')) {
-            return response()->json(['error' => 'Unauthorized to revoke user permissions'], 403);
+            return redirect()->back()->withErrors(['permission' => 'Unauthorized to revoke user permissions']);
         }
 
         // Validate parameters
@@ -789,12 +789,12 @@ class UserController extends Controller
 
         // Prevent modifying own permissions unless Super Admin
         if ($user->id === $currentUser->id && $currentUser->role !== 'Super Admin') {
-            return response()->json(['error' => 'Non-super admins cannot revoke their own permissions'], 403);
+            return redirect()->back()->withErrors(['permission' => 'Non-super admins cannot revoke their own permissions']);
         }
 
         // Prevent modifying Super Admin permissions unless current user is Super Admin
         if ($user->role === 'Super Admin' && $currentUser->role !== 'Super Admin') {
-            return response()->json(['error' => 'Only Super Admin can revoke Super Admin permissions'], 403);
+            return redirect()->back()->withErrors(['permission' => 'Only Super Admin can revoke Super Admin permissions']);
         }
 
         // Find the user permission record
@@ -803,11 +803,11 @@ class UserController extends Controller
             ->first();
 
         if (!$userPermission) {
-            return response()->json(['error' => 'User does not have this permission assigned'], 404);
+            return redirect()->back()->withErrors(['permission' => 'User does not have this permission assigned']);
         }
 
         if (!$userPermission->allowed) {
-            return response()->json(['error' => 'Permission is already revoked'], 400);
+            return redirect()->back()->withErrors(['permission' => 'Permission is already revoked']);
         }
 
         // Set allowed to false instead of deleting to maintain audit trail
@@ -837,16 +837,7 @@ class UserController extends Controller
             'logged_at' => now(),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Permission revoked successfully',
-            'data' => [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'permission_id' => $permission->id,
-                'permission_name' => $permission->name,
-            ]
-        ]);
+        return redirect()->back()->with('success', 'Permission revoked successfully');
     }
 
     /**
