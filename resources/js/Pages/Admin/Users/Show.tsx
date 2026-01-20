@@ -346,9 +346,7 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                                                                 // Confirm before overriding this role-based permission
                                                                 if (window.confirm(`Override role-based permission '${rp.permission.name}' for this user? This will allow you to manage this permission specifically for this user.`)) {
                                                                     // Send a request to convert this to a user-specific permission
-                                                                    router.post(`/admin/users/${user.id}/permissions/${rp.permission.id}/override`, {
-                                                                        preserveScroll: true,
-                                                                    });
+                                                                    router.post(`/admin/users/${user.id}/permissions/${rp.permission.id}/override`);
                                                                 }
                                                             }}
                                                             className="text-blue-600 hover:bg-blue-50 border-blue-300 shrink-0"
@@ -398,16 +396,14 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                                                             variant="destructive"
                                                             size="sm"
                                                             onClick={() => {
-                                                                router.delete(`/admin/users/${user.id}/permissions/${permission.id}`, {
-                                                                    preserveScroll: true,
-                                                                });
+                                                                router.delete(`/admin/users/${user.id}/permissions/${permission.id}`);
                                                             }}
                                                             className="text-red-600 hover:bg-red-50 border-red-300 shrink-0"
                                                         >
                                                             <XCircle className="h-4 w-4 mr-1" />
                                                             Remove
                                                         </Button>
-                                                    </div>
+                                                     </div>
                                                 </div>
                                                 <p className="text-sm text-gray-600 mb-3">
                                                     {permission.description}
