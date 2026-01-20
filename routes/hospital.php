@@ -180,6 +180,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{user}/permissions', [App\Http\Controllers\Admin\UserController::class, 'editPermissions'])->name('admin.users.permissions.edit')->middleware('auth');
             Route::put('/{user}/permissions', [App\Http\Controllers\Admin\UserController::class, 'updatePermissions'])->name('admin.users.permissions.update')->middleware('auth');
             Route::delete('/{user}/permissions/{permission}', [App\Http\Controllers\Admin\UserController::class, 'revokePermission'])->name('admin.users.permissions.revoke')->middleware('auth');
+            Route::post('/{user}/permissions/{permission}/override', [App\Http\Controllers\Admin\UserController::class, 'overrideRolePermission'])->name('admin.users.permissions.override')->middleware('auth');
 
             // Bulk operations and templates
             Route::post('/bulk-permissions', [App\Http\Controllers\Admin\UserController::class, 'bulkUpdatePermissions'])->name('admin.users.bulk-permissions')->middleware('auth');

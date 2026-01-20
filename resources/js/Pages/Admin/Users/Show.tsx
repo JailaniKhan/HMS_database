@@ -316,74 +316,115 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {(() => {
-                            // Combine role-based and user-specific permissions
-                            const allPermissions = [
-                                ...user.rolePermissions.map(rp => ({
-                                    ...rp.permission,
-                                    type: 'role-based',
-                                    id: `role-${rp.permission.id}`
-                                })),
-                                ...user.userPermissions.map(up => ({
-                                    ...up,
-                                    type: 'user-specific',
-                                    id: `user-${up.id}`
-                                }))
-                            ];
+                        <div className="space-y-8">
+                            {/* Role-Based Permissions Section */}
+                            {user.rolePermissions.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <Shield className="h-5 w-5 text-blue-600" />
+                                        Role-Based Permissions
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {user.rolePermissions.map((rp) => (
+                                            <div
+                                                key={`role-${rp.permission.id}`}
+                                                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <h4 className="font-semibold text-gray-900">{rp.permission.name}</h4>
+                                                    <div className="flex items-center gap-1">
+                                                        <Badge variant="outline" className="text-xs bg-blue-100 border-blue-300">
+                                                            Role
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {rp.permission.action}
+                                                        </Badge>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                // Confirm before overriding this role-based permission
+                                                                if (window.confirm(`Override role-based permission '${rp.permission.name}' for this user? This will allow you to manage this permission specifically for this user.`)) {
+                                                                    // Send a request to convert this to a user-specific permission
+                                                                    router.post(`/admin/users/${user.id}/permissions/${rp.permission.id}/override`, {
+                                                                        preserveScroll: true,
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="text-blue-600 hover:bg-blue-50 border-blue-300 shrink-0"
+                                                        >
+                                                            Override
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mb-3">
+                                                    {rp.permission.description}
+                                                </p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {rp.permission.resource}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-                            return allPermissions.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {allPermissions.map((permission) => (
-                                        <div
-                                            key={permission.id}
-                                            className={`border rounded-lg p-4 hover:shadow-md transition-shadow bg-white ${
-                                                permission.type === 'user-specific'
-                                                    ? 'border-green-200 bg-green-50'
-                                                    : 'border-gray-200'
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <h4 className="font-semibold text-gray-900">{permission.name}</h4>
-                                                <div className="flex items-center gap-1">
-                                                    {permission.type === 'user-specific' && (
+                            {/* User-Specific Permissions Section */}
+                            {user.userPermissions.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <Key className="h-5 w-5 text-green-600" />
+                                        User-Specific Permissions
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {user.userPermissions.map((permission) => (
+                                            <div
+                                                key={`user-${permission.id}`}
+                                                className="border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-green-50"
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <h4 className="font-semibold text-gray-900">{permission.name}</h4>
+                                                    <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-xs bg-green-100 border-green-300">
                                                             User
                                                         </Badge>
-                                                    )}
-                                                    <Badge variant="outline" className="text-xs">
-                                                        {permission.action}
-                                                    </Badge>
-                                                    {permission.type === 'user-specific' && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {permission.action}
+                                                        </Badge>
 
                                                         <Button
                                                             variant="destructive"
                                                             size="sm"
                                                             onClick={() => {
-                                                                const permissionId = permission.id.split('-')[1];
-                                                                 router.delete(`/admin/users/${user.id}/permissions/${permissionId}`, {
+                                                                router.delete(`/admin/users/${user.id}/permissions/${permission.id}`, {
                                                                     preserveScroll: true,
                                                                 });
                                                             }}
-                                                            className="bg-red-500 hover:bg-red-600 text-white shrink-0"
+                                                            className="text-red-600 hover:bg-red-50 border-red-300 shrink-0"
                                                         >
                                                             <XCircle className="h-4 w-4 mr-1" />
                                                             Remove
                                                         </Button>
-                                                    )}
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mb-3">
+                                                    {permission.description}
+                                                </p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {permission.resource}
+                                                    </Badge>
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-gray-600 mb-3">
-                                                {permission.description}
-                                            </p>
-                                            <div className="flex flex-wrap gap-1">
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {permission.resource}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            ) : (
+                            )}
+
+                            {/* Message when no permissions are assigned */}
+                            {user.rolePermissions.length === 0 && user.userPermissions.length === 0 && (
                                 <div className="text-center py-8">
                                     <div className="mx-auto h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                                         <Key className="h-6 w-6 text-gray-400" />
@@ -391,8 +432,8 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                                     <h3 className="text-lg font-medium text-gray-900 mb-1">No Permissions Assigned</h3>
                                     <p className="text-gray-500">This user currently has no specific permissions assigned.</p>
                                 </div>
-                            );
-                        })()}
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             </div>

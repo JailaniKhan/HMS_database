@@ -845,6 +845,71 @@ class UserController extends Controller
     }
 
     /**
+     * Override a role-based permission with a user-specific permission.
+     */
+    public function overrideRolePermission(Request $request, string $userId, string $permissionId): RedirectResponse
+    {
+        $currentUser = \Illuminate\Support\Facades\Auth::user();
+
+        // Authorization check
+        if (!$currentUser->isSuperAdmin() && !$currentUser->hasPermission('manage-users')) {
+            return redirect()->back()->withErrors(['permission' => 'Unauthorized to override user permissions']);
+        }
+
+        $user = User::findOrFail($userId);
+        $permission = Permission::findOrFail($permissionId);
+
+        // Prevent modifying own permissions unless Super Admin
+        if ($user->id === $currentUser->id && $currentUser->role !== 'Super Admin') {
+            return redirect()->back()->withErrors(['permission' => 'Non-super admins cannot override their own permissions']);
+        }
+
+        // Prevent modifying Super Admin permissions unless current user is Super Admin
+        if ($user->role === 'Super Admin' && $currentUser->role !== 'Super Admin') {
+            return redirect()->back()->withErrors(['permission' => 'Only Super Admin can override Super Admin permissions']);
+        }
+
+        // Check if this permission is actually part of the user's role
+        $rolePermission = RolePermission::where('role', $user->role)
+            ->where('permission_id', $permission->id)
+            ->first();
+
+        if (!$rolePermission) {
+            return redirect()->back()->withErrors(['permission' => 'This permission is not part of the user\'s role']);
+        }
+
+        // Create or update user-specific permission to override the role-based one
+        // By default, we're creating an 'allowed' permission, but this could be extended to accept a parameter
+        $user->userPermissions()->updateOrCreate(
+            ['permission_id' => $permission->id],
+            ['allowed' => true]
+        );
+
+        // Clear permission cache for this user and permission
+        \Illuminate\Support\Facades\Cache::forget("user_permission:{$user->id}:{$permission->name}");
+
+        // Log the permission override
+        \App\Models\AuditLog::create([
+            'user_id' => $currentUser->id,
+            'user_name' => $currentUser->name,
+            'user_role' => $currentUser->role,
+            'action' => 'Override Role Permission',
+            'description' => "Overrode role-based permission '{$permission->name}' for user {$user->name} (ID: {$user->id}), making it user-specific",
+            'module' => 'User Management',
+            'severity' => 'medium',
+            'response_time' => 0.1,
+            'memory_usage' => 1000000,
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'logged_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Role-based permission successfully overridden with user-specific permission');
+    }
+
+    /**
      * Get all available roles from the role permissions, excluding Super Admin.
      */
     private function getAvailableRoles(): array
