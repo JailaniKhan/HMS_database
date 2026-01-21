@@ -103,8 +103,8 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-        // Automatically assign default permissions based on role for NEW users only
-        $this->assignDefaultPermissions($user, $request->role);
+        // Removed automatic permission assignment - permissions should be assigned manually
+        // through the admin panel to ensure proper access control
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }

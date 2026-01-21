@@ -117,10 +117,10 @@ class PermissionsController extends Controller
         // Define default permissions for each role
         $defaultPermissions = [
             'Super Admin' => [], // Super Admin gets all permissions implicitly
-            'Reception Admin' => ['view-patients', 'create-patients', 'view-appointments', 'create-appointments'],
-            'Pharmacy Admin' => ['view-medicines', 'create-medicines', 'view-sales'],
-            'Laboratory Admin' => ['view-lab-tests', 'create-lab-tests', 'view-patients'],
-            'Sub Super Admin' => ['view-users', 'manage-users', 'view-permissions'],
+            'Reception Admin' => [],
+            'Pharmacy Admin' => [],
+            'Laboratory Admin' => [],
+            'Sub Super Admin' => [],
         ];
 
         // Validate the role
