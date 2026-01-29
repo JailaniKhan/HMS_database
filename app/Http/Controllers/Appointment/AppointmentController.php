@@ -52,6 +52,7 @@ class AppointmentController extends Controller
             'reason' => 'nullable|string',
             'notes' => 'nullable|string',
             'fee' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0|max:100',
         ]);
 
         try {
@@ -63,6 +64,7 @@ class AppointmentController extends Controller
                 'reason' => $request->reason,
                 'notes' => $request->notes,
                 'fee' => $request->fee,
+                'discount' => $request->discount ?? 0,
             ]);
 
             return redirect()->route('appointments.index')->with('success', 'Appointment created successfully.');

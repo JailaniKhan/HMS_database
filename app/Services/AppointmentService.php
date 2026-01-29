@@ -36,7 +36,7 @@ class AppointmentService
             'patients' => Patient::select('id', 'first_name', 'father_name', 'patient_id')
                 ->orderBy('father_name')
                 ->get(),
-            'doctors' => Doctor::select('id', 'full_name', 'specialization')
+            'doctors' => Doctor::select('id', 'full_name', 'specialization', 'fees')
                 ->where('status', 'active')
                 ->orderBy('full_name')
                 ->get(),
@@ -71,6 +71,7 @@ class AppointmentService
                 'reason' => $data['reason'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'fee' => $data['fee'],
+                'discount' => $data['discount'] ?? 0,
             ]);
 
             DB::commit();

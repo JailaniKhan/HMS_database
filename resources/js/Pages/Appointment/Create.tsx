@@ -1,41 +1,53 @@
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Heading from '@/components/heading';
-import { ArrowLeft, Save, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Calendar as CalendarIcon, User, Stethoscope, Percent, DollarSign } from 'lucide-react';
 
 interface Patient {
     id: number;
     patient_id: string;
     first_name: string;
-    last_name: string;
+    father_name: string;
 }
 
 interface Doctor {
     id: number;
-    doctor_id: string;
-    first_name: string;
-    last_name: string;
+    full_name: string;
     specialization: string;
+    fees: string;
+}
+
+interface Department {
+    id: number;
+    name: string;
 }
 
 interface AppointmentCreateProps {
     patients: Patient[];
     doctors: Doctor[];
+    departments: Department[];
 }
 
-export default function AppointmentCreate({ patients, doctors }: AppointmentCreateProps) {
+export default function AppointmentCreate({ patients, doctors, departments }: AppointmentCreateProps) {
+    // Get current date and time
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+    
     const { data, setData, post, processing, errors } = useForm({
         patient_id: '',
         doctor_id: '',
-        appointment_date: '',
-        appointment_time: '',
-        status: 'scheduled',
+        department_id: '',
+        appointment_date: currentDate + 'T' + currentTime,
         reason: '',
+        notes: '',
+        fee: '',
+        discount: '0',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -50,6 +62,30 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
 
     const handleSelectChange = (name: string, value: string) => {
         setData(name as keyof typeof data, value);
+        
+        // Auto-populate fee when doctor is selected
+        if (name === 'doctor_id' && value) {
+            const selectedDoctor = doctors.find(d => d.id.toString() === value);
+            if (selectedDoctor && selectedDoctor.fees) {
+                setData('fee', selectedDoctor.fees);
+            }
+        }
+    };
+
+    const calculateFinalFee = () => {
+        const fee = parseFloat(data.fee) || 0;
+        const discount = parseFloat(data.discount) || 0;
+        
+        // Validate discount is between 0-100
+        if (discount < 0 || discount > 100) {
+            return '0.00';
+        }
+        
+        const discountAmount = (fee * discount) / 100;
+        const finalFee = fee - discountAmount;
+        
+        // Ensure final fee is not negative
+        return finalFee >= 0 ? finalFee.toFixed(2) : '0.00';
     };
 
     return (
@@ -58,23 +94,32 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
             
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <Heading title="Schedule New Appointment" />
+                    <div>
+                        <Heading title="Schedule New Appointment" />
+                        <p className="text-sm text-muted-foreground mt-1">Create a new appointment for a patient</p>
+                    </div>
                     
                     <Link href="/appointments">
-                        <Button variant="outline">
+                        <Button variant="outline" size="sm">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to Appointments
+                            Back
                         </Button>
                     </Link>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Appointment Details</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Patient & Doctor Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <User className="h-5 w-5" />
+                                Patient & Doctor Information
+                            </CardTitle>
+                            <CardDescription>Select the patient and doctor for this appointment</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Patient Selection with Search */}
                                 <div className="space-y-2">
                                     <Label htmlFor="patient_id">Patient *</Label>
                                     <Select 
@@ -87,7 +132,12 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                         <SelectContent>
                                             {patients.map(patient => (
                                                 <SelectItem key={patient.id} value={patient.id.toString()}>
-                                                    {patient.patient_id} - {patient.first_name} {patient.last_name}
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">{patient.patient_id}</span>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {patient.first_name} {patient.father_name}
+                                                        </span>
+                                                    </div>
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -97,6 +147,7 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                     )}
                                 </div>
                                 
+                                {/* Doctor Selection */}
                                 <div className="space-y-2">
                                     <Label htmlFor="doctor_id">Doctor *</Label>
                                     <Select 
@@ -109,7 +160,10 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                         <SelectContent>
                                             {doctors.map(doctor => (
                                                 <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                                                    {doctor.doctor_id} - {doctor.first_name} {doctor.last_name} ({doctor.specialization})
+                                                    <div className="flex items-center gap-2">
+                                                        <Stethoscope className="h-4 w-4" />
+                                                        <span>{doctor.full_name} ({doctor.specialization})</span>
+                                                    </div>
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -118,15 +172,53 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                         <p className="text-sm text-red-600">{errors.doctor_id}</p>
                                     )}
                                 </div>
-                                
-                                <div className="space-y-2">
-                                    <Label htmlFor="appointment_date">Date *</Label>
+
+                                {/* Department Selection */}
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label htmlFor="department_id">Department *</Label>
+                                    <Select 
+                                        value={data.department_id} 
+                                        onValueChange={(value) => handleSelectChange('department_id', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {departments.map(dept => (
+                                                <SelectItem key={dept.id} value={dept.id.toString()}>
+                                                    {dept.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.department_id && (
+                                        <p className="text-sm text-red-600">{errors.department_id}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Appointment Details */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CalendarIcon className="h-5 w-5" />
+                                Appointment Details
+                            </CardTitle>
+                            <CardDescription>Schedule date, time and reason for the appointment</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Date and Time */}
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label htmlFor="appointment_date">Appointment Date & Time *</Label>
                                     <div className="relative">
                                         <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="appointment_date"
                                             name="appointment_date"
-                                            type="date"
+                                            type="datetime-local"
                                             value={data.appointment_date}
                                             onChange={handleChange}
                                             className="pl-8"
@@ -137,26 +229,9 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                     )}
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    <Label htmlFor="appointment_time">Time *</Label>
-                                    <div className="relative">
-                                        <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="appointment_time"
-                                            name="appointment_time"
-                                            type="time"
-                                            value={data.appointment_time}
-                                            onChange={handleChange}
-                                            className="pl-8"
-                                        />
-                                    </div>
-                                    {errors.appointment_time && (
-                                        <p className="text-sm text-red-600">{errors.appointment_time}</p>
-                                    )}
-                                </div>
-                                
+                                {/* Reason */}
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="reason">Reason for Appointment *</Label>
+                                    <Label htmlFor="reason">Reason for Appointment</Label>
                                     <Textarea
                                         id="reason"
                                         name="reason"
@@ -164,48 +239,117 @@ export default function AppointmentCreate({ patients, doctors }: AppointmentCrea
                                         onChange={handleChange}
                                         placeholder="Describe the reason for the appointment"
                                         rows={3}
+                                        className="resize-none"
                                     />
                                     {errors.reason && (
                                         <p className="text-sm text-red-600">{errors.reason}</p>
                                     )}
                                 </div>
-                                
+
+                                {/* Notes */}
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="status">Status</Label>
-                                    <Select 
-                                        value={data.status} 
-                                        onValueChange={(value) => handleSelectChange('status', value)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="scheduled">Scheduled</SelectItem>
-                                            <SelectItem value="completed">Completed</SelectItem>
-                                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                                            <SelectItem value="rescheduled">Rescheduled</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.status && (
-                                        <p className="text-sm text-red-600">{errors.status}</p>
+                                    <Label htmlFor="notes">Additional Notes</Label>
+                                    <Textarea
+                                        id="notes"
+                                        name="notes"
+                                        value={data.notes}
+                                        onChange={handleChange}
+                                        placeholder="Any additional notes or special requirements"
+                                        rows={2}
+                                        className="resize-none"
+                                    />
+                                    {errors.notes && (
+                                        <p className="text-sm text-red-600">{errors.notes}</p>
                                     )}
                                 </div>
                             </div>
-                            
-                            <div className="flex justify-end space-x-4 pt-4">
-                                <Link href="/appointments">
-                                    <Button type="button" variant="outline">
-                                        Cancel
-                                    </Button>
-                                </Link>
-                                <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {processing ? 'Scheduling...' : 'Schedule Appointment'}
-                                </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Fee & Discount */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <DollarSign className="h-5 w-5" />
+                                Fee & Discount
+                            </CardTitle>
+                            <CardDescription>Set the consultation fee and apply discount if applicable</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Fee */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="fee">Consultation Fee *</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="fee"
+                                            name="fee"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.fee}
+                                            onChange={handleChange}
+                                            placeholder="0.00"
+                                            className="pl-8 bg-muted"
+                                            readOnly
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Auto-filled from selected doctor</p>
+                                    {errors.fee && (
+                                        <p className="text-sm text-red-600">{errors.fee}</p>
+                                    )}
+                                </div>
+
+                                {/* Discount */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount">Discount (%)</Label>
+                                    <div className="relative">
+                                        <Percent className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="discount"
+                                            name="discount"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={data.discount}
+                                            onChange={handleChange}
+                                            placeholder="0"
+                                            className="pl-8"
+                                        />
+                                    </div>
+                                    {errors.discount && (
+                                        <p className="text-sm text-red-600">{errors.discount}</p>
+                                    )}
+                                </div>
+
+                                {/* Final Fee */}
+                                <div className="space-y-2">
+                                    <Label>Final Amount *</Label>
+                                    <div className="flex items-center h-10 px-3 py-2 border-2 border-primary rounded-md bg-primary/5">
+                                        <DollarSign className="h-5 w-5 mr-2 text-primary" />
+                                        <span className="font-bold text-xl text-primary">{calculateFinalFee()}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Amount after discount</p>
+                                </div>
                             </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                            
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-4">
+                        <Link href="/appointments">
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </Link>
+                        <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
+                            <Save className="mr-2 h-4 w-4" />
+                            {processing ? 'Scheduling...' : 'Schedule Appointment'}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </>
     );

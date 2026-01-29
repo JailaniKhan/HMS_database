@@ -19,11 +19,13 @@ class Appointment extends Model
         'reason',
         'notes',
         'fee',
+        'discount',
     ];
 
     protected $casts = [
         'appointment_date' => 'datetime',
         'fee' => 'decimal:2',
+        'discount' => 'decimal:2',
     ];
 
     public function patient()
