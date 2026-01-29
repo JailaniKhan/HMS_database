@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
 import HospitalLayout from '@/layouts/HospitalLayout';
-import { Calendar, Clock, User, Stethoscope, FileText, ArrowLeft, Pencil, MapPin, Phone } from 'lucide-react';
+import { Calendar, Clock, User, Stethoscope, FileText, ArrowLeft, Pencil } from 'lucide-react';
 
 interface Patient {
     id: number;
