@@ -116,17 +116,7 @@ export default function PatientIndex({ patients }: PatientIndexProps) {
                                 <TableBody>
                                     {filteredPatients.length > 0 ? (
                                         filteredPatients.map((patient) => {
-                                            const calculateAge = (dob: string | null) => {
-                                                if (!dob) return 'N/A';
-                                                const birthDate = new Date(dob);
-                                                const today = new Date();
-                                                let age = today.getFullYear() - birthDate.getFullYear();
-                                                const monthDiff = today.getMonth() - birthDate.getMonth();
-                                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                                                    age--;
-                                                }
-                                                return age;
-                                            };
+
                                             
                                             return (
                                             <TableRow key={patient.id}>
@@ -149,7 +139,7 @@ export default function PatientIndex({ patients }: PatientIndexProps) {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {calculateAge(patient.date_of_birth)}
+                                                    {patient.age || 'N/A'}
                                                 </TableCell>
                                                 <TableCell>
                                                     {patient.blood_group ? (

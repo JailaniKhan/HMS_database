@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
-import { Phone, MapPin, User, ArrowLeft, Pencil, FileText, Calendar, Droplet, Users } from 'lucide-react';
+import { Phone, MapPin, User, ArrowLeft, Pencil, FileText, Droplet, Users } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Patient } from '@/types/patient';
 
@@ -19,18 +19,6 @@ export default function PatientShow({ patient }: PatientShowProps) {
             month: 'short',
             day: 'numeric',
         });
-    };
-
-    const calculateAge = (dob: string | null) => {
-        if (!dob) return 'N/A';
-        const birthDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
     };
 
     const getGenderBadgeVariant = (gender: string) => {
@@ -113,16 +101,8 @@ export default function PatientShow({ patient }: PatientShowProps) {
                                 </div>
                                 
                                 <div>
-                                    <h3 className="text-sm font-medium text-muted-foreground">Date of Birth</h3>
-                                    <p className="flex items-center">
-                                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        {formatDate(patient.date_of_birth)}
-                                    </p>
-                                </div>
-                                
-                                <div>
                                     <h3 className="text-sm font-medium text-muted-foreground">Age</h3>
-                                    <p>{calculateAge(patient.date_of_birth)} years</p>
+                                    <p>{patient.age || 'N/A'} years</p>
                                 </div>
                                 
                                 <div>

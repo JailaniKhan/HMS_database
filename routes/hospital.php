@@ -14,6 +14,7 @@ use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Laboratory\LabTestController;
 use App\Http\Controllers\Laboratory\LabTestResultController;
 use App\Http\Controllers\Department\DepartmentController;
+use App\Http\Controllers\Department\DepartmentServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -136,6 +137,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
         Route::put('/{department}', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+
+        // Department Service Routes
+        Route::post('/{department}/services', [DepartmentServiceController::class, 'store'])->name('departments.services.store');
+        Route::put('/services/{service}', [DepartmentServiceController::class, 'update'])->name('departments.services.update');
+        Route::delete('/services/{service}', [DepartmentServiceController::class, 'destroy'])->name('departments.services.destroy');
     });
 
     // Report Routes

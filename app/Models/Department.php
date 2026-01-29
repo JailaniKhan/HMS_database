@@ -12,17 +12,32 @@ class Department extends Model
     protected $fillable = [
         'name',
         'description',
-        'head_doctor',
+        'head_doctor_id',
         'phone',
-        'email',
         'metadata',
     ];
 
     protected $casts = [
         'phone' => 'encrypted',
-        'email' => 'encrypted',
         'metadata' => 'array',
     ];
+
+    protected $appends = ['head_doctor_name'];
+
+    public function getHeadDoctorNameAttribute()
+    {
+        return $this->headDoctor?->full_name;
+    }
+
+    public function headDoctor()
+    {
+        return $this->belongsTo(Doctor::class, 'head_doctor_id');
+    }
+
+    public function services()
+    {
+        return $this->hasMany(DepartmentService::class);
+    }
 
     public function doctors()
     {

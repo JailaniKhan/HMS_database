@@ -28,7 +28,6 @@ export default function DepartmentCreate({ doctors = [] }: DepartmentCreateProps
         description: '',
         head_doctor_id: '',
         phone: '',
-        email: '',
         address: '',
     });
 
@@ -155,21 +154,6 @@ export default function DepartmentCreate({ doctors = [] }: DepartmentCreateProps
                                     />
                                     {errors.phone && (
                                         <p className="text-sm text-red-600">{errors.phone}</p>
-                                    )}
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email Address</Label>
-                                    <Input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        value={data.email}
-                                        onChange={handleChange}
-                                        placeholder="Enter email address"
-                                    />
-                                    {errors.email && (
-                                        <p className="text-sm text-red-600">{errors.email}</p>
                                     )}
                                 </div>
                                 

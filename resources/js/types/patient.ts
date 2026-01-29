@@ -6,9 +6,8 @@ export interface Patient {
     gender: 'male' | 'female' | 'other' | null;
     phone: string | null;
     address: string | null;
-    date_of_birth: string | null;
     blood_group: string | null;
-    age?: number;
+    age: number | null;
     created_at: string;
     updated_at: string;
     user?: {

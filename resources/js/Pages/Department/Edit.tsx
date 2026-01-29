@@ -26,7 +26,6 @@ interface Department {
     head_doctor_id?: number | null;
     head_doctor_name?: string | null;
     phone?: string | null;
-    email?: string | null;
     address?: string | null;
     created_at: string;
     updated_at: string;
@@ -43,7 +42,6 @@ export default function DepartmentEdit({ department, doctors = [] }: DepartmentE
         description: department.description || '',
         head_doctor_id: department.head_doctor_id?.toString() || '',
         phone: department.phone || '',
-        email: department.email || '',
         address: department.address || '',
     });
 
@@ -170,21 +168,6 @@ export default function DepartmentEdit({ department, doctors = [] }: DepartmentE
                                     />
                                     {errors.phone && (
                                         <p className="text-sm text-red-600">{errors.phone}</p>
-                                    )}
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email Address</Label>
-                                    <Input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        value={data.email}
-                                        onChange={handleChange}
-                                        placeholder="Enter email address"
-                                    />
-                                    {errors.email && (
-                                        <p className="text-sm text-red-600">{errors.email}</p>
                                     )}
                                 </div>
                                 

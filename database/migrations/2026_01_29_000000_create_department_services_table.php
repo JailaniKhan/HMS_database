@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
+        Schema::create('department_services', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('department_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('head_doctor_id')->nullable();
-            $table->string('phone')->nullable();
+            $table->decimal('base_cost', 10, 2)->default(0);
+            $table->decimal('fee_percentage', 5, 2)->default(0);
+            $table->decimal('discount_percentage', 5, 2)->default(0);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
-
-            $table->foreign('head_doctor_id')->references('id')->on('doctors')->onDelete('set null');
         });
     }
 
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('department_services');
     }
 };

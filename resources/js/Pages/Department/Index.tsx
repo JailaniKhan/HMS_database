@@ -11,22 +11,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
-import { Building, Users, Phone, PlusCircle, Search, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Building, Users, Phone, PlusCircle, Search, Eye, Pencil, Trash2, Activity } from 'lucide-react';
 import { useState } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
-
-interface Department {
-    id: number;
-    department_id: string;
-    name: string;
-    description?: string | null;
-    head_doctor_id?: number | null;
-    head_doctor_name?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    address?: string | null;
-    created_at: string;
-}
+import { Department } from '@/types/department';
 
 interface DepartmentIndexProps {
     departments: {
@@ -119,6 +107,7 @@ export default function DepartmentIndex({ departments }: DepartmentIndexProps) {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Description</TableHead>
                                         <TableHead>Head Doctor</TableHead>
+                                        <TableHead>Services</TableHead>
                                         <TableHead>Contact</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -126,10 +115,10 @@ export default function DepartmentIndex({ departments }: DepartmentIndexProps) {
                                 </TableHeader>
                                 <TableBody>
                                     {filteredDepartments.length > 0 ? (
-                                        filteredDepartments.map((department) => (
+                                        filteredDepartments.map((department, index) => (
                                             <TableRow key={department.id}>
-                                                <TableCell className="font-medium">
-                                                    {department.department_id}
+                                                <TableCell className="font-medium text-center">
+                                                    {(departments.meta?.from || 1) + index}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center">
@@ -146,6 +135,12 @@ export default function DepartmentIndex({ departments }: DepartmentIndexProps) {
                                                     <div className="flex items-center">
                                                         <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                                                         {department.head_doctor_name || 'N/A'}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center">
+                                                        <Activity className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                        {department.services_count || 0} Services
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>

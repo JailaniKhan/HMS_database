@@ -18,7 +18,7 @@ class DepartmentController extends Controller
      */
     public function index(): Response
     {
-        $departments = Department::withCount(['doctors', 'appointments'])
+        $departments = Department::with(['headDoctor'])->withCount(['doctors', 'appointments', 'services'])
             ->paginate(10);
 
         return Inertia::render('Department/Index', [
@@ -59,9 +59,8 @@ class DepartmentController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:departments,name',
             'description' => 'nullable|string',
-            'head_doctor' => 'nullable|string|max:255',
+            'head_doctor_id' => 'nullable|exists:doctors,id',
             'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -81,7 +80,9 @@ class DepartmentController extends Controller
      */
     public function show(string $id): Response
     {
-        $department = Department::with(['doctors', 'appointments'])->findOrFail($id);
+        $department = Department::with(['headDoctor', 'doctors', 'appointments', 'services'])->findOrFail($id);
+
+        $department->services->each->append('final_cost');
 
         return Inertia::render('Department/Show', [
             'department' => $department
@@ -126,9 +127,8 @@ class DepartmentController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:departments,name,' . $id,
             'description' => 'nullable|string',
-            'head_doctor' => 'nullable|string|max:255',
+            'head_doctor_id' => 'nullable|exists:doctors,id',
             'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
