@@ -23,15 +23,33 @@ class LabTestResultController extends Controller
     {
         $user = Auth::user();
         
-// Check if user has appropriate permission
-if (!$user->hasPermission('view-laboratory')) {
-    abort(403, 'Unauthorized access');
-}
+        // Check if user has appropriate permission
+        if (!$user->isSuperAdmin() && !$user->hasPermission('view-laboratory')) {
+            abort(403, 'Unauthorized access');
+        }
         
-        $labTestResults = LabTestResult::with('labTest', 'patient')->latest()->paginate(10);
+        $labTestResults = LabTestResult::with('test', 'patient')->latest()->paginate(10);
+        
+        // Get filter options
+        $patients = Patient::select('id', 'patient_id', 'first_name', 'last_name')->get();
+        $labTests = LabTest::select('id', 'test_code', 'name')->get();
+        
+        // Calculate stats
+        $stats = [
+            'total' => LabTestResult::count(),
+            'pending' => LabTestResult::where('status', 'pending')->count(),
+            'completed' => LabTestResult::where('status', 'completed')->count(),
+            'verified' => LabTestResult::where('status', 'verified')->count(),
+            'abnormal' => LabTestResult::where('status', 'abnormal')->count(),
+            'critical' => LabTestResult::where('status', 'critical')->count(),
+        ];
         
         return Inertia::render('Laboratory/LabTestResults/Index', [
-            'labTestResults' => $labTestResults
+            'labTestResults' => $labTestResults,
+            'filters' => (object)[],
+            'patients' => $patients,
+            'labTests' => $labTests,
+            'stats' => $stats,
         ]);
     }
 

@@ -65,6 +65,27 @@
     --chart-4: 38 92% 50%;   /* Orange */
     --chart-5: 271 91% 65%;  /* Purple */
     
+    /* Laboratory Colors */
+    /* Status Colors */
+    --lab-pending: 38 92% 50%;      /* Amber - Waiting for processing */
+    --lab-in-progress: 199 89% 48%; /* Blue - Currently processing */
+    --lab-completed: 142 71% 45%;   /* Green - Results available */
+    --lab-cancelled: 215 16% 47%;   /* Gray - Cancelled */
+    /* Priority Colors */
+    --lab-urgent: 0 72% 51%;        /* Red - Urgent priority */
+    --lab-stat: 0 84% 60%;          /* Bright Red - STAT priority */
+    --lab-routine: 187 85% 43%;     /* Teal - Routine priority */
+    /* Result Colors */
+    --lab-abnormal: 0 72% 51%;      /* Red - Abnormal results */
+    --lab-critical: 0 84% 60%;      /* Bright Red - Critical values */
+    --lab-normal: 142 71% 45%;      /* Green - Normal results */
+    /* Category Colors */
+    --lab-hematology: 271 91% 65%;  /* Purple */
+    --lab-biochemistry: 217 91% 60%; /* Blue */
+    --lab-microbiology: 142 71% 45%; /* Green */
+    --lab-immunology: 38 92% 50%;    /* Orange */
+    --lab-urinalysis: 187 85% 43%;   /* Teal */
+    
     --radius: 0.75rem;
   }
 
@@ -111,6 +132,27 @@
     --chart-3: 142 71% 45%;
     --chart-4: 38 92% 50%;
     --chart-5: 271 91% 65%;
+    
+    /* Laboratory Colors - Dark Mode */
+    /* Status Colors */
+    --lab-pending: 38 92% 50%;      /* Amber - Waiting for processing */
+    --lab-in-progress: 199 89% 48%; /* Blue - Currently processing */
+    --lab-completed: 142 71% 45%;   /* Green - Results available */
+    --lab-cancelled: 215 16% 47%;   /* Gray - Cancelled */
+    /* Priority Colors */
+    --lab-urgent: 0 72% 51%;        /* Red - Urgent priority */
+    --lab-stat: 0 84% 60%;          /* Bright Red - STAT priority */
+    --lab-routine: 187 85% 43%;     /* Teal - Routine priority */
+    /* Result Colors */
+    --lab-abnormal: 0 72% 51%;      /* Red - Abnormal results */
+    --lab-critical: 0 84% 60%;      /* Bright Red - Critical values */
+    --lab-normal: 142 71% 45%;      /* Green - Normal results */
+    /* Category Colors */
+    --lab-hematology: 271 91% 65%;  /* Purple */
+    --lab-biochemistry: 217 91% 60%; /* Blue */
+    --lab-microbiology: 142 71% 45%; /* Green */
+    --lab-immunology: 38 92% 50%;    /* Orange */
+    --lab-urinalysis: 187 85% 43%;   /* Teal */
     
     --sidebar-background: 222 47% 15%;
     --sidebar-foreground: 210 40% 98%;

@@ -111,6 +111,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Laboratory Routes
     Route::middleware('check.permission:view-laboratory')->prefix('laboratory')->group(function () {
+        // Laboratory Dashboard
+        Route::get('/', [LabTestController::class, 'dashboard'])->name('laboratory.index');
+        
         Route::get('/lab-tests', [LabTestController::class, 'index'])->name('laboratory.lab-tests.index');
         Route::get('/lab-tests/create', [LabTestController::class, 'create'])->name('laboratory.lab-tests.create');
         Route::post('/lab-tests', [LabTestController::class, 'store'])->name('laboratory.lab-tests.store');
@@ -131,12 +134,9 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('check.permission:view-lab-test-requests')->group(function () {
             Route::get('/lab-test-requests', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'index'])->name('laboratory.lab-test-requests.index');
             Route::get('/lab-test-requests/search', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'search'])->name('laboratory.lab-test-requests.search');
-            Route::get('/lab-test-requests/{labTestRequest}', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'show'])->name('laboratory.lab-test-requests.show');
-        });
-
-        Route::middleware('check.permission:create-lab-test-requests')->group(function () {
             Route::get('/lab-test-requests/create', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'create'])->name('laboratory.lab-test-requests.create');
             Route::post('/lab-test-requests', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'store'])->name('laboratory.lab-test-requests.store');
+            Route::get('/lab-test-requests/{labTestRequest}', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'show'])->name('laboratory.lab-test-requests.show');
         });
 
         Route::middleware('check.permission:edit-lab-test-requests')->group(function () {

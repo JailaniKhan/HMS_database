@@ -59,6 +59,28 @@ export default {
                     border: 'hsl(var(--sidebar-border))',
                     ring: 'hsl(var(--sidebar-ring))',
                 },
+                // Laboratory-specific colors
+                lab: {
+                    // Status colors
+                    pending: 'hsl(var(--lab-pending))',
+                    'in-progress': 'hsl(var(--lab-in-progress))',
+                    completed: 'hsl(var(--lab-completed))',
+                    cancelled: 'hsl(var(--lab-cancelled))',
+                    // Priority colors
+                    urgent: 'hsl(var(--lab-urgent))',
+                    stat: 'hsl(var(--lab-stat))',
+                    routine: 'hsl(var(--lab-routine))',
+                    // Result colors
+                    abnormal: 'hsl(var(--lab-abnormal))',
+                    critical: 'hsl(var(--lab-critical))',
+                    normal: 'hsl(var(--lab-normal))',
+                    // Category colors
+                    hematology: 'hsl(var(--lab-hematology))',
+                    biochemistry: 'hsl(var(--lab-biochemistry))',
+                    microbiology: 'hsl(var(--lab-microbiology))',
+                    immunology: 'hsl(var(--lab-immunology))',
+                    urinalysis: 'hsl(var(--lab-urinalysis))',
+                },
             },
             borderRadius: {
                 lg: 'var(--radius)',

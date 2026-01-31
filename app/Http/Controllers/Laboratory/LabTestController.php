@@ -15,6 +15,96 @@ use Illuminate\Http\RedirectResponse;
 class LabTestController extends Controller
 {
     /**
+     * Display the laboratory dashboard.
+     */
+    public function dashboard(): Response
+    {
+        $user = Auth::user();
+
+        if (!$user->isSuperAdmin() && !$user->hasPermission('view-laboratory')) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Get statistics for dashboard
+        $totalTests = LabTest::count();
+        $activeTests = LabTest::where('status', 'active')->count();
+        $inactiveTests = LabTest::where('status', 'inactive')->count();
+
+        // Get recent lab test requests
+        $recentRequests = \App\Models\LabTestRequest::with(['patient', 'doctor'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get recent results
+        $recentResults = \App\Models\LabTestResult::with(['patient', 'test'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get pending requests count
+        $pendingRequests = \App\Models\LabTestRequest::where('status', 'pending')->count();
+        $inProgressRequests = \App\Models\LabTestRequest::where('status', 'in_progress')->count();
+        $completedRequests = \App\Models\LabTestRequest::where('status', 'completed')->count();
+
+        // Get critical/abnormal results count
+        $criticalResults = \App\Models\LabTestResult::where('status', 'critical')->count();
+        $abnormalResults = \App\Models\LabTestResult::where('status', 'abnormal')->count();
+
+        // Build activities array from recent requests and results
+        $activities = [];
+        foreach ($recentRequests as $request) {
+            $activities[] = [
+                'id' => 'req_' . $request->id,
+                'type' => 'request',
+                'title' => 'New Test Request',
+                'description' => $request->test_name . ' for ' . ($request->patient->first_name ?? 'Unknown'),
+                'timestamp' => $request->created_at->toISOString(),
+                'status' => $request->status,
+                'priority' => $request->test_type,
+            ];
+        }
+        foreach ($recentResults as $result) {
+            $activities[] = [
+                'id' => 'res_' . $result->id,
+                'type' => 'result',
+                'title' => 'Test Result Added',
+                'description' => ($result->test->name ?? 'Unknown Test') . ' for ' . ($result->patient->first_name ?? 'Unknown'),
+                'timestamp' => $result->created_at->toISOString(),
+                'status' => $result->status,
+            ];
+        }
+        // Sort activities by timestamp
+        usort($activities, function($a, $b) {
+            return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+        });
+        $activities = array_slice($activities, 0, 10);
+
+        // Get STAT requests count
+        $statRequests = \App\Models\LabTestRequest::where('test_type', 'stat')
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->count();
+
+        return Inertia::render('Laboratory/Index', [
+            'stats' => [
+                'totalTests' => $totalTests,
+                'activeTests' => $activeTests,
+                'inactiveTests' => $inactiveTests,
+                'pendingRequests' => $pendingRequests,
+                'inProgressRequests' => $inProgressRequests,
+                'completedRequests' => $completedRequests,
+                'criticalResults' => $criticalResults,
+                'abnormalResults' => $abnormalResults,
+            ],
+            'recentRequests' => $recentRequests,
+            'recentResults' => $recentResults,
+            'activities' => $activities,
+            'criticalResults' => $criticalResults,
+            'statRequests' => $statRequests,
+        ]);
+    }
+
+    /**
      * Display a listing of the lab tests.
      */
     public function index(): Response
@@ -74,33 +164,64 @@ if (!$user->isSuperAdmin() && !$user->hasPermission('create-lab-tests')) {
             abort(403, 'Unauthorized access');
         }
 
+        // Log incoming request data for debugging
+        Log::debug('LabTestController store - incoming request data', [
+            'all_input' => $request->all(),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'code' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
+            'cost' => 'required|numeric|min:0',
             'category' => 'required|string|max:100',
-            'duration' => 'required|string|max:100',
+            'turnaround_time' => 'required|integer|min:1',
+            'unit' => 'nullable|string|max:100',
+            'normal_values' => 'nullable|string',
+            'procedure' => 'nullable|string',
+            'status' => 'required|string|in:active,inactive',
         ]);
 
         if ($validator->fails()) {
+            Log::warning('LabTestController store - validation failed', [
+                'errors' => $validator->errors()->toArray(),
+            ]);
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Generate test code automatically
-        $testCode = $this->generateTestCode($request->input('name'));
+        // Use the code from the request or generate one
+        $testCode = $request->input('code') ?: $this->generateTestCode($request->input('name'));
 
         // Map frontend field names to database field names
         $validatedData = [
             'test_code' => $testCode,
             'name' => $request->input('name'),
             'description' => $request->input('description'),
-            'cost' => $request->input('price'),
-            'procedure' => $request->input('category'),
-            'turnaround_time' => $this->parseDurationToHours($request->input('duration')),
-            'unit' => $this->extractUnitFromDuration($request->input('duration')),
+            'cost' => $request->input('cost'),
+            'procedure' => $request->input('procedure'),
+            'turnaround_time' => $request->input('turnaround_time'),
+            'unit' => $request->input('unit'),
+            'normal_values' => $request->input('normal_values'),
+            'status' => $request->input('status'),
         ];
 
-        LabTest::create($validatedData);
+        Log::debug('LabTestController store - data to be created', [
+            'validatedData' => $validatedData,
+        ]);
+
+        try {
+            $labTest = LabTest::create($validatedData);
+            Log::info('LabTestController store - lab test created successfully', [
+                'lab_test_id' => $labTest->id,
+                'test_code' => $labTest->test_code,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('LabTestController store - failed to create lab test', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to create lab test: ' . $e->getMessage())->withInput();
+        }
 
         return redirect()->route('laboratory.lab-tests.index')->with('success', 'Lab test created successfully.');
     }

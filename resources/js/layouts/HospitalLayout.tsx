@@ -104,9 +104,31 @@ function useFilteredNavItems() {
         },
         {
             title: 'Laboratory',
-            href: '/laboratory/lab-tests',
+            href: '/laboratory',
             icon: FlaskConical,
             permission: 'view-laboratory',
+            items: [
+                {
+                    title: 'Dashboard',
+                    href: '/laboratory',
+                    icon: FlaskConical,
+                },
+                {
+                    title: 'Lab Tests',
+                    href: '/laboratory/lab-tests',
+                    icon: FlaskConical,
+                },
+                {
+                    title: 'Test Requests',
+                    href: '/laboratory/lab-test-requests',
+                    icon: FlaskConical,
+                },
+                {
+                    title: 'Results',
+                    href: '/laboratory/lab-test-results',
+                    icon: FlaskConical,
+                },
+            ],
         },
         {
             title: 'Departments',

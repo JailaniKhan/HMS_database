@@ -22,6 +22,8 @@ export interface NavItem {
     href: string | any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon?: any; // Icon component type
+    items?: NavItem[]; // Submenu items
+    permission?: string; // Required permission to view this item
 }
 
 export interface SharedData {

@@ -132,3 +132,102 @@ export interface PaginatedResponse<T> {
     links: Record<string, unknown>;
     meta: PaginationMeta;
 }
+
+// Laboratory Dashboard Types
+export interface LaboratoryDashboardStats {
+    totalTests: number;
+    activeTests: number;
+    pendingRequests: number;
+    inProgressRequests: number;
+    completedRequests: number;
+    totalResults: number;
+    abnormalResults: number;
+    criticalResults: number;
+    verifiedResults: number;
+    statRequests: number;
+}
+
+export interface LaboratoryActivity {
+    id: number;
+    type: 'request' | 'result' | 'test';
+    action: string;
+    description: string;
+    timestamp: string;
+    user?: {
+        id: number;
+        name: string;
+    };
+    link?: string;
+}
+
+export interface LaboratoryQuickAction {
+    id: string;
+    label: string;
+    description: string;
+    href: string;
+    icon: string;
+    color: string;
+    permission?: string;
+}
+
+// Result Parameter Types
+export interface ResultParameter {
+    parameter_id: string;
+    name: string;
+    value: string | number;
+    unit: string;
+    referenceMin: number;
+    referenceMax: number;
+    status: 'normal' | 'abnormal' | 'critical';
+    notes?: string;
+}
+
+// Extended Lab Test Result with full relations
+export interface LabTestResultWithRelations extends LabTestResult {
+    patient: Patient;
+    labTest: LabTest;
+    performedBy?: User;
+    verifiedBy?: User;
+    relatedResults?: LabTestResult[];
+    previousResult?: {
+        performed_at: string;
+        results: ResultParameter[];
+    };
+}
+
+// Extended Lab Test Request with full relations
+export interface LabTestRequestWithRelations extends LabTestRequest {
+    patient: Patient;
+    doctor: Doctor;
+    createdBy: User;
+    results: LabTestResult[];
+}
+
+// Laboratory Category Types
+export type LabCategory = 'hematology' | 'biochemistry' | 'microbiology' | 'immunology' | 'urinalysis';
+
+export interface LabCategoryConfig {
+    label: string;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    icon: string;
+}
+
+// Print Configuration
+export interface LabPrintConfig {
+    showHeader: boolean;
+    showFooter: boolean;
+    showSignature: boolean;
+    showLogo: boolean;
+    headerText: string;
+    footerText: string;
+}
+
+// Accessibility Types
+export interface LabAccessibilityConfig {
+    announceStatusChanges: boolean;
+    highContrastMode: boolean;
+    reducedMotion: boolean;
+    screenReaderOptimized: boolean;
+}

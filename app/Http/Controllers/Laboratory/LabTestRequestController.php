@@ -95,7 +95,7 @@ class LabTestRequestController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasPermission('create-lab-test-requests')) {
+        if (!$user->isSuperAdmin() && !$user->hasPermission('create-lab-test-requests')) {
             abort(403, 'Unauthorized access');
         }
 
