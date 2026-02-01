@@ -107,7 +107,7 @@ class LabTestRequest extends Model
      */
     public function results()
     {
-        return $this->hasMany(LabTestResult::class, 'request_id');
+        return $this->hasMany(LabTestResult::class, 'lab_test_request_id');
     }
 
     /**

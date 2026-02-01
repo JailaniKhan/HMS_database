@@ -453,4 +453,36 @@ if (!$user->isSuperAdmin() && !$user->hasPermission('view-laboratory')) {
             'query' => $query
         ]);
     }
+
+    /**
+     * Duplicate the specified lab test.
+     */
+    public function duplicate(LabTest $labTest): RedirectResponse
+    {
+        $user = Auth::user();
+
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('create-lab-tests')) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Generate a new unique test code based on the original
+        $newTestCode = $this->generateTestCode($labTest->name . ' Copy');
+
+        // Create a duplicate of the lab test
+        $duplicatedLabTest = LabTest::create([
+            'test_code' => $newTestCode,
+            'name' => $labTest->name . ' (Copy)',
+            'description' => $labTest->description,
+            'procedure' => $labTest->procedure,
+            'cost' => $labTest->cost,
+            'turnaround_time' => $labTest->turnaround_time,
+            'unit' => $labTest->unit,
+            'normal_values' => $labTest->normal_values,
+            'status' => 'inactive', // Set as inactive by default
+        ]);
+
+        return redirect()->route('laboratory.lab-tests.edit', $duplicatedLabTest)
+            ->with('success', 'Lab test duplicated successfully. You can now edit the copy.');
+    }
 }

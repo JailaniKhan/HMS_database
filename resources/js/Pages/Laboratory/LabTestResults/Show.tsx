@@ -373,15 +373,15 @@ export default function LabTestResultShow({
                 <div className="flex items-center gap-3">
                   <Avatar className="h-14 w-14 print:hidden">
                     <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                      {getInitials(labTestResult.patient.first_name, labTestResult.patient.father_name)}
+                      {getInitials(labTestResult.patient?.first_name, labTestResult.patient?.father_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-lg">
-                      {labTestResult.patient.first_name} {labTestResult.patient.father_name}
+                      {labTestResult.patient?.first_name} {labTestResult.patient?.father_name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Patient ID: {labTestResult.patient.patient_id}
+                      Patient ID: {labTestResult.patient?.patient_id}
                     </p>
                   </div>
                 </div>
@@ -391,23 +391,23 @@ export default function LabTestResultShow({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground block text-xs uppercase tracking-wide">Age</span>
-                    <p className="font-medium">{labTestResult.patient.age} years</p>
+                    <p className="font-medium">{labTestResult.patient?.age} years</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-xs uppercase tracking-wide">Gender</span>
-                    <p className="font-medium capitalize">{labTestResult.patient.gender}</p>
+                    <p className="font-medium capitalize">{labTestResult.patient?.gender}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-xs uppercase tracking-wide">Blood Group</span>
-                    <p className="font-medium">{labTestResult.patient.blood_group || 'N/A'}</p>
+                    <p className="font-medium">{labTestResult.patient?.blood_group || 'N/A'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-xs uppercase tracking-wide">Phone</span>
-                    <p className="font-medium">{labTestResult.patient.phone || 'N/A'}</p>
+                    <p className="font-medium">{labTestResult.patient?.phone || 'N/A'}</p>
                   </div>
                 </div>
 
-                {labTestResult.patient.address && (
+                {labTestResult.patient?.address && (
                   <>
                     <Separator />
                     <div>
@@ -430,11 +430,11 @@ export default function LabTestResultShow({
               <CardContent className="space-y-4">
                 <div>
                   <span className="text-muted-foreground block text-xs uppercase tracking-wide">Test Name</span>
-                  <p className="font-semibold text-lg">{labTestResult.labTest.name}</p>
-                  <p className="text-xs text-muted-foreground">Test ID: {labTestResult.labTest.test_id}</p>
+                  <p className="font-semibold text-lg">{labTestResult.labTest?.name ?? 'Unknown Test'}</p>
+                  <p className="text-xs text-muted-foreground">Test ID: {labTestResult.labTest?.test_id ?? 'N/A'}</p>
                 </div>
 
-                {labTestResult.labTest.description && (
+                {labTestResult.labTest?.description && (
                   <div>
                     <span className="text-muted-foreground block text-xs uppercase tracking-wide">Description</span>
                     <p className="text-sm">{labTestResult.labTest.description}</p>

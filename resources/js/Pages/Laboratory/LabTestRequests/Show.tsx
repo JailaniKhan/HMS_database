@@ -419,7 +419,7 @@ export default function LabTestRequestShow({ labTestRequest }: LabTestRequestSho
                         <User className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground">Created By</p>
-                          <p className="text-sm font-medium">{labTestRequest.createdBy.name}</p>
+                          <p className="text-sm font-medium">{labTestRequest.createdBy?.name ?? 'Unknown'}</p>
                         </div>
                       </div>
                     </div>

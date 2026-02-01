@@ -457,7 +457,6 @@ export default function LabTestResultCreate({ patients, labTests, requests }: La
                             <SelectValue placeholder="Select request" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
                             {requests.map((req) => (
                               <SelectItem key={req.id} value={req.id.toString()}>
                                 {req.request_id} - {req.test_name}

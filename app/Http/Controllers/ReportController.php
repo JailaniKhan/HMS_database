@@ -86,7 +86,7 @@ class ReportController extends Controller
             $q->whereBetween('appointment_date', [$startDate, $endDate])
               ->select('id', 'patient_id', 'appointment_date', 'status');
         }])
-        ->select('id', 'patient_id', 'first_name', 'last_name', 'gender', 'created_at')
+        ->select('id', 'patient_id', 'first_name', 'father_name', 'gender', 'created_at')
         ->whereBetween('created_at', [$startDate, $endDate]);
 
         // Limit records for export
@@ -131,8 +131,8 @@ class ReportController extends Controller
         [$startDate, $endDate] = $this->getDateRange($request);
 
         $appointments = Appointment::with([
-            'patient:id,patient_id,first_name,last_name',
-            'doctor:id,doctor_id,first_name,last_name',
+            'patient:id,patient_id,first_name,father_name',
+            'doctor:id,doctor_id,full_name',
             'department:id,name'
         ])
         ->select('id', 'appointment_id', 'patient_id', 'doctor_id', 'department_id', 'appointment_date', 'status', 'fee')
@@ -157,7 +157,7 @@ class ReportController extends Controller
         [$startDate, $endDate] = $this->getDateRange($request);
 
         $bills = Bill::with([
-            'patient:id,patient_id,first_name,last_name',
+            'patient:id,patient_id,first_name,father_name',
             'items:id,bill_id,description,quantity,unit_price,total'
         ])
         ->select('id', 'bill_number', 'patient_id', 'bill_date', 'total_amount', 'amount_paid', 'amount_due', 'payment_status', 'status')
@@ -208,7 +208,7 @@ class ReportController extends Controller
         
         $labTestResults = LabTestResult::with([
             'labTest:id,name,category',
-            'patient:id,patient_id,first_name,last_name'
+            'patient:id,patient_id,first_name,father_name'
         ])
         ->select('id', 'test_id', 'patient_id', 'result', 'status', 'created_at')
         ->whereBetween('created_at', [$startDate, $endDate])

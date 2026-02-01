@@ -146,7 +146,7 @@ class LabTestRequestController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $labTestRequest->load(['patient', 'doctor', 'createdBy', 'results']);
+        $labTestRequest->load(['patient', 'doctor', 'createdBy']);
 
         return Inertia::render('Laboratory/LabTestRequests/Show', [
             'labTestRequest' => $labTestRequest,
@@ -172,6 +172,9 @@ class LabTestRequestController extends Controller
 
         $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name')->get();
         $doctors = Doctor::select('id', 'doctor_id', 'full_name')->get();
+
+        // Load relationships for the lab test request
+        $labTestRequest->load(['patient', 'doctor']);
 
         return Inertia::render('Laboratory/LabTestRequests/Edit', [
             'labTestRequest' => $labTestRequest,

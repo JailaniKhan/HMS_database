@@ -119,12 +119,12 @@ export default function LabTestResultEdit({ labTestResult, patients, labTests, c
   const isEditable = !isVerified;
 
   const { data, setData, put, processing, errors } = useForm({
-    lab_test_id: labTestResult.lab_test_id.toString(),
-    patient_id: labTestResult.patient_id.toString(),
-    performed_at: labTestResult.performed_at.split('T')[0],
-    performed_time: labTestResult.performed_at.split('T')[1]?.slice(0, 5) || '00:00',
+    lab_test_id: labTestResult.lab_test_id?.toString() || '',
+    patient_id: labTestResult.patient_id?.toString() || '',
+    performed_at: labTestResult.performed_at?.split('T')[0] || '',
+    performed_time: labTestResult.performed_at?.split('T')[1]?.slice(0, 5) || '00:00',
     results: parsedResults,
-    status: labTestResult.status,
+    status: labTestResult.status || 'pending',
     notes: labTestResult.notes || '',
     abnormal_flags: labTestResult.abnormal_flags || '',
   });

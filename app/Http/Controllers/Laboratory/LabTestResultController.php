@@ -31,7 +31,7 @@ class LabTestResultController extends Controller
         $labTestResults = LabTestResult::with('test', 'patient')->latest()->paginate(10);
         
         // Get filter options
-        $patients = Patient::select('id', 'patient_id', 'first_name', 'last_name')->get();
+        $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name')->get();
         $labTests = LabTest::select('id', 'test_code', 'name')->get();
         
         // Calculate stats
@@ -56,21 +56,35 @@ class LabTestResultController extends Controller
     /**
      * Show the form for creating a new lab test result.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $user = Auth::user();
         
-// Check if user has appropriate permission
-if (!$user->hasPermission('create-lab-test-results')) {
-    abort(403, 'Unauthorized access');
-}
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('create-lab-test-results')) {
+            abort(403, 'Unauthorized access');
+        }
         
         $labTests = LabTest::all();
         $patients = Patient::all();
         
+        // Get pending lab test requests for the dropdown
+        $requests = \App\Models\LabTestRequest::whereIn('status', ['pending', 'in_progress'])
+            ->with('patient')
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'request_id' => $request->request_id,
+                    'test_name' => $request->test_name,
+                    'patient_id' => $request->patient_id,
+                ];
+            });
+        
         return Inertia::render('Laboratory/LabTestResults/Create', [
             'labTests' => $labTests,
-            'patients' => $patients
+            'patients' => $patients,
+            'requests' => $requests,
         ]);
     }
 
@@ -81,35 +95,60 @@ if (!$user->hasPermission('create-lab-test-results')) {
     {
         $user = Auth::user();
         
-// Check if user has appropriate permission
-if (!$user->hasPermission('create-lab-test-results')) {
-    abort(403, 'Unauthorized access');
-}
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('create-lab-test-results')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        Log::debug('LabTestResultController store - incoming request', [
+            'all_data' => $request->all(),
+        ]);
         
         $validator = Validator::make($request->all(), [
             'lab_test_id' => 'required|exists:lab_tests,id',
             'patient_id' => 'required|exists:patients,id',
-            'test_date' => 'required|date',
-            'result_values' => 'required|string',
-            'status' => 'required|in:completed,pending,cancelled',
+            'performed_at' => 'required|date',
+            'results' => 'required|array',
+            'results.*.value' => 'required|string',
+            'status' => 'required|in:pending,completed,verified',
             'notes' => 'nullable|string',
         ]);
         
         if ($validator->fails()) {
+            Log::warning('LabTestResultController store - validation failed', [
+                'errors' => $validator->errors()->toArray(),
+            ]);
             return redirect()->back()->withErrors($validator)->withInput();
         }
         
-        LabTestResult::create([
-            'lab_test_id' => $request->lab_test_id,
-            'patient_id' => $request->patient_id,
-            'test_date' => $request->test_date,
-            'result_values' => $request->result_values,
-            'status' => $request->status,
-            'notes' => $request->notes,
-            'performed_by' => $user->id,
-        ]);
-        
-        return redirect()->route('laboratory.lab-test-results.index')->with('success', 'Lab test result created successfully.');
+        try {
+            $resultId = 'RES-' . strtoupper(uniqid());
+            
+            $labTestResult = LabTestResult::create([
+                'result_id' => $resultId,
+                'test_id' => $request->lab_test_id,
+                'patient_id' => $request->patient_id,
+                'performed_at' => $request->performed_at,
+                'results' => json_encode($request->results),
+                'status' => $request->status,
+                'notes' => $request->notes,
+                'performed_by' => $user->id,
+            ]);
+            
+            Log::info('LabTestResultController store - created successfully', [
+                'result_id' => $labTestResult->id,
+                'result_id_string' => $resultId,
+            ]);
+            
+            return redirect()->route('laboratory.lab-test-results.index')
+                ->with('success', 'Lab test result created successfully.');
+        } catch (\Exception $e) {
+            Log::error('LabTestResultController store - error creating result', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to create lab test result: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -119,10 +158,13 @@ public function show(LabTestResult $labTestResult): Response
 {
     $user = Auth::user();
     
-// Check if user has appropriate permission
-if (!$user->hasPermission('view-laboratory')) {
-    abort(403, 'Unauthorized access');
-}
+    // Check if user has appropriate permission
+    if (!$user->hasPermission('view-laboratory')) {
+        abort(403, 'Unauthorized access');
+    }
+    
+    // Load relationships
+    $labTestResult->load(['patient', 'test', 'performedBy']);
     
     return Inertia::render('Laboratory/LabTestResults/Show', [
         'labTestResult' => $labTestResult
@@ -136,10 +178,13 @@ public function edit(LabTestResult $labTestResult): Response
 {
     $user = Auth::user();
     
-// Check if user has appropriate permission
-if (!$user->hasPermission('edit-lab-test-results')) {
-    abort(403, 'Unauthorized access');
-}
+    // Check if user has appropriate permission
+    if (!$user->hasPermission('edit-lab-test-results')) {
+        abort(403, 'Unauthorized access');
+    }
+    
+    // Load relationships
+    $labTestResult->load(['patient', 'test', 'performedBy']);
     
     $labTests = LabTest::all();
     $patients = Patient::all();

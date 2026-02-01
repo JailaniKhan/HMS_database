@@ -122,6 +122,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/lab-tests/{labTest}', [LabTestController::class, 'update'])->name('laboratory.lab-tests.update');
         Route::delete('/lab-tests/{labTest}', [LabTestController::class, 'destroy'])->name('laboratory.lab-tests.destroy');
         Route::patch('/lab-tests/{labTest}/status', [LabTestController::class, 'updateStatus'])->name('laboratory.lab-tests.update-status');
+        Route::post('/lab-tests/{labTest}/duplicate', [LabTestController::class, 'duplicate'])->name('laboratory.lab-tests.duplicate');
 
         Route::get('/lab-test-results', [LabTestResultController::class, 'index'])->name('laboratory.lab-test-results.index');
         Route::get('/lab-test-results/create', [LabTestResultController::class, 'create'])->name('laboratory.lab-test-results.create');
@@ -152,6 +153,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::middleware('check.permission:process-lab-test-requests')->group(function () {
             Route::put('/lab-test-requests/{labTestRequest}/status', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'updateStatus'])->name('laboratory.lab-test-requests.update-status');
+            Route::patch('/lab-test-requests/{labTestRequest}/status', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'updateStatus'])->name('laboratory.lab-test-requests.update-status-patch');
         });
     });
 

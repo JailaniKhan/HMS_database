@@ -320,22 +320,22 @@ export default function LabTestResultIndex({
 
           {/* Test Name */}
           <h3 className="font-semibold text-lg mb-1 line-clamp-1">
-            {result.labTest.name}
+            {result.labTest?.name ?? 'Unknown Test'}
           </h3>
 
           {/* Patient Info */}
           <div className="flex items-center gap-3 mt-4 mb-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {getInitials(result.patient.first_name, result.patient.father_name)}
+                {getInitials(result.patient?.first_name, result.patient?.father_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
-                {result.patient.first_name || ''} {result.patient.father_name || ''}
+                {result.patient?.first_name || ''} {result.patient?.father_name || ''}
               </p>
               <p className="text-xs text-muted-foreground">
-                PID: {result.patient.patient_id} • {result.patient.age}y • {result.patient.gender}
+                PID: {result.patient?.patient_id} • {result.patient?.age}y • {result.patient?.gender}
               </p>
             </div>
           </div>
@@ -590,7 +590,7 @@ export default function LabTestResultIndex({
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-medium">{result.labTest.name}</h3>
+                            <h3 className="font-medium">{result.labTest?.name ?? 'Unknown Test'}</h3>
                             <LabStatusBadge
                               status={result.status === 'pending' ? 'pending' : result.status === 'completed' ? 'in_progress' : 'completed'}
                               size="sm"
@@ -605,10 +605,10 @@ export default function LabTestResultIndex({
                           <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
                               <User className="h-3.5 w-3.5" />
-                              {result.patient.first_name} {result.patient.father_name}
+                              {result.patient?.first_name} {result.patient?.father_name}
                             </span>
                             <span>•</span>
-                            <span>PID: {result.patient.patient_id}</span>
+                            <span>PID: {result.patient?.patient_id}</span>
                             <span>•</span>
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
