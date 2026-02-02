@@ -35,15 +35,72 @@ class CheckPermission
         }
                 
         $user = Auth::user();
-                
-        Log::debug('Checking user permission', [
+
+        // Enhanced diagnostic logging
+        $isSuperAdmin = $user->isSuperAdmin();
+        $roleId = $user->role_id;
+        $roleModel = $user->roleModel;
+        $effectiveRoleName = $roleModel ? $roleModel->name : 'null';
+        $effectiveRoleSlug = $roleModel ? $roleModel->slug : 'null';
+        
+        Log::debug('Checking user permission - detailed', [
+            'user_id' => $user->id,
             'user' => $user->username,
-            'role' => $user->role,
+            'role_string' => $user->role,
+            'role_id' => $roleId,
+            'role_model_name' => $effectiveRoleName,
+            'role_model_slug' => $effectiveRoleSlug,
+            'is_super_admin' => $isSuperAdmin,
             'permission_required' => $permission,
         ]);
+
+        // Check permission with detailed breakdown
+        $hasPermission = $user->hasPermission($permission);
+        
+        // If permission denied, do detailed investigation
+        if (!$hasPermission && !$isSuperAdmin) {
+            // Check user-specific override
+            $userPermission = $user->userPermissions()
+                ->whereHas('permission', fn($q) => $q->where('name', $permission))
+                ->first();
+            
+            // Check normalized role permissions
+            $hasNormalizedRolePermission = false;
+            if ($roleModel) {
+                $hasNormalizedRolePermission = $roleModel->permissions()
+                    ->where('name', $permission)
+                    ->exists();
+            }
+            
+            // Check legacy role permissions
+            $hasLegacyRolePermission = \App\Models\RolePermission::where('role', $user->role)
+                ->whereHas('permission', fn($q) => $q->where('name', $permission))
+                ->exists();
+            
+            // Check temporary permissions
+            $hasTemporaryPermission = $user->temporaryPermissions()
+                ->active()
+                ->whereHas('permission', fn($q) => $q->where('name', $permission))
+                ->exists();
+            
+            Log::warning('Permission denied - detailed breakdown', [
+                'user_id' => $user->id,
+                'user' => $user->username,
+                'role_string' => $user->role,
+                'role_id' => $roleId,
+                'role_model_name' => $effectiveRoleName,
+                'role_model_slug' => $effectiveRoleSlug,
+                'permission_required' => $permission,
+                'user_specific_override' => $userPermission ? ($userPermission->allowed ? 'ALLOWED' : 'DENIED') : 'NOT_SET',
+                'normalized_role_permission' => $hasNormalizedRolePermission ? 'YES' : 'NO',
+                'legacy_role_permission' => $hasLegacyRolePermission ? 'YES' : 'NO',
+                'temporary_permission' => $hasTemporaryPermission ? 'YES' : 'NO',
+                'url' => $request->fullUrl(),
+            ]);
+        }
                 
-        if (!$user->hasPermission($permission)) {
-            Log::warning('Permission denied', [
+        if (!$hasPermission) {
+            Log::warning('Permission denied - final', [
                 'user' => $user->username,
                 'role' => $user->role,
                 'permission_required' => $permission,

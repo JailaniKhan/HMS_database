@@ -39,10 +39,8 @@ interface HospitalLayoutProps {
 }
 
 function usePermissionChecker() {
-    console.log('usePermissionChecker called');
     try {
         const page = usePage();
-        console.log('usePage successful:', page);
         const user = page.props.auth?.user;
         const userPermissions = user?.permissions || [];
         const userRole = user?.role;

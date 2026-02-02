@@ -1,34 +1,53 @@
-import { Head, useForm, Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Heading from '@/components/heading';
-import { ArrowLeft, Save, DollarSign, Calendar as CalendarIcon } from 'lucide-react';
+import HospitalLayout from '@/layouts/HospitalLayout';
+import { BillItemManager } from './Components/BillItemManager';
+import { BillSummary } from '@/components/billing/BillSummary';
+import { useBillCalculations } from '@/hooks/billing/useBillCalculations';
+import {
+    ArrowLeft,
+    Save,
+    DollarSign,
+    Calendar as CalendarIcon,
+    AlertCircle,
+    User,
+    Stethoscope,
+    Shield,
+} from 'lucide-react';
 
-interface Patient {
-    id: number;
-    patient_id: string;
-    first_name: string;
-    last_name: string;
+interface CreateProps {
+    patients: Array<{
+        id: number;
+        patient_id: string;
+        first_name: string;
+        last_name: string;
+    }>;
 }
 
-interface BillCreateProps {
-    patients: Patient[];
-}
-
-export default function BillCreate({ patients }: BillCreateProps) {
+const Create = ({ patients }: CreateProps) => {
     const { data, setData, post, processing, errors } = useForm({
         patient_id: '',
+        due_date: '',
         total_amount: 0,
         discount: 0,
         tax: 0,
         net_amount: 0,
         status: 'pending',
-        due_date: '',
         notes: '',
     });
 

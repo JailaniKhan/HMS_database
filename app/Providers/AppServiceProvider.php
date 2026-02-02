@@ -14,7 +14,39 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register Billing Services
+        $this->app->singleton(\App\Services\Billing\BillItemService::class, function ($app) {
+            return new \App\Services\Billing\BillItemService(
+                $app->make(\App\Services\AuditLogService::class),
+                $app->make(\App\Services\Billing\BillCalculationService::class)
+            );
+        });
+
+        $this->app->singleton(\App\Services\Billing\BillCalculationService::class, function ($app) {
+            return new \App\Services\Billing\BillCalculationService(
+                $app->make(\App\Services\AuditLogService::class)
+            );
+        });
+
+        $this->app->singleton(\App\Services\Billing\PaymentService::class, function ($app) {
+            return new \App\Services\Billing\PaymentService(
+                $app->make(\App\Services\AuditLogService::class),
+                $app->make(\App\Services\Billing\BillCalculationService::class)
+            );
+        });
+
+        $this->app->singleton(\App\Services\Billing\InvoiceGenerationService::class, function ($app) {
+            return new \App\Services\Billing\InvoiceGenerationService(
+                $app->make(\App\Services\AuditLogService::class)
+            );
+        });
+
+        $this->app->singleton(\App\Services\Billing\InsuranceClaimService::class, function ($app) {
+            return new \App\Services\Billing\InsuranceClaimService(
+                $app->make(\App\Services\AuditLogService::class),
+                $app->make(\App\Services\Billing\BillCalculationService::class)
+            );
+        });
     }
 
     /**

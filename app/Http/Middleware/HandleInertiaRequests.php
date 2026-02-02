@@ -52,23 +52,33 @@ class HandleInertiaRequests extends Middleware
             return [];
         }
         
-        // Get all permissions the user has access to
         $permissions = [];
         
-        // Get role-based permissions
-        if ($user->role === 'Super Admin') {
-            // Super Admin has all permissions
+        // Super Admin has all permissions
+        if ($user->isSuperAdmin()) {
             $allPermissions = \App\Models\Permission::all();
             foreach ($allPermissions as $permission) {
                 $permissions[] = $permission->name;
             }
-        } else {
-            $rolePermissions = \App\Models\RolePermission::where('role', $user->role)
-                ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.id')
-                ->select('permissions.name')
-                ->get();
-                
-            foreach ($rolePermissions as $permission) {
+            return $permissions;
+        }
+        
+        // Check normalized role permissions first (new role_permission_mappings table)
+        if ($user->role_id && $user->roleModel) {
+            $normalizedRolePermissions = $user->roleModel->permissions()->pluck('name');
+            foreach ($normalizedRolePermissions as $permissionName) {
+                $permissions[] = $permissionName;
+            }
+        }
+        
+        // Fallback: Check legacy role_permissions table for backward compatibility
+        $legacyRolePermissions = \App\Models\RolePermission::where('role', $user->role)
+            ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.id')
+            ->select('permissions.name')
+            ->get();
+            
+        foreach ($legacyRolePermissions as $permission) {
+            if (!in_array($permission->name, $permissions)) {
                 $permissions[] = $permission->name;
             }
         }

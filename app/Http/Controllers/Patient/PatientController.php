@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Bill;
+use App\Services\Billing\BillCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +16,13 @@ use Illuminate\Http\RedirectResponse;
 
 class PatientController extends Controller
 {
+    protected $calculationService;
+
+    public function __construct(BillCalculationService $calculationService)
+    {
+        $this->calculationService = $calculationService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -68,7 +77,7 @@ class PatientController extends Controller
                 SELECT MAX(CAST(SUBSTRING(patient_id, 2) AS UNSIGNED)) as max_num
                 FROM patients
                 WHERE patient_id LIKE 'P%'
-            ")->max_num ?? 0;
+            ")-max_num ?? 0;
 
             $nextNumber = $maxNumber + 1;
             $patientId = 'P' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
@@ -104,8 +113,76 @@ class PatientController extends Controller
     public function show(string $id): Response
     {
         $patient = Patient::with('user')->findOrFail($id);
+        
+        // Load billing history
+        $bills = Bill::where('patient_id', $patient->id)
+            ->with(['items', 'payments', 'primaryInsurance.insuranceProvider'])
+            ->latest()
+            ->get();
+        
+        // Calculate outstanding balance
+        $outstandingBalance = Bill::where('patient_id', $patient->id)
+            ->whereNull('voided_at')
+            ->whereIn('payment_status', ['pending', 'partial'])
+            ->sum('balance_due');
+        
+        // Calculate billing statistics
+        $billingStats = [
+            'total_bills' => Bill::where('patient_id', $patient->id)->count(),
+            'total_amount' => Bill::where('patient_id', $patient->id)
+                ->whereNull('voided_at')
+                ->sum('total_amount'),
+            'total_paid' => Bill::where('patient_id', $patient->id)
+                ->whereNull('voided_at')
+                ->sum('amount_paid'),
+            'outstanding_balance' => $outstandingBalance,
+            'overdue_bills' => Bill::where('patient_id', $patient->id)
+                ->whereNull('voided_at')
+                ->where('due_date', '<', now())
+                ->whereIn('payment_status', ['pending', 'partial'])
+                ->count(),
+        ];
+        
+        // Get recent transactions
+        $recentTransactions = collect();
+        
+        // Add bills as transactions
+        foreach ($bills->take(5) as $bill) {
+            $recentTransactions->push([
+                'type' => 'bill',
+                'title' => "Bill #{$bill->bill_number}",
+                'amount' => $bill->total_amount,
+                'date' => $bill->bill_date,
+                'status' => $bill->payment_status,
+            ]);
+        }
+        
+        // Add payments as transactions
+        foreach ($bills as $bill) {
+            foreach ($bill->payments->take(3) as $payment) {
+                $recentTransactions->push([
+                    'type' => 'payment',
+                    'title' => "Payment for Bill #{$bill->bill_number}",
+                    'amount' => $payment->amount,
+                    'date' => $payment->payment_date,
+                    'status' => $payment->status,
+                ]);
+            }
+        }
+        
+        // Sort transactions by date
+        $recentTransactions = $recentTransactions
+            ->sortByDesc('date')
+            ->take(10)
+            ->values();
+        
         return Inertia::render('Patient/Show', [
-            'patient' => $patient
+            'patient' => $patient,
+            'billing' => [
+                'bills' => $bills,
+                'stats' => $billingStats,
+                'recent_transactions' => $recentTransactions,
+            ],
         ]);
     }
 

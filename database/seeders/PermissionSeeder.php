@@ -170,6 +170,118 @@ class PermissionSeeder extends Seeder
                 'action' => 'delete',
                 'category' => 'Billing Management'
             ],
+            [
+                'name' => 'void-billing',
+                'description' => 'Void billing records',
+                'resource' => 'billing',
+                'action' => 'void',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'manage-billing',
+                'description' => 'Manage billing records (send reminders, etc.)',
+                'resource' => 'billing',
+                'action' => 'manage',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'view-payments',
+                'description' => 'View payment records',
+                'resource' => 'payments',
+                'action' => 'view',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'record-payments',
+                'description' => 'Record new payments',
+                'resource' => 'payments',
+                'action' => 'create',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'process-refunds',
+                'description' => 'Process payment refunds',
+                'resource' => 'payments',
+                'action' => 'refund',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'view-insurance-claims',
+                'description' => 'View insurance claims',
+                'resource' => 'insurance-claims',
+                'action' => 'view',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'create-insurance-claims',
+                'description' => 'Create new insurance claims',
+                'resource' => 'insurance-claims',
+                'action' => 'create',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'edit-insurance-claims',
+                'description' => 'Edit existing insurance claims',
+                'resource' => 'insurance-claims',
+                'action' => 'edit',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'delete-insurance-claims',
+                'description' => 'Delete insurance claims',
+                'resource' => 'insurance-claims',
+                'action' => 'delete',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'submit-insurance-claims',
+                'description' => 'Submit insurance claims to providers',
+                'resource' => 'insurance-claims',
+                'action' => 'submit',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'process-insurance-claims',
+                'description' => 'Process insurance claims (approve/reject)',
+                'resource' => 'insurance-claims',
+                'action' => 'process',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'view-insurance-providers',
+                'description' => 'View insurance providers',
+                'resource' => 'insurance-providers',
+                'action' => 'view',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'create-insurance-providers',
+                'description' => 'Create new insurance providers',
+                'resource' => 'insurance-providers',
+                'action' => 'create',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'edit-insurance-providers',
+                'description' => 'Edit existing insurance providers',
+                'resource' => 'insurance-providers',
+                'action' => 'edit',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'delete-insurance-providers',
+                'description' => 'Delete insurance providers',
+                'resource' => 'insurance-providers',
+                'action' => 'delete',
+                'category' => 'Billing Management'
+            ],
+            [
+                'name' => 'view-billing-reports',
+                'description' => 'View billing reports',
+                'resource' => 'billing-reports',
+                'action' => 'view',
+                'category' => 'Billing Management'
+            ],
             
             // Pharmacy Management Permissions
             [

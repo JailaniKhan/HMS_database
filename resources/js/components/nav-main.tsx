@@ -18,6 +18,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
+
 function NavItemComponent({ item }: { item: NavItem }) {
     const page = usePage();
     const isActive = page.url.startsWith(resolveUrl(item.href));
