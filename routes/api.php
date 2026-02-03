@@ -27,8 +27,8 @@ Route::prefix('v1')->group(function () {
     // Public routes (if needed)
     // Route::get('/health', function () { return ['status' => 'ok']; });
 
-    // Protected routes with web session authentication (for Inertia compatibility)
-    Route::middleware(['auth'])->group(function () {
+    // Protected routes with Sanctum authentication (for API compatibility)
+    Route::middleware(['auth:sanctum'])->group(function () {
         // Patient routes
         Route::apiResource('patients', PatientController::class)->names('api.patients');
 
@@ -77,23 +77,22 @@ Route::prefix('v1')->group(function () {
         });
 
         // Billing routes
-        Route::middleware('check.permission:view-billing')->prefix('billing')->group(function () {
+        Route::prefix('billing')->group(function () {
             // All items endpoint for frontend
             Route::get('/all/items', [BillController::class, 'getAllItems']);
         });
 
         // Payments routes
-        Route::middleware('check.permission:view-billing')->prefix('payments')->group(function () {
+        Route::prefix('payments')->group(function () {
             Route::get('/', [PaymentController::class, 'listAll']);
             Route::get('/{payment}', [PaymentController::class, 'show']);
-            Route::post('/{payment}/refund', [PaymentController::class, 'refund'])
-                ->middleware('check.permission:process-refunds');
+            Route::post('/{payment}/refund', [PaymentController::class, 'refund']);
         });
     });
 });
 
 // Non-versioned API routes (for legacy frontend compatibility)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     // Debug endpoint to check authentication state
     Route::get('/debug/auth', function () {
         $user = auth()->user();
@@ -106,13 +105,14 @@ Route::middleware(['auth'])->group(function () {
             'session_id' => session()->getId(),
             'cookies' => request()->cookies->all(),
             'headers' => [
+                'authorization' => request()->header('Authorization'),
                 'x_laravel_session' => request()->header('X-Laravel-Session'),
                 'cookie' => request()->header('Cookie'),
             ],
         ]);
     });
     
-    Route::middleware('check.permission:view-billing')->prefix('billing')->group(function () {
+    Route::prefix('billing')->group(function () {
         Route::get('/all/items', [BillController::class, 'getAllItems']);
     });
 });

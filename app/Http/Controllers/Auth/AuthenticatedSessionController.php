@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -27,13 +29,29 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
         
         $user = Auth::user();
+        
+        // For API compatibility, also create a Sanctum token for the user
+        // This allows the React frontend to make authenticated API requests
+        if ($request->wantsJson() || $request->is('api/*')) {
+            // Create a Sanctum token for API access
+            $token = $user->createToken('web-session', ['*']);
+            return response()->json([
+                'success' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'role' => $user->role,
+                ],
+                'token' => $token->plainTextToken,
+            ]);
+        }
         
         // Redirect based on user permissions and role
         if ($user->isSuperAdmin()) {

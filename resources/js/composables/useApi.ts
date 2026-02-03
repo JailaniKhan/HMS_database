@@ -25,38 +25,32 @@ export function setOnUnauthorizedCallback(callback: UnauthorizedCallback): void 
 export function useApi() {
     const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+    const getToken = useCallback((): string | null => {
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+    }, [])
+
     const get = useCallback(async <T = unknown>(url: string, params?: Record<string, unknown>): Promise<AxiosResponse<T>> => {
         try {
-            // Get CSRF token with fallback
-            let csrfToken = '';
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (metaTag) {
-                csrfToken = metaTag.getAttribute('content') || '';
-            }
-
+            // Get authentication token
+            const token = getToken();
+            
             // DEBUG: Log authentication state
             const cookies = document.cookie;
             console.debug('[API DEBUG] GET request starting', {
                 url: `${baseURL}${url}`,
-                hasCsrfToken: !!csrfToken,
+                hasToken: !!token,
                 cookiesPresent: cookies.length > 0,
                 cookieNames: cookies.split(';').map(c => c.trim().split('=')[0]),
                 withCredentials: true,
                 userAgent: navigator.userAgent,
             });
 
-            // Try to get session ID from cookie
-            const sessionCookie = document.cookie.split('; ').find(row => row.startsWith('laravel_session='));
-            const sessionId = sessionCookie ? sessionCookie.split('=')[1] : null;
-
             const response = await axios.get<T>(`${baseURL}${url}`, {
                 params,
-                withCredentials: true, // Important for session cookies
+                withCredentials: true, // Important for Sanctum cookies
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }),
-                    // Fallback: Include session ID in header for API requests
-                    ...(sessionId && { 'X-Laravel-Session': sessionId }),
+                    ...(token && { 'Authorization': `Bearer ${token}` }),
                 },
             })
             // Reset 401 counter on successful response
@@ -75,7 +69,7 @@ export function useApi() {
             handleApiError(axiosError)
             throw error
         }
-    }, [baseURL])
+    }, [baseURL, getToken])
 
     const post = useCallback(async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<AxiosResponse<T>> => {
         try {
@@ -155,10 +149,6 @@ export function useApi() {
             throw error
         }
     }, [baseURL])
-
-    const getToken = useCallback((): string | null => {
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-    }, [])
 
     const setToken = useCallback((token: string, remember: boolean = false): void => {
         if (remember) {
