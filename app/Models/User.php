@@ -99,6 +99,46 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id');
     }
 
+    /**
+     * Get reporting relationships for this user's role.
+     */
+    public function getRoleReportingRelationships()
+    {
+        if ($this->roleModel) {
+            return $this->roleModel->supervisorRelationships;
+        }
+        return collect();
+    }
+
+    /**
+     * Get subordinate roles for this user's role.
+     */
+    public function getSubordinateRoles()
+    {
+        if ($this->roleModel) {
+            return $this->roleModel->getAllSubordinates();
+        }
+        return [];
+    }
+
+    /**
+     * Check if user can manage another user based on role hierarchy.
+     */
+    public function canManageUser(self $otherUser): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if (!$this->roleModel || !$otherUser->roleModel) {
+            return false;
+        }
+
+        // Check if this user's role is higher in hierarchy
+        $subordinates = $this->getSubordinateRoles();
+        return in_array($otherUser->roleModel->id, array_column($subordinates, 'id'));
+    }
+
     public function patients()
     {
         return $this->hasMany(Patient::class);

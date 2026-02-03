@@ -506,6 +506,28 @@ function SidebarMenuButton({
   const Comp = asChild ? Slot : "button"
   const { isMobile, state } = useSidebar()
 
+  // Create a stable tooltip content reference to prevent infinite re-renders
+  const tooltipContent = React.useMemo(() => {
+    if (!tooltip) return null
+    
+    const tooltipProps = typeof tooltip === "string" 
+      ? { children: tooltip }
+      : tooltip
+
+    // Create a stable key to prevent re-creation
+    const tooltipKey = `${tooltip}-${state}-${isMobile}`
+    
+    return (
+      <TooltipContent
+        key={tooltipKey}
+        side="right"
+        align="center"
+        hidden={state !== "collapsed" || isMobile}
+        {...tooltipProps}
+      />
+    )
+  }, [tooltip, state, isMobile])
+
   const button = (
     <Comp
       data-slot="sidebar-menu-button"
@@ -521,21 +543,10 @@ function SidebarMenuButton({
     return button
   }
 
-  if (typeof tooltip === "string") {
-    tooltip = {
-      children: tooltip,
-    }
-  }
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        align="center"
-        hidden={state !== "collapsed" || isMobile}
-        {...tooltip}
-      />
+      {tooltipContent}
     </Tooltip>
   )
 }

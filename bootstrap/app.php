@@ -16,11 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            HandleAppearance::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        $middleware->validateCsrfTokens();
+        $middleware->validateCsrfTokens(except: [
+            'api/v1/admin/*',
+            'admin/rbac/users/*/role',
+        ]);
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->alias([
@@ -31,12 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission.session' => \App\Http\Middleware\PermissionSessionMiddleware::class,
             'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
             'login.throttle' => \App\Http\Middleware\LoginThrottleMiddleware::class,
-        ]);
-
-        $middleware->web(append: [
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

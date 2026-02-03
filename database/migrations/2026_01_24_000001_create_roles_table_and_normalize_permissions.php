@@ -41,8 +41,6 @@ return new class extends Migration
             ['name' => 'Reception Admin', 'slug' => 'reception-admin', 'description' => 'Reception and patient management', 'is_system' => false, 'priority' => 60],
             ['name' => 'Pharmacy Admin', 'slug' => 'pharmacy-admin', 'description' => 'Pharmacy management access', 'is_system' => false, 'priority' => 60],
             ['name' => 'Laboratory Admin', 'slug' => 'laboratory-admin', 'description' => 'Laboratory management access', 'is_system' => false, 'priority' => 60],
-            ['name' => 'Doctor', 'slug' => 'doctor', 'description' => 'Doctor access', 'is_system' => false, 'priority' => 50],
-            ['name' => 'Patient', 'slug' => 'patient', 'description' => 'Patient access', 'is_system' => false, 'priority' => 10],
         ];
 
         $now = now();

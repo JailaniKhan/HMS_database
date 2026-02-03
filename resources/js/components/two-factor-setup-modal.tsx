@@ -141,14 +141,16 @@ function TwoFactorVerificationStep({
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             pinInputContainerRef.current?.querySelector('input')?.focus();
-        }, 0);
+        }, 100);
+        
+        return () => clearTimeout(timer);
     }, []);
 
     return (
         <Form
-            {...confirm.form()}
+            {...confirm}
             onSuccess={() => onClose()}
             resetOnError
             resetOnSuccess

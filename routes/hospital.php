@@ -22,6 +22,9 @@ use App\Http\Controllers\Laboratory\LabTestController;
 use App\Http\Controllers\Laboratory\LabTestResultController;
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\Department\DepartmentServiceController;
+use App\Http\Controllers\Admin\RBACController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PermissionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -480,5 +483,46 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/api/v1/admin/users/{user}', [App\Http\Controllers\API\v1\SecurityController::class, 'deleteUser']);
     Route::put('/api/v1/admin/users/{user}/change-password', [App\Http\Controllers\API\v1\SecurityController::class, 'updateUserPassword']);
     Route::put('/api/v1/admin/users/{user}/update-username', [App\Http\Controllers\API\v1\SecurityController::class, 'updateUsername']);
+    
+    // Admin RBAC Routes
+    Route::middleware(['check.permission:view-rbac-dashboard'])->prefix('admin')->group(function () {
+        // RBAC Dashboard
+        Route::get('/rbac', [RBACController::class, 'index'])->name('admin.rbac.index');
+        Route::get('/rbac/hierarchy', [RBACController::class, 'hierarchy'])->name('admin.rbac.hierarchy');
+        Route::get('/rbac/permission-matrix', [RBACController::class, 'permissionMatrix'])->name('admin.rbac.permission-matrix');
+        Route::post('/rbac/role-permissions', [RBACController::class, 'updateRolePermissions'])
+            ->name('admin.rbac.update-role-permissions')
+            ->middleware('check.permission:manage-role-permissions');
+        
+        // User Assignments
+        Route::get('/rbac/user-assignments', [RBACController::class, 'userAssignments'])->name('admin.rbac.user-assignments');
+        Route::put('/rbac/users/{user}/role', [RBACController::class, 'updateUserRole'])
+            ->name('admin.rbac.update-user-role')
+            ->middleware('check.permission:manage-user-roles');
+        
+        // Audit Logs
+        Route::get('/rbac/audit-logs', [RBACController::class, 'auditLogs'])->name('admin.rbac.audit-logs');
+        
+        // Configuration Export/Import
+        Route::get('/rbac/export', [RBACController::class, 'exportConfiguration'])
+            ->name('admin.rbac.export')
+            ->middleware('check.permission:export-rbac-configuration');
+        Route::post('/rbac/import', [RBACController::class, 'importConfiguration'])
+            ->name('admin.rbac.import')
+            ->middleware('check.permission:import-rbac-configuration');
+    });
+
+    // Role Management Routes
+    Route::middleware(['check.permission:view-roles'])->prefix('admin/roles')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('admin.roles.index');
+        Route::get('/create', [RoleController::class, 'create'])->name('admin.roles.create');
+        Route::post('/', [RoleController::class, 'store'])->name('admin.roles.store');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('admin.roles.show');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('admin.roles.edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('admin.roles.update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])
+            ->name('admin.roles.destroy')
+            ->middleware('check.permission:delete-roles');
+    });
 });
 

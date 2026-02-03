@@ -43,12 +43,12 @@ class DoctorService
         DB::beginTransaction();
         
         try {
-            // Create user first
+            // Create user first (without role assignment)
             $user = User::create([
                 'name' => $data['full_name'],
                 'username' => $data['phone_number'],
                 'password' => bcrypt($data['phone_number']),
-                'role' => 'Doctor',
+                // Doctor role removed - doctors should not have admin access
             ]);
 
             // Create doctor record

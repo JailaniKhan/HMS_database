@@ -430,7 +430,7 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {recentAdjustments.data.length > 0 ? (
+                                        {recentAdjustments?.data?.length > 0 ? (
                                             recentAdjustments.data.map((adjustment) => (
                                                 <TableRow key={adjustment.id}>
                                                     <TableCell className="text-sm">
@@ -438,8 +438,8 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
                                                     </TableCell>
                                                     <TableCell>
                                                         <div>
-                                                            <p className="font-medium text-sm">{adjustment.medicine.name}</p>
-                                                            <p className="text-xs text-muted-foreground">{adjustment.medicine.medicine_id}</p>
+                                                            <p className="font-medium text-sm">{adjustment.medicine?.name}</p>
+                                                            <p className="text-xs text-muted-foreground">{adjustment.medicine?.medicine_id}</p>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
@@ -455,7 +455,7 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
                                                             </span>
                                                         </div>
                                                         <p className="text-xs text-muted-foreground">
-                                                            by {adjustment.user.name}
+                                                            by {adjustment.user?.name}
                                                         </p>
                                                     </TableCell>
                                                 </TableRow>
@@ -473,25 +473,25 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
                             </div>
 
                             {/* Pagination */}
-                            {recentAdjustments.meta.last_page > 1 && (
+                            {recentAdjustments?.meta?.last_page > 1 && (
                                 <div className="flex items-center justify-between mt-4">
                                     <p className="text-xs text-muted-foreground">
-                                        Showing {recentAdjustments.meta.from} to {recentAdjustments.meta.to} of {recentAdjustments.meta.total}
+                                        Showing {recentAdjustments?.meta?.from} to {recentAdjustments?.meta?.to} of {recentAdjustments?.meta?.total}
                                     </p>
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            disabled={!recentAdjustments.links.prev}
-                                            onClick={() => router.visit(recentAdjustments.links.prev || '')}
+                                            disabled={!recentAdjustments?.links?.prev}
+                                            onClick={() => router.visit(recentAdjustments?.links?.prev || '')}
                                         >
                                             Previous
                                         </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            disabled={!recentAdjustments.links.next}
-                                            onClick={() => router.visit(recentAdjustments.links.next || '')}
+                                            disabled={!recentAdjustments?.links?.next}
+                                            onClick={() => router.visit(recentAdjustments?.links?.next || '')}
                                         >
                                             Next
                                         </Button>

@@ -26,7 +26,7 @@ class StockController extends Controller
         $user = Auth::user();
         
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -105,7 +105,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -157,7 +157,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -187,7 +187,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -249,7 +249,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -376,7 +376,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -465,7 +465,7 @@ class StockController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -529,7 +529,7 @@ class StockController extends Controller
         $user = Auth::user();
         
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -548,7 +548,7 @@ class StockController extends Controller
         $user = Auth::user();
         
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -569,7 +569,7 @@ class StockController extends Controller
         $user = Auth::user();
         
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -623,7 +623,7 @@ class StockController extends Controller
         $user = Auth::user();
         
         // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin', 'Super Admin'])) {
             abort(403, 'Unauthorized access');
         }
         

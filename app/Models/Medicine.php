@@ -11,6 +11,7 @@ use App\Models\MedicineAlert;
 class Medicine extends Model
 {
     protected $fillable = [
+        'medicine_id',
         'medicine_code',
         'name',
         'description',
@@ -21,7 +22,10 @@ class Medicine extends Model
         'strength',
         'cost_price',
         'sale_price',
+        'unit_price',
         'quantity',
+        'stock_quantity',
+        'reorder_level',
         'expiry_date',
         'batch_number',
         'status',

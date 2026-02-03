@@ -32,12 +32,12 @@ class PatientService
         DB::beginTransaction();
         
         try {
-            // Create user first
+            // Create user first (without role assignment)
             $user = User::create([
                 'name' => $data['name'],
                 'username' => $data['email'], // Using email as username
                 'password' => bcrypt($data['phone']), // Using phone as default password
-                'role' => 'Patient',
+                // Patient role removed - patients should not have admin access
             ]);
 
             // Create patient record

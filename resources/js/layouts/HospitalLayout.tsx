@@ -29,6 +29,8 @@ import {
     Truck,
     AlertTriangle,
     List,
+    Shield,
+    Lock,
 } from 'lucide-react';
 import {  usePage } from '@inertiajs/react';
 import { type NavItem } from '@/types';
@@ -230,6 +232,39 @@ function useFilteredNavItems() {
             href: '/admin',
             icon: Users,
             permission: 'view-users',
+        },
+        {
+            title: 'RBAC',
+            href: '/admin/rbac',
+            icon: Shield,
+            permission: 'manage-rbac',
+            items: [
+                {
+                    title: 'Dashboard',
+                    href: '/admin/rbac',
+                    icon: LayoutGrid,
+                },
+                {
+                    title: 'Roles',
+                    href: '/admin/roles',
+                    icon: Shield,
+                },
+                {
+                    title: 'Permissions',
+                    href: '/admin/permissions',
+                    icon: Lock,
+                },
+                {
+                    title: 'User Assignments',
+                    href: '/admin/rbac/user-assignments',
+                    icon: Users,
+                },
+                {
+                    title: 'Audit Logs',
+                    href: '/admin/rbac/audit-logs',
+                    icon: FileText,
+                },
+            ],
         },
         {
             title: 'Settings',

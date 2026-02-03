@@ -30,12 +30,23 @@ class PermissionsController extends Controller
     public function index(): Response
     {
         $permissions = Permission::all();
-        $roles = RolePermission::select('role')->distinct()->pluck('role');
-
+        $roles = \App\Models\Role::with('permissions')->get();
+        
+        // Categorize permissions
+        $categories = Permission::distinct()->pluck('category')->filter()->values();
+        $modules = Permission::distinct()->pluck('module')->filter()->values();
+        
         // Get role permissions mapping
         $rolePermissions = [];
         foreach ($roles as $role) {
-            $rolePermissions[$role] = RolePermission::where('role', $role)
+            $rolePermissions[$role->id] = $role->permissions->pluck('id')->toArray();
+        }
+
+        // Legacy roles mapping for backward compatibility
+        $legacyRoles = RolePermission::select('role')->distinct()->pluck('role');
+        $legacyRolePermissions = [];
+        foreach ($legacyRoles as $lRole) {
+            $legacyRolePermissions[$lRole] = RolePermission::where('role', $lRole)
                 ->pluck('permission_id')
                 ->toArray();
         }
@@ -44,6 +55,10 @@ class PermissionsController extends Controller
             'permissions' => $permissions,
             'roles' => $roles,
             'rolePermissions' => $rolePermissions,
+            'categories' => $categories,
+            'modules' => $modules,
+            'legacyRoles' => $legacyRoles,
+            'legacyRolePermissions' => $legacyRolePermissions,
         ]);
     }
 
@@ -65,39 +80,41 @@ class PermissionsController extends Controller
     }
 
     /**
-     * Update permissions for a specific role.
+     * Update permissions for a specific role (by ID or name).
      */
-    public function updateRolePermissions(Request $request, string $role)
+    public function updateRolePermissions(Request $request, string $roleIdentifier)
     {
-        // Validate the role exists in our system
-        $validRoles = RolePermission::select('role')->distinct()->pluck('role');
-        if (!$validRoles->contains($role)) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Invalid role specified.'], 400);
+        $role = \App\Models\Role::find($roleIdentifier) ?? \App\Models\Role::where('name', $roleIdentifier)->first();
+        
+        if (!$role) {
+            // Check legacy RolePermission
+            $legacyRole = RolePermission::where('role', $roleIdentifier)->first();
+            if (!$legacyRole) {
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => 'Invalid role specified.'], 400);
+                }
+                return redirect()->back()->with('error', 'Invalid role specified.');
             }
-            return redirect()->back()->with('error', 'Invalid role specified.');
-        }
-
-        // Clear existing role permissions
-        RolePermission::where('role', $role)->delete();
-
-        // Add new permissions if provided
-        if ($request->has('permissions') && is_array($request->permissions)) {
-            foreach ($request->permissions as $permissionId) {
-                $permission = Permission::find($permissionId);
-                if ($permission) {
+            
+            // Handle legacy role sync
+            RolePermission::where('role', $roleIdentifier)->delete();
+            if ($request->has('permissions') && is_array($request->permissions)) {
+                foreach ($request->permissions as $permissionId) {
                     RolePermission::create([
-                        'role' => $role,
-                        'permission_id' => $permission->id,
+                        'role' => $roleIdentifier,
+                        'permission_id' => $permissionId,
                     ]);
                 }
             }
+        } else {
+            // Sync with normalized table
+            $role->permissions()->sync($request->permissions ?? []);
         }
 
         // Log permission change for monitoring
         $this->monitoringService->logMetric('permission_change', count($request->permissions ?? []), [
             'action' => 'role_permissions_updated',
-            'role' => $role,
+            'role' => $role ? $role->name : $roleIdentifier,
             'user_id' => Auth::id(),
             'permissions_count' => count($request->permissions ?? []),
         ]);
@@ -106,7 +123,7 @@ class PermissionsController extends Controller
             return response()->json(['success' => 'Role permissions updated successfully.']);
         }
 
-        return redirect()->route('admin.permissions.index')->with('success', 'Role permissions updated successfully.');
+        return redirect()->back()->with('success', 'Role permissions updated successfully.');
     }
 
     /**
