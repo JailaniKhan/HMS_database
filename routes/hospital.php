@@ -16,6 +16,7 @@ use App\Http\Controllers\Pharmacy\MedicineCategoryController;
 use App\Http\Controllers\Pharmacy\StockController;
 use App\Http\Controllers\Pharmacy\SalesController;
 use App\Http\Controllers\Pharmacy\PurchaseOrderController;
+use App\Http\Controllers\Pharmacy\SupplierController;
 use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Laboratory\LabTestController;
@@ -313,6 +314,15 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('pharmacy.purchase-orders.update-status');
         Route::get('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receivePage'])->name('pharmacy.purchase-orders.receive');
         Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('pharmacy.purchase-orders.receive.store');
+
+        // Supplier Routes
+        Route::get('/suppliers', [SupplierController::class, 'index'])->name('pharmacy.suppliers.index');
+        Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('pharmacy.suppliers.create');
+        Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
+        Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->name('pharmacy.suppliers.show');
+        Route::get('/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('pharmacy.suppliers.edit');
+        Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('pharmacy.suppliers.update');
+        Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('pharmacy.suppliers.destroy');
 
         Route::get('/alerts', [AlertController::class, 'index'])->name('pharmacy.alerts.index');
         Route::get('/alerts/pending', [AlertController::class, 'pending'])->name('pharmacy.alerts.pending');

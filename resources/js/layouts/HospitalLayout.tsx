@@ -32,9 +32,9 @@ import {
     Shield,
     Lock,
 } from 'lucide-react';
-import {  usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { type NavItem } from '@/types';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo, useCallback } from 'react';
 
 interface HospitalLayoutProps {
     header?: ReactNode;
@@ -42,244 +42,19 @@ interface HospitalLayoutProps {
 }
 
 function usePermissionChecker() {
-    try {
-        const page = usePage();
+    const page = usePage();
+    
+    const hasPermission = useCallback((permission: string): boolean => {
         const user = page.props.auth?.user;
         const userPermissions = user?.permissions || [];
         const userRole = user?.role;
+        
+        // Super Admin bypass
+        if (userRole === 'Super Admin') return true;
+        return userPermissions.includes(permission);
+    }, [page.props.auth]);
 
-        const hasPermission = (permission: string): boolean => {
-            // Super Admin bypass
-            if (userRole === 'Super Admin') return true;
-            return userPermissions.includes(permission);
-        };
-
-        return { hasPermission };
-    } catch (error) {
-        console.error('Error in usePage:', error);
-        return { hasPermission: () => false };
-    }
-}
-
-function useFilteredNavItems() {
-    const { hasPermission } = usePermissionChecker();
-    
-    const allNavItems: (NavItem & { permission?: string })[] = [
-        {
-            title: 'Dashboard',
-            href: '/dashboard',
-            icon: LayoutGrid,
-            permission: 'view-dashboard',
-        },
-        {
-            title: 'Reports',
-            href: '/reports',
-            icon: FileBarChart,
-            permission: 'view-reports',
-        },
-        {
-            title: 'Patients',
-            href: '/patients',
-            icon: Users,
-            permission: 'view-patients',
-        },
-        {
-            title: 'Doctors',
-            href: '/doctors',
-            icon: User,
-            permission: 'view-doctors',
-        },
-        {
-            title: 'Appointments',
-            href: '/appointments',
-            icon: Calendar,
-            permission: 'view-appointments',
-        },
-        {
-            title: 'Billing',
-            href: '/billing',
-            icon: FileText,
-            permission: 'view-billing',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: '/billing/parts/dashboard',
-                    icon: LayoutGrid,
-                },
-                {
-                    title: 'All Bills',
-                    href: '/billing',
-                    icon: FileText,
-                },
-              
-                {
-                    title: 'Bill Parts',
-                    href: '/billing/parts',
-                    icon: List,
-                },
-                {
-                    title: 'Payments',
-                    href: '/payments',
-                    icon: FileText,
-                },
-                {
-                    title: 'Insurance Claims',
-                    href: '/insurance/claims',
-                    icon: FileText,
-                },
-                {
-                    title: 'Insurance Providers',
-                    href: '/insurance/providers',
-                    icon: FileText,
-                },
-                {
-                    title: 'Patient Insurance',
-                    href: '/billing/patient-insurance',
-                    icon: FileText,
-                },
-                {
-                    title: 'Reports',
-                    href: '/reports/billing',
-                    icon: FileBarChart,
-                },
-            ],
-        },
-        {
-            title: 'Pharmacy',
-            href: '/pharmacy',
-            icon: Pill,
-            permission: 'view-pharmacy',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: '/pharmacy',
-                    icon: LayoutGrid,
-                },
-                {
-                    title: 'Medicines',
-                    href: '/pharmacy/medicines',
-                    icon: Pill,
-                },
-                {
-                    title: 'Sales',
-                    href: '/pharmacy/sales',
-                    icon: FileText,
-                },
-                {
-                    title: 'Stock',
-                    href: '/pharmacy/stock',
-                    icon: Package,
-                },
-                {
-                    title: 'Purchase Orders',
-                    href: '/pharmacy/purchase-orders',
-                    icon: ClipboardList,
-                },
-                {
-                    title: 'Suppliers',
-                    href: '/pharmacy/suppliers',
-                    icon: Truck,
-                },
-                {
-                    title: 'Alerts',
-                    href: '/pharmacy/alerts',
-                    icon: AlertTriangle,
-                },
-                {
-                    title: 'Reports',
-                    href: '/pharmacy/reports',
-                    icon: FileBarChart,
-                },
-            ],
-        },
-        {
-            title: 'Laboratory',
-            href: '/laboratory',
-            icon: FlaskConical,
-            permission: 'view-laboratory',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: '/laboratory',
-                    icon: FlaskConical,
-                },
-                {
-                    title: 'Lab Tests',
-                    href: '/laboratory/lab-tests',
-                    icon: FlaskConical,
-                },
-                {
-                    title: 'Test Requests',
-                    href: '/laboratory/lab-test-requests',
-                    icon: FlaskConical,
-                },
-                {
-                    title: 'Results',
-                    href: '/laboratory/lab-test-results',
-                    icon: FlaskConical,
-                },
-            ],
-        },
-        {
-            title: 'Departments',
-            href: '/departments',
-            icon: Building,
-            permission: 'view-departments',
-        },
-
-        {
-            title: 'User Management',
-            href: '/admin',
-            icon: Users,
-            permission: 'view-users',
-        },
-        {
-            title: 'RBAC',
-            href: '/admin/rbac',
-            icon: Shield,
-            permission: 'manage-rbac',
-            items: [
-                {
-                    title: 'Dashboard',
-                    href: '/admin/rbac',
-                    icon: LayoutGrid,
-                },
-                {
-                    title: 'Roles',
-                    href: '/admin/roles',
-                    icon: Shield,
-                },
-                {
-                    title: 'Permissions',
-                    href: '/admin/permissions',
-                    icon: Lock,
-                },
-                {
-                    title: 'User Assignments',
-                    href: '/admin/rbac/user-assignments',
-                    icon: Users,
-                },
-                {
-                    title: 'Audit Logs',
-                    href: '/admin/rbac/audit-logs',
-                    icon: FileText,
-                },
-            ],
-        },
-        {
-            title: 'Settings',
-            href: '/settings',
-            icon: Settings,
-            permission: 'view-settings',
-        },
-    ];
-    
-    return allNavItems.filter(item => {
-        if (!item.permission) {
-            return true; // Always show items without specific permission requirement
-        }
-        return hasPermission(item.permission);
-    });
+    return { hasPermission };
 }
 
 const footerNavItems: NavItem[] = [
@@ -287,7 +62,225 @@ const footerNavItems: NavItem[] = [
 ];
 
 export default function HospitalLayout({ header, children }: HospitalLayoutProps) {
-    const filteredNavItems = useFilteredNavItems();
+    const { hasPermission } = usePermissionChecker();
+    
+    const filteredNavItems = useMemo(() => {
+        const allNavItems: (NavItem & { permission?: string })[] = [
+            {
+                title: 'Dashboard',
+                href: '/dashboard',
+                icon: LayoutGrid,
+                permission: 'view-dashboard',
+            },
+            {
+                title: 'Reports',
+                href: '/reports',
+                icon: FileBarChart,
+                permission: 'view-reports',
+            },
+            {
+                title: 'Patients',
+                href: '/patients',
+                icon: Users,
+                permission: 'view-patients',
+            },
+            {
+                title: 'Doctors',
+                href: '/doctors',
+                icon: User,
+                permission: 'view-doctors',
+            },
+            {
+                title: 'Appointments',
+                href: '/appointments',
+                icon: Calendar,
+                permission: 'view-appointments',
+            },
+            {
+                title: 'Billing',
+                href: '/billing',
+                icon: Building,
+                permission: 'view-billing',
+                items: [
+                    {
+                        title: 'Dashboard',
+                        href: '/billing/parts/dashboard',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'All Bills',
+                        href: '/billing',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Bill Parts',
+                        href: '/billing/parts',
+                        icon: List,
+                    },
+                    {
+                        title: 'Payments',
+                        href: '/payments',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Insurance Claims',
+                        href: '/insurance/claims',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Insurance Providers',
+                        href: '/insurance/providers',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Patient Insurance',
+                        href: '/billing/patient-insurance',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Reports',
+                        href: '/reports/billing',
+                        icon: FileBarChart,
+                    },
+                ],
+            },
+            {
+                title: 'Pharmacy',
+                href: '/pharmacy',
+                icon: Pill,
+                permission: 'view-pharmacy',
+                items: [
+                    {
+                        title: 'Dashboard',
+                        href: '/pharmacy',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'Medicines',
+                        href: '/pharmacy/medicines',
+                        icon: Pill,
+                    },
+                    {
+                        title: 'Sales',
+                        href: '/pharmacy/sales',
+                        icon: FileText,
+                    },
+                    {
+                        title: 'Stock',
+                        href: '/pharmacy/stock',
+                        icon: Package,
+                    },
+                    {
+                        title: 'Purchase Orders',
+                        href: '/pharmacy/purchase-orders',
+                        icon: ClipboardList,
+                    },
+                    {
+                        title: 'Suppliers',
+                        href: '/pharmacy/suppliers',
+                        icon: Truck,
+                    },
+                    {
+                        title: 'Alerts',
+                        href: '/pharmacy/alerts',
+                        icon: AlertTriangle,
+                    },
+                    {
+                        title: 'Reports',
+                        href: '/pharmacy/reports',
+                        icon: FileBarChart,
+                    },
+                ],
+            },
+            {
+                title: 'Laboratory',
+                href: '/laboratory',
+                icon: FlaskConical,
+                permission: 'view-laboratory',
+                items: [
+                    {
+                        title: 'Dashboard',
+                        href: '/laboratory',
+                        icon: FlaskConical,
+                    },
+                    {
+                        title: 'Lab Tests',
+                        href: '/laboratory/lab-tests',
+                        icon: FlaskConical,
+                    },
+                    {
+                        title: 'Test Requests',
+                        href: '/laboratory/lab-test-requests',
+                        icon: FlaskConical,
+                    },
+                    {
+                        title: 'Results',
+                        href: '/laboratory/lab-test-results',
+                        icon: FlaskConical,
+                    },
+                ],
+            },
+            {
+                title: 'Departments',
+                href: '/departments',
+                icon: Building,
+                permission: 'view-departments',
+            },
+
+            {
+                title: 'User Management',
+                href: '/admin',
+                icon: Users,
+                permission: 'view-users',
+            },
+            {
+                title: 'RBAC',
+                href: '/admin/rbac',
+                icon: Shield,
+                permission: 'manage-rbac',
+                items: [
+                    {
+                        title: 'Dashboard',
+                        href: '/admin/rbac',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'Roles',
+                        href: '/admin/roles',
+                        icon: Shield,
+                    },
+                    {
+                        title: 'Permissions',
+                        href: '/admin/permissions',
+                        icon: Lock,
+                    },
+                    {
+                        title: 'User Assignments',
+                        href: '/admin/rbac/user-assignments',
+                        icon: Users,
+                    },
+                    {
+                        title: 'Audit Logs',
+                        href: '/admin/rbac/audit-logs',
+                        icon: FileText,
+                    },
+                ],
+            },
+            {
+                title: 'Settings',
+                href: '/settings',
+                icon: Settings,
+                permission: 'view-settings',
+            },
+        ];
+        
+        return allNavItems.filter(item => {
+            if (!item.permission) {
+                return true; // Always show items without specific permission requirement
+            }
+            return hasPermission(item.permission);
+        });
+    }, [hasPermission]);
     
     return (
         <AppShell variant="sidebar">
@@ -321,24 +314,16 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                     <NavUser />
                 </SidebarFooter>
             </Sidebar>
-
-            <SidebarInset className="bg-gradient-to-br from-background via-background to-muted/20">
-                <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-6 shadow-sm">
-                    <SidebarTrigger className="-ml-1 hover:bg-accent transition-colors" />
-                    {header && (
-                        <div className="flex items-center gap-3">
-                            <div className="h-6 w-[2px] bg-primary/30 rounded-full" />
-                            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                                {header}
-                            </h2>
-                        </div>
-                    )}
-                </header>
-                <div className="flex-1 overflow-auto p-6 animate-fade-in">
-                    <div className="mx-auto max-w-7xl space-y-6">
-                        {children}
+            <SidebarInset className="bg-background">
+                <header className="flex items-center justify-between border-b px-6 py-4">
+                    <div className="flex items-center gap-4">
+                        <SidebarTrigger />
+                        {header}
                     </div>
-                </div>
+                </header>
+                <main className="flex-1 overflow-auto p-6">
+                    {children}
+                </main>
             </SidebarInset>
         </AppShell>
     );

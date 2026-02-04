@@ -200,6 +200,7 @@ export interface Supplier {
     email: string | null;
     phone: string | null;
     address: string | null;
+    notes: string | null;
     status: 'active' | 'inactive';
     created_at: string;
     updated_at: string;

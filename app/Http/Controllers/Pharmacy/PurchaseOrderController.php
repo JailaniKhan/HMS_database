@@ -23,15 +23,28 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
-            abort(403, 'Unauthorized access');
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+            abort(403, 'Unauthorized access. Required role: Hospital Admin or Pharmacy Admin');
         }
         
         $purchaseOrders = PurchaseOrder::with('items.medicine', 'supplier', 'user')->latest()->paginate(10);
+        $suppliers = Supplier::all();
+        
+        // Calculate stats
+        $stats = [
+            'pending' => PurchaseOrder::where('status', 'pending')->count(),
+            'ordered' => PurchaseOrder::whereIn('status', ['confirmed', 'sent'])->count(),
+            'partial' => PurchaseOrder::where('status', 'partial')->count(),
+            'received' => PurchaseOrder::where('status', 'received')->count(),
+            'cancelled' => PurchaseOrder::where('status', 'cancelled')->count(),
+            'total_value' => PurchaseOrder::sum('total_amount'),
+        ];
         
         return Inertia::render('Pharmacy/PurchaseOrders/Index', [
-            'purchaseOrders' => $purchaseOrders
+            'purchaseOrders' => $purchaseOrders,
+            'suppliers' => $suppliers,
+            'stats' => $stats,
         ]);
     }
 
@@ -42,8 +55,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
+        // Check if user has appropriate permission (Super Admin bypasses permission check)
+        if (!$user->isSuperAdmin() && !$user->hasPermission('view-pharmacy')) {
             abort(403, 'Unauthorized access');
         }
         
@@ -63,8 +76,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -121,8 +134,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -140,8 +153,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -170,8 +183,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -236,8 +249,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -260,8 +273,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
@@ -305,8 +318,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
 
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
 
@@ -330,8 +343,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
 
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
 
@@ -441,8 +454,8 @@ class PurchaseOrderController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user has appropriate role
-        if (!$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
+        // Check if user has appropriate role (Super Admin bypasses role check)
+        if (!$user->isSuperAdmin() && !$user->hasAnyRole(['Hospital Admin', 'Pharmacy Admin'])) {
             abort(403, 'Unauthorized access');
         }
         
