@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,20 @@ export default function RoleCreate({ permissions }: Props) {
     post('/admin/roles');
   };
 
+  // Memoize checkbox state to avoid unnecessary recalculations
+  const checkboxState = useMemo(() => {
+    const state: Record<string, { checked: boolean; indeterminate: boolean }> = {};
+    Object.keys(permissions).forEach(resource => {
+      const selectedCount = permissions[resource].filter(p => data.permissions.includes(p.id)).length;
+      const totalCount = permissions[resource].length;
+      state[resource] = {
+        checked: selectedCount === totalCount,
+        indeterminate: selectedCount > 0 && selectedCount < totalCount,
+      };
+    });
+    return state;
+  }, [data.permissions, permissions]);
+
   const togglePermission = (id: number) => {
     const newPermissions = data.permissions.includes(id)
       ? data.permissions.filter(pId => pId !== id)
@@ -74,14 +89,8 @@ export default function RoleCreate({ permissions }: Props) {
     setData('permissions', newPermissions);
   };
 
-  const isResourceSelected = (resource: string) => {
-    return permissions[resource].every(p => data.permissions.includes(p.id));
-  };
-
-  const isResourcePartiallySelected = (resource: string) => {
-    const selectedCount = permissions[resource].filter(p => data.permissions.includes(p.id)).length;
-    return selectedCount > 0 && selectedCount < permissions[resource].length;
-  };
+  const isResourceSelected = (resource: string) => checkboxState[resource]?.checked ?? false;
+  const isResourcePartiallySelected = (resource: string) => checkboxState[resource]?.indeterminate ?? false;
 
   return (
     <HospitalLayout>

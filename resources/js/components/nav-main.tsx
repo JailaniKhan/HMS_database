@@ -13,30 +13,24 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { resolveUrl } from '@/lib/utils';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
+function getItemId(title: string | undefined, label: string | undefined): string {
+    return `nav-${(title || label || '').toLowerCase().replace(/\s+/g, '-')}`;
+}
 
 function NavItemComponent({ item }: { item: NavItem }) {
-    const page = usePage();
-    const isActive = page.url.startsWith(resolveUrl(item.href));
-    const itemId = `nav-${(item.title || item.label || '').toLowerCase().replace(/\s+/g, '-')}`;
+    const itemId = getItemId(item.title, item.label);
 
     // If item has sub-items, render as collapsible
     if (item.items && item.items.length > 0) {
-        const isSubActive = item.items.some(subItem => 
-            page.url.startsWith(resolveUrl(subItem.href))
-        );
-
         return (
-            <Collapsible defaultOpen={isSubActive} className="group/collapsible">
+            <Collapsible defaultOpen={false} className="group/collapsible">
                 <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                            isActive={isSubActive}
-                            tooltip={{ children: item.title || item.label }}
                             data-testid={itemId}
                             className="group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!px-2 group-data-[collapsible=icon]:!py-2.5"
                         >
@@ -55,19 +49,16 @@ function NavItemComponent({ item }: { item: NavItem }) {
                     <CollapsibleContent>
                         <SidebarMenuSub>
                             {item.items.map((subItem) => {
-                                const subIsActive = page.url.startsWith(resolveUrl(subItem.href));
-                                const subItemId = `nav-${(subItem.title || subItem.label || '').toLowerCase().replace(/\s+/g, '-')}`;
+                                const subItemId = getItemId(subItem.title, subItem.label);
                                 
                                 return (
                                     <SidebarMenuSubItem key={subItem.title || subItem.label}>
                                         <SidebarMenuSubButton
                                             asChild
-                                            isActive={subIsActive}
                                             data-testid={subItemId}
                                         >
                                             <Link
                                                 href={subItem.href}
-                                                aria-current={subIsActive ? 'page' : undefined}
                                                 aria-describedby={`${subItemId}-description`}
                                                 prefetch={true}
                                             >
@@ -101,14 +92,11 @@ function NavItemComponent({ item }: { item: NavItem }) {
         <SidebarMenuItem className="relative">
             <SidebarMenuButton
                 asChild
-                isActive={isActive}
-                tooltip={{ children: item.title || item.label }}
                 data-testid={itemId}
                 className="group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!px-2 group-data-[collapsible=icon]:!py-2.5"
             >
                 <Link
                     href={item.href}
-                    aria-current={isActive ? 'page' : undefined}
                     aria-describedby={`${itemId}-description`}
                     prefetch={true}
                     className="flex items-center gap-2 w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-12"
