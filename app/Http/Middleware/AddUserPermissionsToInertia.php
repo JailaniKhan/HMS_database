@@ -29,6 +29,8 @@ class AddUserPermissionsToInertia
                         'username' => $user->username,
                         'role' => $user->role,
                         'role_id' => $user->role_id,
+                        'profile_photo_url' => $user->profile_photo_url,
+                        'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
                     ],
                 ],
             ]);

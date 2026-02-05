@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, User, Settings, KeyRound, Activity,AlertTriangle, Calendar, Stethoscope, TestTube, BarChart3 } from 'lucide-react';
@@ -35,17 +35,17 @@ interface AuditLog {
     severity: 'high' | 'low' | 'medium';
 }
 
-interface Props {
+interface PageProps extends Record<string, unknown> {
     auth: {
         user: User;
     };
 }
 
-export default function AdminDashboard({ auth }: Props) {
+export default function AdminDashboard() {
+    const { auth } = usePage<PageProps>().props;
     const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [error, setError] = useState<string | null>(null);
-
     
     useEffect(() => {
         // Fetch real data from backend API
@@ -84,6 +84,26 @@ export default function AdminDashboard({ auth }: Props) {
         fetchData();
     }, []);
     
+    // Guard against undefined auth
+    if (!auth || !auth.user) {
+        return (
+            <HospitalLayout>
+                <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center py-12">
+                            <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
+                            <p className="text-gray-600 mb-4">Please log in to access the admin dashboard.</p>
+                            <Link href="/login">
+                                <Button>Go to Login</Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </HospitalLayout>
+        );
+    }
+    
     const getUserRoleBadge = (role: string) => {
         switch(role.toLowerCase()) {
             case 'super admin':
@@ -114,12 +134,12 @@ export default function AdminDashboard({ auth }: Props) {
                         <p className="text-gray-600 mt-2">Manage system settings users and permissions</p>
                         <div className="mt-4 flex items-center">
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src={auth.user.profile_photo_url} alt={auth.user.name} />
-                                <AvatarFallback>{auth.user.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={auth?.user?.profile_photo_url} alt={auth?.user?.name || 'User'} />
+                                <AvatarFallback>{auth?.user?.name?.charAt(0) || 'U'}</AvatarFallback>
                             </Avatar>
                             <div className="ml-3">
-                                <p className="font-medium">{auth.user.name}</p>
-                                {getUserRoleBadge(auth.user.role || 'User')}
+                                <p className="font-medium">{auth?.user?.name || 'Unknown User'}</p>
+                                {getUserRoleBadge(auth?.user?.role || 'User')}
                             </div>
                         </div>
                     </div>
@@ -182,7 +202,7 @@ export default function AdminDashboard({ auth }: Props) {
                                 </Card>
                             </Link>
                         
-                        {(auth.user.role === 'Super Admin' || auth.user.role === 'Sub Super Admin' || auth.user.permissions?.includes('manage-permissions')) && (
+                        {(auth?.user?.role === 'Super Admin' || auth?.user?.role === 'Sub Super Admin' || auth?.user?.permissions?.includes('manage-permissions')) && (
                             <Link href="/admin/permissions" className="block">
                                 <Card className="hover:shadow-md transition-shadow">
                                     <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -338,7 +358,7 @@ export default function AdminDashboard({ auth }: Props) {
                             <Link href="/admin/users">
                                 <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors">Go to User Management</Button>
                             </Link>
-                            {(auth.user.role === 'Super Admin' || auth.user.permissions?.includes('view-activity-logs')) && (
+                            {(auth?.user?.role === 'Super Admin' || auth?.user?.permissions?.includes('view-activity-logs')) && (
                                 <Link href="/admin/activity-logs">
                                     <Button className="bg-blue-50 text-blue-800 border border-blue-200 px-6 py-3 rounded-lg font-medium hover:bg-blue-100 transition-colors">View Activity Logs</Button>
                                 </Link>

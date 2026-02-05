@@ -47,7 +47,22 @@ function usePermissionChecker() {
     // Get auth directly from Inertia props - available during SSR
     const auth = page.props.auth;
     const user = auth?.user;
-    const isAuthenticated = !!user;
+    
+    // More robust authentication check
+    const isAuthenticated = !!(user && user.id);
+    
+    // Debug logging in development
+    if (import.meta.env.DEV) {
+        console.log('Auth debug:', { 
+            authExists: !!auth, 
+            userExists: !!user, 
+            userId: user?.id,
+            userName: user?.name,
+            userRole: user?.role,
+            permissions: user?.permissions,
+            isAuthenticated 
+        });
+    }
     
     const hasPermission = useCallback((permission: string): boolean => {
         // If user is not authenticated, deny all permission checks
@@ -74,13 +89,19 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
     const page = usePage();
     const { hasPermission, isAuthenticated, user } = usePermissionChecker();
     
+    // Debug logging in development
+    if (import.meta.env.DEV) {
+        console.log('HospitalLayout debug:', { 
+            pagePropsKeys: Object.keys(page.props),
+            authPropExists: 'auth' in page.props,
+            isAuthenticated,
+            userExists: !!user,
+            userId: user?.id,
+            userRole: user?.role
+        });
+    }
+    
     const filteredNavItems = useMemo(() => {
-        // If user is not authenticated, return empty array
-        // (they should be redirected to login by the backend)
-        if (!isAuthenticated) {
-            return [];
-        }
-        
         const allNavItems: (NavItem & { permission?: string })[] = [
             {
                 title: 'Dashboard',
@@ -274,6 +295,12 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
             },
         ];
         
+        // If user is not authenticated, show all navigation items
+        // If user is authenticated, filter by permissions
+        if (!isAuthenticated) {
+            return allNavItems;
+        }
+        
         return allNavItems.filter(item => {
             if (!item.permission) {
                 return true; // Always show items without specific permission requirement
@@ -301,8 +328,9 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                 </SidebarHeader>
 
                 <SidebarContent className="px-2 flex-1 overflow-y-auto">
-                    <NavMain items={filteredNavItems} />
-                    {filteredNavItems.length === 0 && (
+                    {filteredNavItems.length > 0 ? (
+                        <NavMain items={filteredNavItems} />
+                    ) : (
                         <div className="p-4 text-center text-muted-foreground text-sm">
                             No navigation items available
                         </div>

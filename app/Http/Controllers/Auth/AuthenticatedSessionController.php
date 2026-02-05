@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -45,11 +46,22 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
+        \Log::info('Login attempt:', [
+            'username' => $request->input('username'),
+            'has_password' => !empty($request->input('password'))
+        ]);
+        
         $request->authenticate();
 
         $request->session()->regenerate();
         
         $user = Auth::user();
+        
+        \Log::info('Login successful:', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'role' => $user->role
+        ]);
         
         // Initialize session timeout service - THIS IS THE FIX!
         $this->sessionTimeoutService->initializeSession($user, $request->session()->getId());

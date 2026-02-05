@@ -10,7 +10,20 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/dashboard', [ReportController::class, 'dashboardStats'])->middleware(['auth', 'verified'])->name('dashboard');
+// Test route to check authentication status
+Route::get('/auth-status', function () {
+    return response()->json([
+        'authenticated' => Auth::check(),
+        'user' => Auth::check() ? [
+            'id' => Auth::user()->id,
+            'name' => Auth::user()->name,
+            'role' => Auth::user()->role,
+        ] : null,
+        'session_id' => session()->getId(),
+    ]);
+});
+
+Route::get('/dashboard', [ReportController::class, 'dashboardStats'])->middleware(['auth'])->name('dashboard');
 
 Route::get('/dashboard-redirect', function () {
     $user = Auth::user();
@@ -48,7 +61,7 @@ Route::get('/dashboard-redirect', function () {
         // Default fallback for users without specific permissions
         return redirect()->intended(route('dashboard', absolute: false));
     }
-})->middleware(['auth', 'verified'])->name('dashboard.redirect');
+})->middleware(['auth'])->name('dashboard.redirect');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
