@@ -248,13 +248,7 @@ class PatientController extends Controller
      */
     public function edit(Patient $patient): Response
     {
-        // DEBUG: Log the route binding
-        \Log::debug('Patient route binding debug', [
-            'route_patient_id' => $patient->patient_id ?? null,
-            'route_id' => request()->route('patient') ?? null,
-            'all_request_data' => request()->all(),
-            'route_parameters' => request()->route()->parameters(),
-        ]);
+    
         
         // IDOR Protection - verify access before showing data
         if (!$this->userCanAccessPatient($patient)) {
@@ -269,7 +263,7 @@ class PatientController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Patient $patient): RedirectResponse
+    public function update(Request $request, Patient $patient)
     {
       
         
@@ -312,6 +306,14 @@ class PatientController extends Controller
             'emergency_contact_phone' => $sanitizedData['emergency_contact_phone'],
             'medical_history' => $sanitizedData['medical_history'],
         ]);
+
+        // For Inertia PUT requests, return success response instead of redirect
+        if ($request->wantsJson() || $request->header('X-Inertia')) {
+            return response()->json([
+                'message' => 'Patient updated successfully',
+                'patient' => $patient->fresh()
+            ], 200);
+        }
 
         return redirect()->route('patients.index')->with('success', 'Patient updated successfully.');
     }

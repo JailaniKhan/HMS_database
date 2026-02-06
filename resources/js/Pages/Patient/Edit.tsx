@@ -31,12 +31,9 @@ interface PatientEditProps {
 type TabValue = 'personal' | 'medical' | 'emergency';
 
 export default function PatientEdit({ patient }: PatientEditProps) {
-    // Debug: Log the patient data
-    console.log('Patient data received:', patient);
-    console.log('Patient ID:', patient?.patient_id);
-    
     const [activeTab, setActiveTab] = useState<TabValue>('personal');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [updateSuccess, setUpdateSuccess] = useState(false);
 
     const { data, setData, processing, errors, put, wasSuccessful } = useForm<PatientFormData>({
         first_name: patient?.first_name || '',
@@ -88,13 +85,6 @@ export default function PatientEdit({ patient }: PatientEditProps) {
         e.preventDefault();
         setIsSubmitting(true);
 
-        console.log('=== FORM SUBMISSION DEBUG ===');
-        console.log('Form submitted with data:', data);
-        console.log('Patient object:', patient);
-        console.log('Patient ID:', patient.patient_id);
-        console.log('Patient ID type:', typeof patient.patient_id);
-        console.log('Patient ID length:', patient.patient_id?.length);
-        
         // Validate patient ID exists
         if (!patient.patient_id) {
             console.error('Patient ID is missing!');
@@ -104,18 +94,18 @@ export default function PatientEdit({ patient }: PatientEditProps) {
 
         // Construct URL directly since route() helper may have caching issues
         const updateUrl = `/patients/${patient.patient_id}`;
-        console.log('Update URL:', updateUrl);
-        console.log('Full URL that will be used:', `${window.location.origin}${updateUrl}`);
 
         try {
-            console.log('Making PUT request to:', updateUrl);
-            console.log('With data:', data);
-            put(updateUrl, data, {
-                onSuccess: () => {
+            put(updateUrl, {
+                preserveState: true,
+                onSuccess: (page) => {
                     setIsSubmitting(false);
-                    console.log('Update successful!');
+                    setUpdateSuccess(true);
+                    console.log('Update successful!', page);
+                    // Clear success message after 3 seconds
+                    setTimeout(() => setUpdateSuccess(false), 3000);
                 },
-                onError: (errors) => {
+                onError: (errors: Record<string, string>) => {
                     setIsSubmitting(false);
                     console.error('Update errors:', errors);
                 },
@@ -173,7 +163,7 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                 </div>
 
                 {/* Progress Indicator */}
-                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100">
+                <Card className="bg-linear-to-r from-blue-50 to-indigo-50 border-blue-100">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
@@ -221,11 +211,11 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                 )}
 
                 {/* Success Message */}
-                {wasSuccessful && (
+                {(updateSuccess || wasSuccessful) && (
                     <Alert className="bg-green-50 border-green-200">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-800">
-                            Patient information has been updated successfully! Redirecting...
+                            Patient information has been updated successfully!
                         </AlertDescription>
                     </Alert>
                 )}
@@ -560,7 +550,7 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                         <Button 
                             type="submit" 
                             disabled={processing || isSubmitting}
-                            className="bg-blue-600 hover:bg-blue-700 min-w-[150px]"
+                            className="bg-blue-600 hover:bg-blue-700 min-w-37.5"
                         >
                             {processing || isSubmitting ? (
                                 <>
