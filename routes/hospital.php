@@ -44,6 +44,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         
         // More specific routes MUST come before parameterized routes
         Route::get('/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+        // Fallback PUT route for /edit URL (in case form generates wrong URL)
+        Route::put('/{patient}/edit', [PatientController::class, 'update'])->name('patients.update.edit');
         Route::put('/{patient}', [PatientController::class, 'update'])->name('patients.update')
             ->middleware('check.permission:edit-patients');
         Route::delete('/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy')

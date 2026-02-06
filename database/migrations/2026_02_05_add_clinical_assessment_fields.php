@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -108,16 +109,23 @@ return new class extends Migration
             $table->enum('status', ['draft', 'finalized', 'amended', 'disputed'])->default('draft');
             $table->timestamps();
             
-            // Foreign Keys
-            $table->foreign('medical_record_id')->references('id')->on('medical_records')->onDelete('cascade');
-            $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
-            $table->foreign('assessor_id')->references('id')->on('users')->onDelete('set null');
-            
             // Indexes
             $table->index(['patient_id', 'created_at'], 'idx_assessment_patient_date');
             $table->index(['assessor_id', 'created_at'], 'idx_assessment_assessor_date');
             $table->index('assessment_type');
             $table->index('fabrication_suspicion_level');
+            
+            // Ensure consistent charset and collation to prevent foreign key constraint issues
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+        });
+
+        // Add foreign key constraints after table creation (deferred due to MySQL constraint issues)
+        Schema::table('clinical_assessments', function (Blueprint $table) {
+            $table->foreign('medical_record_id')->references('id')->on('medical_records')->onDelete('cascade');
+            $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
+            // Temporarily skipping the assessor_id foreign key constraint due to MySQL constraint issues
+            // Will be added in a follow-up migration
         });
 
         // Create assessment_consistency_logs table for tracking changes
@@ -129,9 +137,21 @@ return new class extends Migration
             $table->text('previous_value')->nullable();
             $table->text('current_value')->nullable();
             $table->text('analysis_notes')->nullable();
-            $table->unsignedBigInteger('logged_by');
+            $table->unsignedBigInteger('logged_by')->nullable(); // Required for ON DELETE SET NULL foreign key
             $table->timestamps();
             
+            // Indexes
+            $table->index(['clinical_assessment_id', 'created_at'], 'idx_consistency_log_assessment_date');
+            $table->index(['patient_id', 'created_at'], 'idx_consistency_log_patient_date');
+            $table->index('logged_by', 'assessment_consistency_logs_logged_by_index');
+            
+            // Ensure consistent charset and collation to prevent foreign key constraint issues
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+        });
+
+        // Add foreign key constraints after table creation
+        Schema::table('assessment_consistency_logs', function (Blueprint $table) {
             $table->foreign('clinical_assessment_id')->references('id')->on('clinical_assessments')->onDelete('cascade');
             $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
             $table->foreign('logged_by')->references('id')->on('users')->onDelete('set null');

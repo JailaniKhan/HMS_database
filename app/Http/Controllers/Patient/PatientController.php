@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Bill;
 use App\Services\Billing\BillCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use Inertia\Inertia;
@@ -258,17 +257,9 @@ class PatientController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Patient $patient)
+    public function update(UpdatePatientRequest $request, Patient $patient)
     {
-        $validated = $request->validate([
-            'first_name' => 'nullable|string|max:255',
-            'father_name' => 'nullable|string|max:255',
-            'gender' => 'nullable|in:male,female,other',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'age' => 'nullable|integer|min:0|max:150',
-            'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-        ]);
+        $validated = $request->validated();
 
         $sanitizedData = $this->sanitizeInput($validated);
 
