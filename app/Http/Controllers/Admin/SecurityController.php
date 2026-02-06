@@ -25,6 +25,10 @@ class SecurityController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        return Inertia::render('Admin/Security/Index');
+        return Inertia::render('Admin/Security/Index', [
+            'auth' => [
+                'user' => $user,
+            ],
+        ]);
     }
 }
