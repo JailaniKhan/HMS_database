@@ -15,11 +15,8 @@ import {
     Save, 
     AlertCircle, 
     User, 
-    Heart, 
-    Phone, 
     CheckCircle2,
-    CircleDashed,
-    ChevronRight
+    CircleDashed
 } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Patient, PatientFormData } from '@/types/patient';
@@ -33,7 +30,6 @@ type TabValue = 'personal' | 'medical' | 'emergency';
 export default function PatientEdit({ patient }: PatientEditProps) {
     const [activeTab, setActiveTab] = useState<TabValue>('personal');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [updateSuccess, setUpdateSuccess] = useState(false);
 
     const { data, setData, processing, errors, put, wasSuccessful } = useForm<PatientFormData>({
         first_name: patient?.first_name || '',
@@ -43,11 +39,6 @@ export default function PatientEdit({ patient }: PatientEditProps) {
         address: patient?.address || '',
         age: patient?.age?.toString() || '',
         blood_group: patient?.blood_group || '',
-        blood_type: patient?.blood_type || '',
-        allergies: patient?.allergies || '',
-        emergency_contact_name: patient?.emergency_contact_name || '',
-        emergency_contact_phone: patient?.emergency_contact_phone || '',
-        medical_history: patient?.medical_history || '',
     });
 
     // Validation checks
@@ -92,28 +83,15 @@ export default function PatientEdit({ patient }: PatientEditProps) {
             return;
         }
 
-        // Construct URL directly since route() helper may have caching issues
-        const updateUrl = `/patients/${patient.patient_id}`;
+        // Use the route helper with the patient ID
+        const updateUrl = route('patients.update', { patient: patient.patient_id });
 
-        try {
-            put(updateUrl, {
-                preserveState: true,
-                onSuccess: (page) => {
-                    setIsSubmitting(false);
-                    setUpdateSuccess(true);
-                    console.log('Update successful!', page);
-                    // Clear success message after 3 seconds
-                    setTimeout(() => setUpdateSuccess(false), 3000);
-                },
-                onError: (errors: Record<string, string>) => {
-                    setIsSubmitting(false);
-                    console.error('Update errors:', errors);
-                },
-            });
-        } catch (error) {
-            setIsSubmitting(false);
-            console.error('Unexpected error:', error);
-        }
+        put(updateUrl, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsSubmitting(false);
+            },
+        });
     };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -127,8 +105,6 @@ export default function PatientEdit({ patient }: PatientEditProps) {
 
     const tabs: { id: TabValue; label: string; icon: typeof User }[] = [
         { id: 'personal', label: 'Personal Info', icon: User },
-        { id: 'medical', label: 'Medical Details', icon: Heart },
-        { id: 'emergency', label: 'Emergency Contact', icon: Phone },
     ];
 
     const totalErrors = Object.keys(errors).length;
@@ -150,7 +126,7 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                     <div>
                         <Heading 
                             title={`Edit Patient: ${patient.patient_id}`}
-                            description="Update patient information and medical details"
+                            description="Update patient information"
                         />
                     </div>
                     
@@ -210,12 +186,12 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                     </Alert>
                 )}
 
-                {/* Success Message */}
-                {(updateSuccess || wasSuccessful) && (
+                {/* Success Message from Backend Flash */}
+                {wasSuccessful && (
                     <Alert className="bg-green-50 border-green-200">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-800">
-                            Patient information has been updated successfully!
+                            Patient has been updated successfully!
                         </AlertDescription>
                     </Alert>
                 )}
@@ -223,100 +199,63 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                 {/* Form */}
                 <form onSubmit={handleSubmit}>
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full grid-cols-1">
                             {tabs.map((tab) => (
-                                <TabsTrigger 
-                                    key={tab.id} 
-                                    value={tab.id}
-                                    className="flex items-center gap-2"
-                                >
+                                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
                                     <tab.icon className="h-4 w-4" />
                                     {tab.label}
                                 </TabsTrigger>
                             ))}
                         </TabsList>
 
-                        {/* Personal Information Tab */}
+                        {/* Personal Info Tab */}
                         <TabsContent value="personal" className="space-y-6">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <User className="h-5 w-5 text-blue-500" />
-                                        Personal Information
+                                        <User className="h-5 w-5" />
+                                        Basic Information
                                     </CardTitle>
                                     <CardDescription>
-                                        Basic demographic and contact information for the patient.
+                                        Enter the patient's basic personal details
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* First Name */}
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="first_name" className="required">
-                                                First Name
-                                            </Label>
+                                            <Label htmlFor="first_name">First Name *</Label>
                                             <Input
                                                 id="first_name"
                                                 name="first_name"
                                                 value={data.first_name}
                                                 onChange={handleChange}
                                                 placeholder="Enter first name"
-                                                className={errors.first_name ? 'border-red-500' : ''}
+                                                required
                                             />
                                             {errors.first_name && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.first_name}
-                                                </p>
+                                                <p className="text-sm text-red-500">{errors.first_name}</p>
                                             )}
                                         </div>
-
-                                        {/* Father's Name */}
+                                        
                                         <div className="space-y-2">
-                                            <Label htmlFor="father_name">Father's Name</Label>
+                                            <Label htmlFor="father_name">Father's Name *</Label>
                                             <Input
                                                 id="father_name"
                                                 name="father_name"
                                                 value={data.father_name}
                                                 onChange={handleChange}
                                                 placeholder="Enter father's name"
-                                                className={errors.father_name ? 'border-red-500' : ''}
+                                                required
                                             />
                                             {errors.father_name && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.father_name}
-                                                </p>
+                                                <p className="text-sm text-red-500">{errors.father_name}</p>
                                             )}
                                         </div>
+                                    </div>
 
-                                        {/* Gender */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="gender" className="required">Gender</Label>
-                                            <Select 
-                                                value={data.gender} 
-                                                onValueChange={(value) => handleSelectChange('gender', value)}
-                                            >
-                                                <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
-                                                    <SelectValue placeholder="Select gender" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="male">Male</SelectItem>
-                                                    <SelectItem value="female">Female</SelectItem>
-                                                    <SelectItem value="other">Other</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.gender && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.gender}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Age */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="age" className="required">Age</Label>
+                                            <Label htmlFor="age">Age *</Label>
                                             <Input
                                                 id="age"
                                                 name="age"
@@ -326,40 +265,55 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                                                 value={data.age}
                                                 onChange={handleChange}
                                                 placeholder="Enter age"
-                                                className={errors.age ? 'border-red-500' : ''}
+                                                required
                                             />
                                             {errors.age && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.age}
-                                                </p>
+                                                <p className="text-sm text-red-500">{errors.age}</p>
                                             )}
                                         </div>
 
-                                        {/* Phone */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="phone">Phone Number</Label>
+                                            <Label htmlFor="gender">Gender *</Label>
+                                            <Select 
+                                                value={data.gender} 
+                                                onValueChange={(value) => handleSelectChange('gender', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="male">Male</SelectItem>
+                                                    <SelectItem value="female">Female</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.gender && (
+                                                <p className="text-sm text-red-500">{errors.gender}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone">Phone Number *</Label>
                                             <Input
                                                 id="phone"
                                                 name="phone"
+                                                type="tel"
                                                 value={data.phone}
                                                 onChange={handleChange}
                                                 placeholder="Enter phone number"
-                                                className={errors.phone ? 'border-red-500' : ''}
+                                                required
                                             />
                                             {errors.phone && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.phone}
-                                                </p>
+                                                <p className="text-sm text-red-500">{errors.phone}</p>
                                             )}
                                         </div>
 
-                                        {/* Blood Group */}
                                         <div className="space-y-2">
                                             <Label htmlFor="blood_group">Blood Group</Label>
                                             <Select 
-                                                value={data.blood_group || ''} 
+                                                value={data.blood_group} 
                                                 onValueChange={(value) => handleSelectChange('blood_group', value)}
                                             >
                                                 <SelectTrigger>
@@ -377,15 +331,11 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                                                 </SelectContent>
                                             </Select>
                                             {errors.blood_group && (
-                                                <p className="text-sm text-red-600 flex items-center gap-1">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {errors.blood_group}
-                                                </p>
+                                                <p className="text-sm text-red-500">{errors.blood_group}</p>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Address */}
                                     <div className="space-y-2">
                                         <Label htmlFor="address">Address</Label>
                                         <Textarea
@@ -395,202 +345,29 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                                             onChange={handleChange}
                                             placeholder="Enter full address"
                                             rows={3}
-                                            className={errors.address ? 'border-red-500' : ''}
                                         />
                                         {errors.address && (
-                                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                                <AlertCircle className="h-3 w-3" />
-                                                {errors.address}
-                                            </p>
+                                            <p className="text-sm text-red-500">{errors.address}</p>
                                         )}
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        {/* Medical Details Tab */}
-                        <TabsContent value="medical" className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Heart className="h-5 w-5 text-red-500" />
-                                        Medical Information
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Blood type, allergies, and medical history for better patient care.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Blood Type */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="blood_type">Blood Type</Label>
-                                            <Select 
-                                                value={data.blood_type || ''} 
-                                                onValueChange={(value) => handleSelectChange('blood_type', value)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select blood type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="A">A</SelectItem>
-                                                    <SelectItem value="B">B</SelectItem>
-                                                    <SelectItem value="AB">AB</SelectItem>
-                                                    <SelectItem value="O">O</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <p className="text-xs text-gray-500">
-                                                Different from blood group (e.g., A+ vs A)
-                                            </p>
-                                        </div>
-
-                                        {/* Allergies */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="allergies">Allergies</Label>
-                                            <Input
-                                                id="allergies"
-                                                name="allergies"
-                                                value={data.allergies || ''}
-                                                onChange={handleChange}
-                                                placeholder="e.g., Penicillin, Peanuts, Dust"
-                                            />
-                                            <p className="text-xs text-gray-500">
-                                                List any known allergies separated by commas
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Medical History */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="medical_history">Medical History</Label>
-                                        <Textarea
-                                            id="medical_history"
-                                            name="medical_history"
-                                            value={data.medical_history || ''}
-                                            onChange={handleChange}
-                                            placeholder="Enter relevant medical history, past surgeries, chronic conditions, etc."
-                                            rows={6}
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Include any relevant medical information for future reference
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        {/* Emergency Contact Tab */}
-                        <TabsContent value="emergency" className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Phone className="h-5 w-5 text-green-500" />
-                                        Emergency Contact
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Contact person to reach in case of emergency.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Emergency Contact Name */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="emergency_contact_name">
-                                                Contact Name
-                                            </Label>
-                                            <Input
-                                                id="emergency_contact_name"
-                                                name="emergency_contact_name"
-                                                value={data.emergency_contact_name || ''}
-                                                onChange={handleChange}
-                                                placeholder="e.g., John Doe (Spouse)"
-                                            />
-                                            <p className="text-xs text-gray-500">
-                                                Name and relationship to patient
-                                            </p>
-                                        </div>
-
-                                        {/* Emergency Contact Phone */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="emergency_contact_phone">
-                                                Contact Phone
-                                            </Label>
-                                            <Input
-                                                id="emergency_contact_phone"
-                                                name="emergency_contact_phone"
-                                                value={data.emergency_contact_phone || ''}
-                                                onChange={handleChange}
-                                                placeholder="+1 (555) 123-4567"
-                                            />
-                                            <p className="text-xs text-gray-500">
-                                                Phone number including country code
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <Alert className="bg-blue-50 border-blue-200">
-                                        <AlertCircle className="h-4 w-4 text-blue-600" />
-                                        <AlertDescription className="text-blue-800">
-                                            This contact will be notified in case of medical emergencies.
-                                            Please ensure the information is accurate and up to date.
-                                        </AlertDescription>
-                                    </Alert>
                                 </CardContent>
                             </Card>
                         </TabsContent>
                     </Tabs>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end space-x-4 pt-6 mt-6 border-t">
+                    <div className="flex justify-end gap-4 mt-6">
                         <Link href={`/patients/${patient.patient_id}`}>
                             <Button type="button" variant="outline">
                                 Cancel
                             </Button>
                         </Link>
-                        <Button 
-                            type="submit" 
-                            disabled={processing || isSubmitting}
-                            className="bg-blue-600 hover:bg-blue-700 min-w-37.5"
-                        >
-                            {processing || isSubmitting ? (
-                                <>
-                                    <CircleDashed className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    Save Changes
-                                </>
-                            )}
+                        <Button type="submit" disabled={processing || isSubmitting}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {processing || isSubmitting ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </div>
                 </form>
-
-                {/* Navigation Hint */}
-                <div className="flex justify-center">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        {tabs.map((tab, index) => (
-                            <React.Fragment key={tab.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-1 px-3 py-1 rounded-full transition-colors ${
-                                        activeTab === tab.id
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'hover:bg-gray-100'
-                                    }`}
-                                >
-                                    <tab.icon className="h-3 w-3" />
-                                    {tab.label}
-                                </button>
-                                {index < tabs.length - 1 && (
-                                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                </div>
             </div>
         </HospitalLayout>
     );

@@ -28,11 +28,6 @@ class Patient extends Model
         'user_id',
         'age',
         'blood_group',
-        'blood_type',
-        'allergies',
-        'emergency_contact_name',
-        'emergency_contact_phone',
-        'medical_history',
         'address',
     ];
 

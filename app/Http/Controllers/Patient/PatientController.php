@@ -45,11 +45,6 @@ class PatientController extends Controller
                 ? $data['gender']
                 : null,
             'blood_group' => $this->validateBloodGroup($data['blood_group'] ?? null),
-            'blood_type' => strip_tags($data['blood_type'] ?? ''),
-            'allergies' => strip_tags($data['allergies'] ?? ''),
-            'emergency_contact_name' => strip_tags($data['emergency_contact_name'] ?? ''),
-            'emergency_contact_phone' => preg_replace('/[^0-9+]/', '', $data['emergency_contact_phone'] ?? ''),
-            'medical_history' => strip_tags($data['medical_history'] ?? ''),
         ];
     }
 
@@ -265,8 +260,6 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
-      
-        
         $validated = $request->validate([
             'first_name' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
@@ -275,11 +268,6 @@ class PatientController extends Controller
             'address' => 'nullable|string',
             'age' => 'nullable|integer|min:0|max:150',
             'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'blood_type' => 'nullable|string|max:50',
-            'allergies' => 'nullable|string|max:1000',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:20',
-            'medical_history' => 'nullable|string|max:5000',
         ]);
 
         $sanitizedData = $this->sanitizeInput($validated);
@@ -300,22 +288,10 @@ class PatientController extends Controller
             'address' => $sanitizedData['address'],
             'age' => $sanitizedData['age'],
             'blood_group' => $sanitizedData['blood_group'],
-            'blood_type' => $sanitizedData['blood_type'],
-            'allergies' => $sanitizedData['allergies'],
-            'emergency_contact_name' => $sanitizedData['emergency_contact_name'],
-            'emergency_contact_phone' => $sanitizedData['emergency_contact_phone'],
-            'medical_history' => $sanitizedData['medical_history'],
         ]);
 
-        // For Inertia PUT requests, return success response instead of redirect
-        if ($request->wantsJson() || $request->header('X-Inertia')) {
-            return response()->json([
-                'message' => 'Patient updated successfully',
-                'patient' => $patient->fresh()
-            ], 200);
-        }
-
-        return redirect()->route('patients.index')->with('success', 'Patient updated successfully.');
+        // Return Inertia response for SPA behavior - redirect back to edit page with success message
+        return redirect()->back()->with('success', 'Patient updated successfully.');
     }
 
     /**

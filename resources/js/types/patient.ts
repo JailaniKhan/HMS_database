@@ -8,11 +8,6 @@ export interface Patient {
     address: string | null;
     blood_group: string | null;
     age: number | null;
-    blood_type: string | null;
-    allergies: string | null;
-    emergency_contact_name: string | null;
-    emergency_contact_phone: string | null;
-    medical_history: string | null;
     created_at: string;
     updated_at: string;
     user?: {
@@ -30,9 +25,4 @@ export interface PatientFormData {
     address: string;
     age: string;
     blood_group: string;
-    blood_type?: string;
-    allergies?: string;
-    emergency_contact_name?: string;
-    emergency_contact_phone?: string;
-    medical_history?: string;
 }
