@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, type FormEvent, type ChangeEvent } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -80,7 +80,7 @@ export default function PatientEdit({ patient }: PatientEditProps) {
         );
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
@@ -108,7 +108,7 @@ export default function PatientEdit({ patient }: PatientEditProps) {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setData(name as keyof typeof data, value);
     };
@@ -587,6 +587,3 @@ export default function PatientEdit({ patient }: PatientEditProps) {
         </HospitalLayout>
     );
 }
-
-// Helper component for React.Fragment since we're using it inline
-import React from 'react';
