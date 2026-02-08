@@ -32,16 +32,6 @@ export function useApi() {
 
     const get = useCallback(async <T = unknown>(url: string, params?: Record<string, unknown>): Promise<AxiosResponse<T>> => {
         try {
-            // DEBUG: Log authentication state
-            const cookies = document.cookie;
-            console.debug('[API DEBUG] GET request starting', {
-                url: `${baseURL}${url}`,
-                cookiesPresent: cookies.length > 0,
-                cookieNames: cookies.split(';').map(c => c.trim().split('=')[0]),
-                withCredentials: true,
-                userAgent: navigator.userAgent,
-            });
-
             const response = await axios.get<T>(`${baseURL}${url}`, {
                 params,
                 withCredentials: true, // Important for Sanctum cookies
@@ -56,12 +46,11 @@ export function useApi() {
             return response
         } catch (error) {
             const axiosError = error as AxiosError;
-            console.error('[API DEBUG] GET request failed', {
+            // Security: Never log cookies or sensitive data
+            console.error('[API] GET request failed', {
                 url: `${baseURL}${url}`,
                 status: axiosError.response?.status,
                 statusText: axiosError.response?.statusText,
-                message: axiosError.message,
-                cookies: document.cookie,
             });
             handleApiError(axiosError)
             throw error
@@ -155,19 +144,10 @@ export function useApi() {
         // No-op: tokens are HttpOnly cookies managed by backend
     }, [])
 
-    // DEBUG: Check and log authentication status
+    // Check authentication status (debug removed for security)
     const checkAuthStatus = useCallback((): void => {
-        const cookies = document.cookie;
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        const csrfToken = metaTag?.getAttribute('content') || '';
-        
-        console.debug('[AUTH DEBUG] Current authentication status:', {
-            cookiesPresent: cookies.length > 0,
-            cookieNames: cookies.split(';').map(c => c.trim().split('=')[0]),
-            hasCsrfToken: !!csrfToken,
-            localStorageToken: !!localStorage.getItem('auth_token'),
-            sessionStorageToken: !!sessionStorage.getItem('auth_token'),
-        });
+        // Security: Never log cookie names or token status
+        // This method is kept for API compatibility but logging has been removed
     }, [])
 
     const handleApiError = useCallback((error: AxiosError): void => {
@@ -178,19 +158,7 @@ export function useApi() {
             if (status === 401) {
                 consecutive401Count++;
 
-                // DEBUG: Log detailed authentication state on 401
-                const cookies = document.cookie;
-                const metaTag = document.querySelector('meta[name="csrf-token"]');
-                console.error('[401 DEBUG] Unauthorized request detailed analysis:', {
-                    cookiesPresent: cookies.length > 0,
-                    cookieNames: cookies.split(';').map(c => c.trim().split('=')[0]),
-                    hasCsrfToken: !!metaTag?.getAttribute('content'),
-                    localStorageToken: !!localStorage.getItem('auth_token'),
-                    sessionStorageToken: !!sessionStorage.getItem('auth_token'),
-                    consecutive401Count,
-                    url: error.config?.url,
-                    method: error.config?.method,
-                });
+                // Security: Never log cookie data or authentication details
 
                 // Prevent infinite loops by limiting consecutive 401 errors
                 if (consecutive401Count >= MAX_CONSECUTIVE_401) {

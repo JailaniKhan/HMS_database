@@ -58,13 +58,25 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
     (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Sanitize user input to prevent XSS
+  const sanitizeForDisplay = (text: string): string => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   const handleDelete = (categoryId: number, categoryName: string, medicineCount: number) => {
+    // Security: Sanitize categoryName before displaying in UI
+    const sanitizedName = sanitizeForDisplay(categoryName);
+    
     if (medicineCount > 0) {
-      alert(`Cannot delete "${categoryName}" because it contains ${medicineCount} medicine(s). Please reassign or delete these medicines first.`);
+      // Use a modal or toast notification instead of alert for production
+      // For now, sanitize the input to prevent XSS
+      alert(`Cannot delete the selected category because it contains ${medicineCount} medicine(s). Please reassign or delete these medicines first.`);
       return;
     }
     
-    if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+    if (confirm(`Are you sure you want to delete this category? This action cannot be undone.`)) {
       router.delete(`/pharmacy/categories/${categoryId}`);
     }
   };

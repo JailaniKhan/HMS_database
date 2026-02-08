@@ -192,13 +192,19 @@ class SecurityController extends Controller
             ], 422);
         }
 
-        // Create the user with a default password
+        // Generate a secure random temporary password
+        $tempPassword = $this->generateSecurePassword();
+        
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'password' => Hash::make('password123'), // Default password, should be changed immediately
+            'password' => Hash::make($tempPassword),
             'role' => $request->role,
+            'password_change_required' => true, // Flag to force password change on first login
         ]);
+        
+        // TODO: Send email to user with temporary password
+        // Mail::to($user->email)->send(new NewUserWelcome($user, $tempPassword));
 
         return response()->json([
             'message' => 'User created successfully',
@@ -287,13 +293,20 @@ class SecurityController extends Controller
             ], 403);
         }
 
-        // Reset to default password
+        // Generate a secure random temporary password
+        $tempPassword = $this->generateSecurePassword();
+        
         $user->update([
-            'password' => Hash::make('password123')
+            'password' => Hash::make($tempPassword),
+            'password_change_required' => true, // Force password change on next login
         ]);
+        
+        // TODO: Send email to user with temporary password
+        // Mail::to($user->email)->send(new PasswordResetNotification($user, $tempPassword));
 
         return response()->json([
-            'message' => 'User password reset successfully'
+            'message' => 'User password reset successfully. A temporary password has been generated and should be sent to the user.',
+            'note' => 'User must change password on next login'
         ]);
     }
 
@@ -363,19 +376,46 @@ $users = User::select('id', 'name', 'username', 'role')
     }
 
     /**
+     * Generate a cryptographically secure random password
+     */
+    private function generateSecurePassword(int $length = 16): string
+    {
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $numbers = '0123456789';
+        $special = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        
+        $all = $lowercase . $uppercase . $numbers . $special;
+        $password = '';
+        
+        // Ensure at least one of each character type
+        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        $password .= $special[random_int(0, strlen($special) - 1)];
+        
+        // Fill the rest randomly
+        for ($i = 4; $i < $length; $i++) {
+            $password .= $all[random_int(0, strlen($all) - 1)];
+        }
+        
+        // Shuffle the password
+        return str_shuffle($password);
+    }
+
+    /**
      * Get available roles excluding Super Admin
      */
     private function getAvailableRoles(): array
     {
-        $roles = \App\Models\RolePermission::select('role')
-                             ->distinct()
-                             ->where('role', '!=', 'Super Admin')
-                             ->pluck('role')
-                             ->toArray();
+        $roles = \App\Models\Role::query()
+            ->where('name', '!=', 'Super Admin')
+            ->pluck('name')
+            ->toArray();
                              
-        // Add fallback roles if no role permissions exist
+        // Add fallback roles if no roles exist in database
         if (empty($roles)) {
-            return ['Super Admin', 'Reception Admin', 'Pharmacy Admin', 'Laboratory Admin','Sub Super Admin'];
+            return ['Reception Admin', 'Pharmacy Admin', 'Laboratory Admin', 'Sub Super Admin'];
         }
         
         return $roles;

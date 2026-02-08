@@ -2,30 +2,66 @@
 
 namespace App\Http\Controllers\API\v1;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\BaseApiController;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
-class DoctorController extends Controller
+class DoctorController extends BaseApiController
 {
+    /**
+     * Check if user can access doctors
+     */
+    private function authorizeDoctorAccess(): void
+    {
+        if (!auth()->user()?->hasPermission('view-doctors')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Check if user can modify doctors
+     */
+    private function authorizeDoctorModify(): void
+    {
+        if (!auth()->user()?->hasPermission('edit-doctors')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Sanitize input data
+     */
+    private function sanitizeInput(array $data): array
+    {
+        return [
+            'name' => htmlspecialchars(strip_tags($data['name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'specialization' => htmlspecialchars(strip_tags($data['specialization'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'license_number' => htmlspecialchars(strip_tags($data['license_number'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'phone' => preg_replace('/[^0-9+\-\s\(\)]/', '', $data['phone'] ?? ''),
+            'department_id' => filter_var($data['department_id'] ?? null, FILTER_VALIDATE_INT),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->input('per_page', 10);
-        $doctors = Doctor::with('department')->paginate($perPage);
-        
-        return response()->json([
-            'data' => $doctors->items(),
-            'pagination' => [
-                'current_page' => $doctors->currentPage(),
-                'last_page' => $doctors->lastPage(),
-                'per_page' => $doctors->perPage(),
-                'total' => $doctors->total(),
-            ]
-        ]);
+        $this->authorizeDoctorAccess();
+
+        return $this->executeWithErrorHandling(function () use ($request) {
+            $perPage = $this->validatePerPage($request->input('per_page', 10));
+            $doctors = Doctor::with('department')->paginate($perPage);
+
+            Log::info('Doctors list retrieved via API', [
+                'count' => $doctors->total(),
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->paginatedResponse($doctors, 'Doctors retrieved successfully');
+        }, 'Doctor list retrieval');
     }
 
     /**
@@ -33,21 +69,35 @@ class DoctorController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:doctors,email',
-            'phone' => 'required|string|max:20',
-            'specialization' => 'required|string|max:255',
-            'license_number' => 'required|string|max:255|unique:doctors,license_number',
-            'department_id' => 'required|exists:departments,id',
-        ]);
+        $this->authorizeDoctorModify();
 
-        $doctor = Doctor::create($request->all());
+        return $this->executeWithErrorHandling(function () use ($request) {
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:doctors,email',
+                'phone' => 'required|string|max:20',
+                'specialization' => 'required|string|max:255',
+                'license_number' => 'required|string|max:255|unique:doctors,license_number',
+                'department_id' => 'required|exists:departments,id',
+            ]);
 
-        return response()->json([
-            'message' => 'Doctor created successfully',
-            'data' => $doctor
-        ], 201);
+            $sanitized = $this->sanitizeInput($validatedData);
+            $doctor = Doctor::create([
+                'name' => $sanitized['name'],
+                'email' => $validatedData['email'],
+                'phone' => $sanitized['phone'],
+                'specialization' => $sanitized['specialization'],
+                'license_number' => $sanitized['license_number'],
+                'department_id' => $sanitized['department_id'],
+            ]);
+
+            Log::info('Doctor created via API', [
+                'doctor_id' => $doctor->id,
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->successResponse($doctor, 'Doctor created successfully', 201);
+        }, 'Doctor creation');
     }
 
     /**
@@ -55,11 +105,21 @@ class DoctorController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $doctor = Doctor::with('department')->findOrFail($id);
+        $this->authorizeDoctorAccess();
 
-        return response()->json([
-            'data' => $doctor
-        ]);
+        $doctorId = $this->validateId($id);
+        if (!$doctorId) {
+            return $this->errorResponse('Invalid doctor ID', 400);
+        }
+
+        return $this->executeWithErrorHandling(
+            function () use ($doctorId) {
+                $doctor = Doctor::with('department')->findOrFail($doctorId);
+                return $this->successResponse($doctor);
+            },
+            'Doctor retrieval',
+            $id
+        );
     }
 
     /**
@@ -67,23 +127,42 @@ class DoctorController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $doctor = Doctor::findOrFail($id);
+        $this->authorizeDoctorModify();
 
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:doctors,email,' . $id,
-            'phone' => 'sometimes|required|string|max:20',
-            'specialization' => 'sometimes|required|string|max:255',
-            'license_number' => 'sometimes|required|string|max:255|unique:doctors,license_number,' . $id,
-            'department_id' => 'sometimes|required|exists:departments,id',
-        ]);
+        $doctorId = $this->validateId($id);
+        if (!$doctorId) {
+            return $this->errorResponse('Invalid doctor ID', 400);
+        }
 
-        $doctor->update($request->all());
+        return $this->executeWithErrorHandling(function () use ($request, $doctorId, $id) {
+            $doctor = Doctor::findOrFail($doctorId);
 
-        return response()->json([
-            'message' => 'Doctor updated successfully',
-            'data' => $doctor
-        ]);
+            $validatedData = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|email|unique:doctors,email,' . $id,
+                'phone' => 'sometimes|required|string|max:20',
+                'specialization' => 'sometimes|required|string|max:255',
+                'license_number' => 'sometimes|required|string|max:255|unique:doctors,license_number,' . $id,
+                'department_id' => 'sometimes|required|exists:departments,id',
+            ]);
+
+            $sanitized = $this->sanitizeInput($validatedData);
+            $doctor->update([
+                'name' => $sanitized['name'] ?? $doctor->name,
+                'email' => $validatedData['email'] ?? $doctor->email,
+                'phone' => $sanitized['phone'] ?? $doctor->phone,
+                'specialization' => $sanitized['specialization'] ?? $doctor->specialization,
+                'license_number' => $sanitized['license_number'] ?? $doctor->license_number,
+                'department_id' => $sanitized['department_id'] ?? $doctor->department_id,
+            ]);
+
+            Log::info('Doctor updated via API', [
+                'doctor_id' => $doctor->id,
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->successResponse($doctor, 'Doctor updated successfully');
+        }, 'Doctor update', $id);
     }
 
     /**
@@ -91,11 +170,27 @@ class DoctorController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $doctor = Doctor::findOrFail($id);
-        $doctor->delete();
+        $this->authorizeDoctorModify();
 
-        return response()->json([
-            'message' => 'Doctor deleted successfully'
-        ]);
+        if (!auth()->user()?->hasPermission('delete-doctors')) {
+            return $this->unauthorizedResponse('Unauthorized to delete doctors');
+        }
+
+        $doctorId = $this->validateId($id);
+        if (!$doctorId) {
+            return $this->errorResponse('Invalid doctor ID', 400);
+        }
+
+        return $this->executeWithErrorHandling(function () use ($doctorId) {
+            $doctor = Doctor::findOrFail($doctorId);
+            $doctor->delete();
+
+            Log::info('Doctor deleted via API', [
+                'doctor_id' => $doctorId,
+                'user_id' => auth()->id()
+            ]);
+
+            return $this->successResponse(null, 'Doctor deleted successfully');
+        }, 'Doctor deletion', $id);
     }
 }

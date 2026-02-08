@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HasPerformanceOptimization;
 use App\Http\Requests\Billing\StoreBillRequest;
 use App\Http\Requests\Billing\UpdateBillRequest;
 use App\Http\Requests\Billing\VoidBillRequest;
@@ -32,6 +33,7 @@ use Exception;
 
 class BillController extends Controller
 {
+    use HasPerformanceOptimization;
     /**
      * Check if user can access this bill
      */
@@ -473,8 +475,23 @@ class BillController extends Controller
 
             $bill->update($updateData);
 
-            // Update items if provided
+            // BUSINESS LOGIC FIX: Validate and update items
             if ($request->has('items') && is_array($request->items)) {
+                // Validate all items belong to this bill if IDs provided
+                $requestItemIds = collect($request->items)
+                    ->pluck('id')
+                    ->filter()
+                    ->toArray();
+                
+                if (!empty($requestItemIds)) {
+                    $existingItemIds = $bill->items()->pluck('id')->toArray();
+                    $invalidItems = array_diff($requestItemIds, $existingItemIds);
+                    
+                    if (!empty($invalidItems)) {
+                        throw new Exception('Invalid bill items provided: ' . implode(', ', $invalidItems));
+                    }
+                }
+                
                 // Remove existing items
                 $bill->items()->delete();
 
@@ -728,12 +745,19 @@ class BillController extends Controller
                 },
             ])->findOrFail($patientId);
 
-            // Check if user has broad permissions to view all patient data
+            // SECURITY FIX: Implement proper authorization
             $user = auth()->user();
-            if (!$user->isSuperAdmin() && !$user->hasPermission('view-all-billing')) {
-                // Users can only view patient data if they have specific access
-                // This is handled by the permission middleware, but we add an extra check
-                // for granular access control
+            if (!$user->isSuperAdmin() && 
+                !$user->hasPermission('view-all-billing') &&
+                !$user->hasPermission('view-patients')) {
+                // Check if user created bills for this patient
+                $hasAccess = Bill::where('patient_id', $patientId)
+                    ->where('created_by', $user->id)
+                    ->exists();
+                
+                if (!$hasAccess) {
+                    abort(403, 'Unauthorized access to patient billing data');
+                }
             }
 
             // Get recent bills for this patient
@@ -838,48 +862,29 @@ class BillController extends Controller
 
     /**
      * Get all bill items across all bills (API endpoint for frontend).
+     * SECURITY FIX: Added authorization and pagination
      */
     public function getAllItems(Request $request): JsonResponse
     {
-        // Allow public access to this endpoint
-        // $this->authorize('view-billing'); // Removed for public access
+        // SECURITY FIX: Require proper authorization
+        $this->authorize('view-billing');
 
         try {
-            // Get all bills with their items
-            $bills = Bill::with(['items.source', 'patient'])
+            // PERFORMANCE FIX: Use pagination instead of loading all
+            $perPage = min(max($request->input('per_page', 50), 1), 100);
+            
+            $bills = Bill::with([
+                'items.source',
+                'patient:id,first_name,father_name'
+            ])
+                ->select('id', 'bill_id', 'patient_id', 'bill_date', 'total_amount')
                 ->active()
                 ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Flatten all items from all bills
-            $allItems = collect();
-            $totalItems = 0;
-            $totalAmount = 0;
-
-            foreach ($bills as $bill) {
-                foreach ($bill->items as $item) {
-                    // Add bill and patient info to each item
-                    $itemData = $item->toArray();
-                    $itemData['bill_info'] = [
-                        'id' => $bill->id,
-                        'bill_id' => $bill->bill_id,
-                        'patient_name' => $bill->patient->full_name,
-                        'bill_date' => $bill->bill_date,
-                    ];
-                    $allItems->push($itemData);
-                    $totalItems++;
-                    $totalAmount += $item->total_price;
-                }
-            }
+                ->paginate($perPage);
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'items' => $allItems->toArray(),
-                    'total_items' => $totalItems,
-                    'total_amount' => $totalAmount,
-                    'bill_count' => $bills->count(),
-                ],
+                'data' => $bills,
             ]);
         } catch (Exception $e) {
             return response()->json([

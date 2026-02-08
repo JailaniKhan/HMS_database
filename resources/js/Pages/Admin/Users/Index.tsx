@@ -57,11 +57,17 @@ export default function UsersIndex({ users, auth }: UsersIndexProps) {
 
     const deleteUser = (user: UserWithDetails) => {
         if (user.role === 'Super Admin') {
-            alert('Super Admin accounts cannot be deleted for security reasons.');
+            // Security: Use a proper UI notification system instead of alert
+            // This is a security control to prevent accidental/malicious super admin deletion
+            window.dispatchEvent(new CustomEvent('show-notification', {
+                detail: { type: 'error', message: 'Super Admin accounts cannot be deleted for security reasons.' }
+            }));
             return;
         }
         if (user.role === 'Sub Super Admin' && auth.user.role !== 'Super Admin') {
-            alert('Only Super Admin can delete Sub Super Admin accounts.');
+            window.dispatchEvent(new CustomEvent('show-notification', {
+                detail: { type: 'error', message: 'Only Super Admin can delete Sub Super Admin accounts.' }
+            }));
             return;
         }
         if (confirm('Are you sure you want to delete this user?')) {

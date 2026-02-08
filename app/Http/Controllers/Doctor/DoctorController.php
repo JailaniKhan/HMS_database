@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HasPerformanceOptimization;
 use App\Models\Doctor;
 use App\Models\User;
 use App\Models\Department;
@@ -14,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 
 class DoctorController extends Controller
 {
+    use HasPerformanceOptimization;
     /**
      * Check if the current user can access doctor management
      */
@@ -74,7 +76,8 @@ class DoctorController extends Controller
     {
         $this->authorizeDoctorModify();
         
-        $departments = Department::all();
+        // Use cached departments instead of loading all
+        $departments = $this->getDepartments();
         return Inertia::render('Doctor/Create', [
             'departments' => $departments
         ]);
@@ -175,7 +178,8 @@ class DoctorController extends Controller
         $this->authorizeDoctorModify();
         
         $doctor->load('user', 'department');
-        $departments = Department::all();
+        // Use cached departments
+        $departments = $this->getDepartments();
         return Inertia::render('Doctor/Edit', [
             'doctor' => $doctor,
             'departments' => $departments

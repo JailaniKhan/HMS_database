@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HasPerformanceOptimization;
 use App\Models\Medicine;
 use App\Models\MedicineCategory;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 
 class MedicineController extends Controller
 {
+    use HasPerformanceOptimization;
+
     const LOW_STOCK_THRESHOLD = 10;
     const EXPIRY_WARNING_DAYS = 30;
 
@@ -149,7 +152,8 @@ class MedicineController extends Controller
     {
         $this->authorizeMedicineModify();
         
-        $categories = MedicineCategory::all();
+        // Use cached categories instead of loading all
+        $categories = $this->getMedicineCategories();
         
         return Inertia::render('Pharmacy/Medicines/Create', [
             'categories' => $categories
@@ -248,7 +252,8 @@ class MedicineController extends Controller
         }
         
         $medicine = Medicine::findOrFail($medicineId);
-        $categories = MedicineCategory::all();
+        // Use cached categories
+        $categories = $this->getMedicineCategories();
         
         return Inertia::render('Pharmacy/Medicines/Edit', [
             'medicine' => $medicine,

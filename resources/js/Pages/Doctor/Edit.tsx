@@ -63,24 +63,20 @@ export default function DoctorEdit({ doctor, departments = [] }: DoctorEditProps
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Debug: Log the doctor object and ID
-        console.log('Doctor object:', doctor);
-        console.log('Doctor ID:', doctor?.id);
-        
         if (!doctor?.id) {
-            console.error('Doctor ID is missing!');
+            // Security: Use toast/notification system instead of alert in production
+            // alert is used here temporarily for error visibility
             alert('Error: Doctor ID is missing. Please refresh the page.');
             return;
         }
         
         // Use the route helper to generate the correct URL
         const updateUrl = route('doctors.update', doctor.id);
-        console.log('Update URL:', updateUrl);
         
         put(updateUrl, {
             preserveScroll: true,
             onError: (errors) => {
-                console.error('Form submission errors:', errors);
+                // Error handling done via Inertia error bag
             },
         });
     };

@@ -12,21 +12,21 @@ export function initSessionHandler() {
   // Handle session errors on XHR failures
   document.addEventListener('inertia:xhr-error', (event) => {
     const error = event.detail;
-    console.error('[SessionHandler] Inertia XHR error:', error);
+    // Debug logging removed for production
     
     // Check for session-related errors
     if (isSessionError(error)) {
-      console.warn('[SessionHandler] Session expired, redirecting to login...');
+      // Debug logging removed for production
       redirectToLogin();
     }
   });
   
   // Handle navigation failures
   document.addEventListener('inertia:navigation-guarded', (event) => {
-    console.warn('[SessionHandler] Navigation guarded:', event.detail);
+    // Debug logging removed for production
   });
   
-  console.log('[SessionHandler] Session error handler initialized');
+  // Debug logging removed for production
 }
 
 /**
@@ -105,7 +105,7 @@ export function isAuthenticated() {
     // Default to false if we can't determine
     return false;
   } catch (e) {
-    console.error('[SessionHandler] Error checking authentication:', e);
+    // Debug logging removed for production
     return false;
   }
 }
@@ -118,13 +118,11 @@ export function validateSession() {
   const hasSession = document.cookie.includes('laravel_session=');
   
   if (!auth && !window.location.pathname.includes('/login')) {
-    console.warn('[SessionHandler] User appears logged out but not on login page');
     redirectToLogin();
     return false;
   }
   
   if (!hasSession && !window.location.pathname.includes('/login')) {
-    console.warn('[SessionHandler] No session cookie found');
     redirectToLogin();
     return false;
   }

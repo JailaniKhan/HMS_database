@@ -322,7 +322,8 @@ export default function SecurityCenterModal({ isOpen, onClose, currentUser }: Se
     
     const handleDeleteUser = async (user: User) => {
         if (user.role === 'Super Admin') {
-            alert('Super Admin accounts cannot be deleted for security reasons.');
+            // Security: Use state-based error display instead of alert
+            setUserManagementError('Super Admin accounts cannot be deleted for security reasons.');
             setShowDeleteConfirmation(null);
             return;
         }

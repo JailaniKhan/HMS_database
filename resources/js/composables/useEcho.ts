@@ -8,7 +8,7 @@ export function useEcho() {
     if (typeof window !== 'undefined' && window.Echo) {
       echo.value = window.Echo
       isConnected.value = true
-      console.log('Echo connected successfully')
+      // Debug logging removed for production
     } else {
       console.warn('Echo is not available. Make sure Laravel Echo is properly configured.')
     }
@@ -18,7 +18,7 @@ export function useEcho() {
     if (echo.value && typeof echo.value.disconnect === 'function') {
       echo.value.disconnect()
       isConnected.value = false
-      console.log('Echo disconnected')
+      // Debug logging removed for production
     }
   }
 
@@ -31,7 +31,7 @@ export function useEcho() {
     // Listen for broadcasted notifications
     echo.value.private(`user.${window.Laravel.userId}`)
       .notification((notification: any) => {
-        console.log('Received notification:', notification)
+        // Debug logging removed for production
         callback(notification)
       })
   }
@@ -44,7 +44,7 @@ export function useEcho() {
 
     echo.value.channel(channel)
       .listen(event, (data: any) => {
-        console.log(`Received ${event} on ${channel}:`, data)
+        // Debug logging removed for production
         callback(data)
       })
   }
@@ -64,21 +64,21 @@ export function useEcho() {
 
     if (callbacks.here) {
       presenceChannel.here((users: any[]) => {
-        console.log('Users in channel:', users)
+        // Debug logging removed for production
         callbacks.here!(users)
       })
     }
 
     if (callbacks.joining) {
       presenceChannel.joining((user: any) => {
-        console.log('User joined:', user)
+        // Debug logging removed for production
         callbacks.joining!(user)
       })
     }
 
     if (callbacks.leaving) {
       presenceChannel.leaving((user: any) => {
-        console.log('User left:', user)
+        // Debug logging removed for production
         callbacks.leaving!(user)
       })
     }
@@ -98,7 +98,7 @@ export function useEcho() {
     }
 
     echo.value.leave(channel)
-    console.log(`Left channel: ${channel}`)
+    // Debug logging removed for production
   }
 
   const getPresenceUsers = (channel: string): Promise<any[]> => {
