@@ -20,12 +20,62 @@ class PatientController extends Controller
     }
 
     /**
+     * Check if user can access patients
+     */
+    private function authorizePatientAccess(): void
+    {
+        if (!auth()->user()?->hasPermission('view-patients')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Check if user can modify patients
+     */
+    private function authorizePatientModify(): void
+    {
+        if (!auth()->user()?->hasPermission('edit-patients')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Sanitize input data
+     */
+    private function sanitizeInput(array $data): array
+    {
+        return [
+            'first_name' => htmlspecialchars(strip_tags($data['first_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'father_name' => htmlspecialchars(strip_tags($data['father_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'phone' => preg_replace('/[^0-9+\-\s\(\)]/', '', $data['phone'] ?? ''),
+            'address' => htmlspecialchars(strip_tags($data['address'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'age' => filter_var($data['age'] ?? null, FILTER_VALIDATE_INT),
+            'gender' => in_array($data['gender'] ?? '', ['male', 'female', 'other']) ? $data['gender'] : null,
+            'blood_group' => $this->validateBloodGroup($data['blood_group'] ?? null),
+            'emergency_contact_name' => htmlspecialchars(strip_tags($data['emergency_contact_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'emergency_contact_phone' => preg_replace('/[^0-9+\-\s\(\)]/', '', $data['emergency_contact_phone'] ?? ''),
+            'medical_conditions' => htmlspecialchars(strip_tags($data['medical_conditions'] ?? ''), ENT_QUOTES, 'UTF-8'),
+        ];
+    }
+
+    /**
+     * Validate blood group
+     */
+    private function validateBloodGroup(?string $bloodGroup): ?string
+    {
+        $validGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        return in_array($bloodGroup, $validGroups) ? $bloodGroup : null;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
     {
+        $this->authorizePatientAccess();
+
         try {
-            $perPage = $request->input('per_page', 10);
+            $perPage = filter_var($request->input('per_page', 10), FILTER_VALIDATE_INT) ?: 10;
 
             // Validate pagination parameters
             if ($perPage < 1 || $perPage > 100) {
@@ -42,7 +92,8 @@ class PatientController extends Controller
             Log::info('Patients list retrieved', [
                 'count' => $patients->total(),
                 'page' => $patients->currentPage(),
-                'per_page' => $perPage
+                'per_page' => $perPage,
+                'user_id' => auth()->id()
             ]);
 
             return response()->json([
@@ -61,7 +112,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to retrieve patients list', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'user_id' => auth()->id()
             ]);
 
             return response()->json([
@@ -77,6 +128,8 @@ class PatientController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->authorizePatientModify();
+
         try {
             $validatedData = $request->validate([
                 'first_name' => 'nullable|string|max:255|min:2',
@@ -91,6 +144,9 @@ class PatientController extends Controller
                 'medical_conditions' => 'nullable|string|max:1000',
             ]);
 
+            // Sanitize input
+            $sanitized = $this->sanitizeInput($validatedData);
+
             // Generate unique patient ID
             $year = date('Y');
             $lastPatient = Patient::where('patient_id', 'LIKE', 'P' . $year . '%')
@@ -100,28 +156,33 @@ class PatientController extends Controller
             $nextNumber = $lastPatient ? (int)substr($lastPatient->patient_id, strlen('P'.$year)) + 1 : 1;
             $patientId = 'P' . $year . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-            $patientData = array_merge($validatedData, [
+            $patientData = [
                 'patient_id' => $patientId,
+                'first_name' => $sanitized['first_name'],
+                'father_name' => $sanitized['father_name'],
+                'phone' => $sanitized['phone'],
+                'address' => $sanitized['address'],
+                'age' => $sanitized['age'],
+                'gender' => $sanitized['gender'],
+                'blood_group' => $sanitized['blood_group'],
                 'metadata' => [
                     'emergency_contact' => [
-                        'name' => $validatedData['emergency_contact_name'] ?? null,
-                        'phone' => $validatedData['emergency_contact_phone'] ?? null,
+                        'name' => $sanitized['emergency_contact_name'],
+                        'phone' => $sanitized['emergency_contact_phone'],
                     ],
-                    'medical_conditions' => $validatedData['medical_conditions'] ?? null,
+                    'medical_conditions' => $sanitized['medical_conditions'],
                 ]
-            ]);
-
-            // Remove temporary fields
-            unset($patientData['emergency_contact_name'], $patientData['emergency_contact_phone'], $patientData['medical_conditions']);
+            ];
 
             $patient = Patient::create($patientData);
 
             // Clear relevant caches
             $this->cacheService->clearPatientCache($patient->id);
 
-            Log::info('Patient created successfully', [
+            Log::info('Patient created via API', [
                 'patient_id' => $patient->patient_id,
-                'id' => $patient->id
+                'id' => $patient->id,
+                'user_id' => auth()->id()
             ]);
 
             return response()->json([
@@ -133,7 +194,7 @@ class PatientController extends Controller
         } catch (ValidationException $e) {
             Log::warning('Patient creation validation failed', [
                 'errors' => $e->errors(),
-                'input' => $request->all()
+                'user_id' => auth()->id()
             ]);
 
             return response()->json([
@@ -145,8 +206,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             Log::error('Patient creation failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->except(['password']) // Don't log sensitive data
+                'user_id' => auth()->id()
             ]);
 
             return response()->json([
@@ -162,9 +222,21 @@ class PatientController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $patient = Patient::findOrFail($id);
+        $this->authorizePatientAccess();
+
+        // Validate ID
+        $patientId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$patientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid patient ID'
+            ], 400);
+        }
+
+        $patient = Patient::findOrFail($patientId);
 
         return response()->json([
+            'success' => true,
             'data' => $patient
         ]);
     }
@@ -174,22 +246,49 @@ class PatientController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $patient = Patient::findOrFail($id);
+        $this->authorizePatientModify();
 
-        $request->validate([
+        // Validate ID
+        $patientId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$patientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid patient ID'
+            ], 400);
+        }
+
+        $patient = Patient::findOrFail($patientId);
+
+        $validatedData = $request->validate([
             'first_name' => 'sometimes|nullable|string|max:255',
             'father_name' => 'sometimes|nullable|string|max:255',
-            'email' => 'sometimes|required|email|unique:patients,email,' . $id,
             'phone' => 'sometimes|nullable|string|max:20',
-            'address' => 'nullable|string',
+            'address' => 'nullable|string|max:500',
             'age' => 'sometimes|nullable|integer|min:0|max:150',
             'gender' => 'sometimes|nullable|in:male,female,other',
             'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
         ]);
 
-        $patient->update($request->all());
+        // Sanitize input
+        $sanitized = $this->sanitizeInput($validatedData);
+
+        $patient->update([
+            'first_name' => $sanitized['first_name'],
+            'father_name' => $sanitized['father_name'],
+            'phone' => $sanitized['phone'],
+            'address' => $sanitized['address'],
+            'age' => $sanitized['age'],
+            'gender' => $sanitized['gender'],
+            'blood_group' => $sanitized['blood_group'],
+        ]);
+
+        Log::info('Patient updated via API', [
+            'patient_id' => $patient->id,
+            'user_id' => auth()->id()
+        ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Patient updated successfully',
             'data' => $patient
         ]);
@@ -200,10 +299,35 @@ class PatientController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $patient = Patient::findOrFail($id);
+        $this->authorizePatientModify();
+
+        // Check delete permission specifically
+        if (!auth()->user()?->hasPermission('delete-patients')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to delete patients'
+            ], 403);
+        }
+
+        // Validate ID
+        $patientId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$patientId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid patient ID'
+            ], 400);
+        }
+
+        $patient = Patient::findOrFail($patientId);
         $patient->delete();
 
+        Log::info('Patient deleted via API', [
+            'patient_id' => $patientId,
+            'user_id' => auth()->id()
+        ]);
+
         return response()->json([
+            'success' => true,
             'message' => 'Patient deleted successfully'
         ]);
     }

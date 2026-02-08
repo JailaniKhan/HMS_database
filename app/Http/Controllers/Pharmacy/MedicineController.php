@@ -19,29 +19,74 @@ class MedicineController extends Controller
     const EXPIRY_WARNING_DAYS = 30;
 
     /**
+     * Check if the current user can access pharmacy
+     */
+    private function authorizePharmacyAccess(): void
+    {
+        if (!auth()->user()?->hasPermission('view-pharmacy')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Check if the current user can modify medicines
+     */
+    private function authorizeMedicineModify(): void
+    {
+        if (!auth()->user()?->hasPermission('edit-medicines')) {
+            abort(403, 'Unauthorized access');
+        }
+    }
+
+    /**
+     * Sanitize search term to prevent SQL injection
+     */
+    private function sanitizeSearchTerm(string $term): string
+    {
+        // Remove any characters that could be used for SQL injection
+        return preg_replace('/[^a-zA-Z0-9\s\-_.]/', '', $term);
+    }
+
+    /**
+     * Sanitize input data to prevent XSS
+     */
+    private function sanitizeInput(array $data): array
+    {
+        return [
+            'name' => htmlspecialchars(strip_tags($data['name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'description' => htmlspecialchars(strip_tags($data['description'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'manufacturer' => htmlspecialchars(strip_tags($data['manufacturer'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'batch_number' => htmlspecialchars(strip_tags($data['batch_number'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'unit' => htmlspecialchars(strip_tags($data['unit'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'category_id' => filter_var($data['category_id'] ?? null, FILTER_VALIDATE_INT),
+            'price' => filter_var($data['price'] ?? 0, FILTER_VALIDATE_FLOAT),
+            'quantity' => filter_var($data['quantity'] ?? 0, FILTER_VALIDATE_INT),
+        ];
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizePharmacyAccess();
         
         $query = Medicine::with('category');
         
         // Apply category filter
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $categoryId = filter_var($request->category_id, FILTER_VALIDATE_INT);
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
         }
         
         // Apply stock status filter
         if ($request->filled('stock_status')) {
-            switch ($request->stock_status) {
+            $stockStatus = htmlspecialchars(strip_tags($request->stock_status), ENT_QUOTES, 'UTF-8');
+            switch ($stockStatus) {
                 case 'in_stock':
-                    $query->where('quantity', '>', self::LOW_STOCK_THRESHOLD); // More than low stock threshold
+                    $query->where('quantity', '>', self::LOW_STOCK_THRESHOLD);
                     break;
                 case 'low_stock':
                     $query->where('quantity', '<=', self::LOW_STOCK_THRESHOLD)
@@ -55,8 +100,9 @@ class MedicineController extends Controller
         
         // Apply expiry status filter
         if ($request->filled('expiry_status')) {
+            $expiryStatus = htmlspecialchars(strip_tags($request->expiry_status), ENT_QUOTES, 'UTF-8');
             $today = now();
-            switch ($request->expiry_status) {
+            switch ($expiryStatus) {
                 case 'valid':
                     $query->whereDate('expiry_date', '>', $today->copy()->addDays(self::EXPIRY_WARNING_DAYS));
                     break;
@@ -70,15 +116,17 @@ class MedicineController extends Controller
             }
         }
         
-        // Apply search query
+        // Apply search query with SQL injection protection
         if ($request->filled('query')) {
-            $searchTerm = $request->query;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('medicine_id', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('manufacturer', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('batch_number', 'like', '%' . $searchTerm . '%');
-            });
+            $searchTerm = $this->sanitizeSearchTerm($request->query);
+            if (!empty($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('medicine_id', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('manufacturer', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('batch_number', 'like', '%' . $searchTerm . '%');
+                });
+            }
         }
         
         $medicines = $query->orderBy('name')->paginate(10)->withQueryString();
@@ -99,12 +147,7 @@ class MedicineController extends Controller
      */
     public function create(): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('create-medicines')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizeMedicineModify();
         
         $categories = MedicineCategory::all();
         
@@ -118,17 +161,12 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $this->authorizeMedicineModify();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('create-medicines')) {
-            abort(403, 'Unauthorized access');
-        }
-        
-        $validator = Validator::make($request->all(), [
+        $validated = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:medicine_categories,id',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
@@ -137,12 +175,25 @@ class MedicineController extends Controller
             'batch_number' => 'required|string|max:100',
         ]);
         
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+        if ($validated->fails()) {
+            return redirect()->back()->withErrors($validated)->withInput();
         }
         
-        DB::transaction(function () use ($validator) {
-            Medicine::create($validator->validated());
+        // Sanitize input data
+        $sanitized = $this->sanitizeInput($validated->validated());
+        
+        DB::transaction(function () use ($sanitized, $validated) {
+            Medicine::create([
+                'name' => $sanitized['name'],
+                'category_id' => $sanitized['category_id'],
+                'description' => $sanitized['description'],
+                'price' => $sanitized['price'],
+                'quantity' => $sanitized['quantity'],
+                'unit' => $sanitized['unit'],
+                'manufacturer' => $sanitized['manufacturer'],
+                'expiry_date' => $validated->validated()['expiry_date'],
+                'batch_number' => $sanitized['batch_number'],
+            ]);
         });
         
         return redirect()->route('pharmacy.medicines.index')->with('success', 'Medicine created successfully.');
@@ -153,17 +204,18 @@ class MedicineController extends Controller
      */
     public function show(string $id): Response
     {
-        $user = Auth::user();
+        $this->authorizePharmacyAccess();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
+        // Validate ID is numeric
+        $medicineId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$medicineId) {
+            abort(404, 'Invalid medicine ID');
         }
         
-        $medicine = Medicine::with('category')->findOrFail($id);
+        $medicine = Medicine::with('category')->findOrFail($medicineId);
         
         // Get recent sales (last 30 days)
-        $recentSales = \App\Models\SalesItem::where('medicine_id', $id)
+        $recentSales = \App\Models\SalesItem::where('medicine_id', $medicineId)
             ->whereHas('sale', function ($q) {
                 $q->where('created_at', '>=', now()->subDays(30));
             })
@@ -172,7 +224,7 @@ class MedicineController extends Controller
             ->limit(10)
             ->get();
         
-        // Get stock history - using array for now since model may not exist
+        // Get stock history
         $stockHistory = [];
         
         return Inertia::render('Pharmacy/Medicines/Show', [
@@ -187,14 +239,15 @@ class MedicineController extends Controller
      */
     public function edit(string $id): Response
     {
-        $user = Auth::user();
+        $this->authorizeMedicineModify();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('edit-medicines')) {
-            abort(403, 'Unauthorized access');
+        // Validate ID is numeric
+        $medicineId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$medicineId) {
+            abort(404, 'Invalid medicine ID');
         }
         
-        $medicine = Medicine::findOrFail($id);
+        $medicine = Medicine::findOrFail($medicineId);
         $categories = MedicineCategory::all();
         
         return Inertia::render('Pharmacy/Medicines/Edit', [
@@ -208,19 +261,20 @@ class MedicineController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        $user = Auth::user();
+        $this->authorizeMedicineModify();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('edit-medicines')) {
-            abort(403, 'Unauthorized access');
+        // Validate ID is numeric
+        $medicineId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$medicineId) {
+            abort(404, 'Invalid medicine ID');
         }
         
-        $medicine = Medicine::findOrFail($id);
+        $medicine = Medicine::findOrFail($medicineId);
         
-        $validator = Validator::make($request->all(), [
+        $validated = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:medicine_categories,id',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|max:50',
@@ -229,12 +283,25 @@ class MedicineController extends Controller
             'batch_number' => 'required|string|max:100',
         ]);
         
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+        if ($validated->fails()) {
+            return redirect()->back()->withErrors($validated)->withInput();
         }
         
-        DB::transaction(function () use ($medicine, $validator) {
-            $medicine->update($validator->validated());
+        // Sanitize input data
+        $sanitized = $this->sanitizeInput($validated->validated());
+        
+        DB::transaction(function () use ($medicine, $sanitized, $validated) {
+            $medicine->update([
+                'name' => $sanitized['name'],
+                'category_id' => $sanitized['category_id'],
+                'description' => $sanitized['description'],
+                'price' => $sanitized['price'],
+                'quantity' => $sanitized['quantity'],
+                'unit' => $sanitized['unit'],
+                'manufacturer' => $sanitized['manufacturer'],
+                'expiry_date' => $validated->validated()['expiry_date'],
+                'batch_number' => $sanitized['batch_number'],
+            ]);
         });
         
         return redirect()->route('pharmacy.medicines.index')->with('success', 'Medicine updated successfully.');
@@ -245,14 +312,21 @@ class MedicineController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
-        $user = Auth::user();
+        $this->authorizeMedicineModify();
         
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('delete-medicines')) {
+        // Require specific delete permission
+        if (!auth()->user()?->hasPermission('delete-medicines')) {
             abort(403, 'Unauthorized access');
         }
         
-        $medicine = Medicine::findOrFail($id);
+        // Validate ID is numeric
+        $medicineId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$medicineId) {
+            abort(404, 'Invalid medicine ID');
+        }
+        
+        $medicine = Medicine::findOrFail($medicineId);
+        
         DB::transaction(function () use ($medicine) {
             $medicine->delete();
         });
@@ -265,18 +339,16 @@ class MedicineController extends Controller
      */
     public function search(Request $request): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizePharmacyAccess();
         
         $query = $request->input('query');
         
-        $medicines = Medicine::where('name', 'like', '%' . $query . '%')
-                    ->orWhere('description', 'like', '%' . $query . '%')
-                    ->orWhere('batch_number', 'like', '%' . $query . '%')
+        // Sanitize search term
+        $searchTerm = $this->sanitizeSearchTerm($query);
+        
+        $medicines = Medicine::where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('batch_number', 'like', '%' . $searchTerm . '%')
                     ->with('category')
                     ->paginate(10);
         
@@ -298,7 +370,13 @@ class MedicineController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $medicine = Medicine::findOrFail($id);
+        // Validate ID is numeric
+        $medicineId = filter_var($id, FILTER_VALIDATE_INT);
+        if (!$medicineId) {
+            abort(404, 'Invalid medicine ID');
+        }
+        
+        $medicine = Medicine::findOrFail($medicineId);
         
         $validator = Validator::make($request->all(), [
             'quantity' => 'required|integer|min:0',
@@ -308,8 +386,10 @@ class MedicineController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
         
+        $quantity = filter_var($request->quantity, FILTER_VALIDATE_INT);
+        
         $medicine->update([
-            'quantity' => $request->quantity,
+            'quantity' => $quantity,
             'updated_at' => now(),
         ]);
         
@@ -321,16 +401,11 @@ class MedicineController extends Controller
      */
     public function lowStock(): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizePharmacyAccess();
         
         // Consider medicines with stock less than LOW_STOCK_THRESHOLD as low stock
         $medicines = Medicine::where('quantity', '<=', self::LOW_STOCK_THRESHOLD)
-                    ->where('quantity', '>=', 1) // greater than 0 but less than LOW_STOCK_THRESHOLD
+                    ->where('quantity', '>=', 1)
                     ->with('category')
                     ->paginate(10);
         
@@ -344,12 +419,7 @@ class MedicineController extends Controller
      */
     public function expired(): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizePharmacyAccess();
         
         $medicines = Medicine::whereDate('expiry_date', '<', now())
                     ->with('category')
@@ -365,12 +435,7 @@ class MedicineController extends Controller
      */
     public function expiringSoon(): Response
     {
-        $user = Auth::user();
-        
-        // Check if user has appropriate permission
-        if (!$user->hasPermission('view-pharmacy')) {
-            abort(403, 'Unauthorized access');
-        }
+        $this->authorizePharmacyAccess();
         
         // Get medicines that expire within the next EXPIRY_WARNING_DAYS days
         $medicines = Medicine::whereDate('expiry_date', '>=', now())

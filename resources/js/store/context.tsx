@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import type { Doctor, Patient, Appointment, Medicine, LabTest, Bill } from '../types';
+import { logger } from '@/services/logger';
 
 // ============================================================================
 // Auth State Types
@@ -317,7 +318,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             } catch (error) {
                 if (import.meta.env.DEV) {
                     // eslint-disable-next-line no-console
-                    console.error('Failed to parse saved UI preferences:', error);
+                    logger.error('Failed to parse saved UI preferences', { error: error instanceof Error ? error.message : 'Unknown error' }, error instanceof Error ? error : undefined);
                 }
             }
         }

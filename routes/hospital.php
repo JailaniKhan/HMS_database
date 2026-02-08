@@ -58,10 +58,14 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/', [DoctorController::class, 'index'])->name('doctors.index');
         Route::get('/create', [DoctorController::class, 'create'])->name('doctors.create');
         Route::post('/', [DoctorController::class, 'store'])->name('doctors.store');
-        Route::get('/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
+        
+        // More specific routes MUST come before parameterized routes
         Route::get('/{doctor}/edit', [DoctorController::class, 'edit'])->name('doctors.edit');
         Route::put('/{doctor}', [DoctorController::class, 'update'])->name('doctors.update');
         Route::delete('/{doctor}', [DoctorController::class, 'destroy'])->name('doctors.destroy');
+        
+        // General parameterized route MUST come last
+        Route::get('/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
     });
 
     // Appointment Routes

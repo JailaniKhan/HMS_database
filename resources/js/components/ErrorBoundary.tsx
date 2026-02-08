@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { logger } from '@/services/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -31,16 +32,15 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ error, errorInfo });
     
+    // Log error with structured logging
+    logger.error('React Error Boundary caught an error', {
+      errorId: this.state.errorId,
+      componentStack: errorInfo.componentStack,
+      ...this.props.context
+    }, error);
+    
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-    
-    // Log error to console for debugging
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
-    // Log error with context if provided
-    if (this.props.context) {
-      console.error('Error context:', this.props.context);
-    }
   }
 
   resetError = () => {
@@ -88,14 +88,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <div className="mt-6 space-y-3">
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                aria-label="Refresh page"
               >
                 Refresh Page
               </button>
               
               <button
                 onClick={this.resetError}
-                className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                aria-label="Try again"
               >
                 Try Again
               </button>
@@ -104,11 +106,17 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <div className="mt-4 p-3 bg-gray-50 rounded-md">
                 <details className="text-xs text-gray-600">
-                  <summary>Error Details (Development)</summary>
-                  <pre className="mt-2 whitespace-pre-wrap">{this.state.error.toString()}</pre>
-                  {this.state.errorInfo && (
-                    <pre className="mt-2 whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
-                  )}
+                  <summary className="cursor-pointer font-medium">Error Details (Development)</summary>
+                  <div className="mt-2">
+                    <p className="font-medium">Error Message:</p>
+                    <pre className="mt-1 whitespace-pre-wrap bg-white p-2 rounded border">{this.state.error.toString()}</pre>
+                    {this.state.errorInfo && (
+                      <>
+                        <p className="font-medium mt-2">Component Stack:</p>
+                        <pre className="mt-1 whitespace-pre-wrap bg-white p-2 rounded border">{this.state.errorInfo.componentStack}</pre>
+                      </>
+                    )}
+                  </div>
                 </details>
               </div>
             )}
