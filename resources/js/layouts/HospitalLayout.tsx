@@ -94,11 +94,6 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                 icon: LayoutGrid,
             },
             {
-                title: 'Reports',
-                href: '/reports',
-                icon: FileBarChart,
-            },
-            {
                 title: 'Patients',
                 href: '/patients',
                 icon: Users,
@@ -114,6 +109,11 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                 icon: Calendar,
             },
             {
+                title: 'Departments',
+                href: '/departments',
+                icon: Building,
+            },
+            {
                 title: 'Billing',
                 href: '/billing',
                 icon: Building,
@@ -124,7 +124,7 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                         icon: LayoutGrid,
                     },
                     {
-                        title: 'All Bills',
+                        title: 'Create Bill',
                         href: '/billing',
                         icon: FileText,
                     },
@@ -136,21 +136,6 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                     {
                         title: 'Payments',
                         href: '/payments',
-                        icon: FileText,
-                    },
-                    {
-                        title: 'Insurance Claims',
-                        href: '/insurance/claims',
-                        icon: FileText,
-                    },
-                    {
-                        title: 'Insurance Providers',
-                        href: '/insurance/providers',
-                        icon: FileText,
-                    },
-                    {
-                        title: 'Patient Insurance',
-                        href: '/billing/patient-insurance',
                         icon: FileText,
                     },
                     {
@@ -234,17 +219,9 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                     },
                 ],
             },
-            {
-                title: 'Departments',
-                href: '/departments',
-                icon: Building,
-            },
+            
 
-            {
-                title: 'User Management',
-                href: '/admin',
-                icon: Users,
-            },
+            
             {
                 title: 'RBAC',
                 href: '/admin/rbac',
@@ -254,6 +231,11 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                         title: 'Dashboard',
                         href: '/admin/rbac',
                         icon: LayoutGrid,
+                    },
+                    {
+                        title: 'User Management',
+                        href: '/admin',
+                        icon: Users,
                     },
                   
                     {
@@ -272,6 +254,11 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                         icon: FileText,
                     },
                 ],
+            },
+             {
+                title: 'Reports',
+                href: '/reports',
+                icon: FileBarChart,
             },
             {
                 title: 'Settings',

@@ -44,7 +44,6 @@ export enum PaymentMethod {
   DEBIT_CARD = 'debit_card',
   CHECK = 'check',
   BANK_TRANSFER = 'bank_transfer',
-  INSURANCE = 'insurance',
   ONLINE = 'online',
   MOBILE_PAYMENT = 'mobile_payment',
 }
@@ -62,20 +61,6 @@ export enum ItemType {
   EQUIPMENT = 'equipment',
   SUPPLY = 'supply',
   OTHER = 'other',
-}
-
-/**
- * Insurance claim status enum
- */
-export enum ClaimStatus {
-  DRAFT = 'draft',
-  SUBMITTED = 'submitted',
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  PARTIAL = 'partial',
-  REJECTED = 'rejected',
-  APPEALED = 'appealed',
-  CANCELLED = 'cancelled',
 }
 
 /**
@@ -181,7 +166,6 @@ export interface Payment {
   check_number?: string;
   amount_tendered?: number;
   change_due?: number;
-  insurance_claim_id?: number;
   received_by?: number;
   received_by_user?: User;
   notes?: string;
@@ -199,91 +183,6 @@ export interface User {
   name: string;
   email: string;
   role?: string;
-}
-
-/**
- * Insurance provider interface
- */
-export interface InsuranceProvider {
-  id: number;
-  name: string;
-  code: string;
-  description?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: Record<string, string>;
-  coverage_types?: string[];
-  coverage_types_label?: string[];
-  max_coverage_amount?: number;
-  api_endpoint?: string;
-  has_api_integration?: boolean;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string;
-}
-
-/**
- * Patient insurance interface
- */
-export interface PatientInsurance {
-  id: number;
-  patient_id: number;
-  patient?: Patient;
-  insurance_provider_id: number;
-  insurance_provider?: InsuranceProvider;
-  policy_number: string;
-  policy_holder_name?: string;
-  relationship_to_patient?: string;
-  coverage_start_date?: string;
-  coverage_end_date?: string;
-  co_pay_amount?: number;
-  co_pay_percentage?: number;
-  deductible_amount?: number;
-  deductible_met?: number;
-  annual_max_coverage?: number;
-  annual_used_amount?: number;
-  is_primary: boolean;
-  priority_order: number;
-  is_active: boolean;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string;
-}
-
-/**
- * Insurance claim interface
- */
-export interface InsuranceClaim {
-  id: number;
-  bill_id: number;
-  bill?: Bill;
-  patient_insurance_id: number;
-  patient_insurance?: PatientInsurance;
-  claim_number: string;
-  claim_amount: number;
-  approved_amount?: number;
-  deductible_amount?: number;
-  co_pay_amount?: number;
-  status: ClaimStatus;
-  submission_date?: string;
-  response_date?: string;
-  approval_date?: string;
-  rejection_reason?: string;
-  rejection_codes?: string[];
-  documents?: Record<string, unknown>[];
-  notes?: string;
-  internal_notes?: string;
-  submitted_by?: number;
-  submitted_by_user?: User;
-  processed_by?: number;
-  processed_by_user?: User;
-  payments?: Payment[];
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string;
 }
 
 /**
@@ -348,8 +247,6 @@ export interface Bill {
   doctor?: Doctor;
   created_by?: number;
   created_by_user?: User;
-  primary_insurance_id?: number;
-  primary_insurance?: PatientInsurance;
   bill_date: string;
   due_date?: string;
   sub_total: number;
@@ -361,9 +258,6 @@ export interface Bill {
   amount_paid: number;
   amount_due: number;
   balance_due: number;
-  insurance_claim_amount?: number;
-  insurance_approved_amount?: number;
-  patient_responsibility?: number;
   payment_status: PaymentStatus;
   status: BillStatus;
   notes?: string;
@@ -377,7 +271,6 @@ export interface Bill {
   void_reason?: string;
   items?: BillItem[];
   payments?: Payment[];
-  insurance_claims?: InsuranceClaim[];
   refunds?: BillRefund[];
   status_history?: BillStatusHistory[];
   created_at?: string;
@@ -410,7 +303,6 @@ export interface BillItemFormData {
 export interface BillFormData {
   patient_id: number;
   doctor_id?: number;
-  primary_insurance_id?: number;
   bill_date: string;
   due_date?: string;
   discount?: number;
@@ -434,21 +326,7 @@ export interface PaymentFormData {
   bank_name?: string;
   check_number?: string;
   amount_tendered?: number;
-  insurance_claim_id?: number;
   notes?: string;
-}
-
-/**
- * Insurance claim form data
- */
-export interface InsuranceClaimFormData {
-  bill_id: number;
-  patient_insurance_id: number;
-  claim_amount: number;
-  deductible_amount?: number;
-  co_pay_amount?: number;
-  notes?: string;
-  documents?: Record<string, unknown>[];
 }
 
 // ============================================================================
@@ -472,7 +350,6 @@ export interface BillFilters {
   max_amount?: number;
   has_balance?: boolean;
   is_overdue?: boolean;
-  insurance_provider_id?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
   page?: number;
@@ -642,8 +519,6 @@ export interface BillCalculations {
   totalAmount: number;
   amountPaid: number;
   balanceDue: number;
-  insuranceClaimAmount: number;
-  patientResponsibility: number;
 }
 
 /**

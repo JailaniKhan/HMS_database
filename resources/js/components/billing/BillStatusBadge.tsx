@@ -10,13 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import {
   BillStatus,
   PaymentStatus,
-  ClaimStatus,
   RefundStatus,
 } from '@/types/billing';
 import { cn } from '@/lib/utils';
 
 // Status type that accepts any of the billing status enums
-export type BillStatusType = BillStatus | PaymentStatus | ClaimStatus | RefundStatus | string;
+export type BillStatusType = BillStatus | PaymentStatus | RefundStatus | string;
 
 interface BillStatusBadgeProps {
   /** The status value to display */
@@ -41,7 +40,6 @@ function getStatusVariant(status: BillStatusType): 'default' | 'secondary' | 'de
   if (
     statusLower === BillStatus.PAID ||
     statusLower === PaymentStatus.PAID ||
-    statusLower === ClaimStatus.APPROVED ||
     statusLower === RefundStatus.PROCESSED
   ) {
     return 'default';
@@ -51,10 +49,8 @@ function getStatusVariant(status: BillStatusType): 'default' | 'secondary' | 'de
   if (
     statusLower === BillStatus.PARTIAL ||
     statusLower === PaymentStatus.PARTIAL ||
-    statusLower === ClaimStatus.PARTIAL ||
     statusLower === BillStatus.PENDING ||
     statusLower === PaymentStatus.PENDING ||
-    statusLower === ClaimStatus.PENDING ||
     statusLower === RefundStatus.PENDING
   ) {
     return 'secondary';
@@ -67,7 +63,6 @@ function getStatusVariant(status: BillStatusType): 'default' | 'secondary' | 'de
     statusLower === BillStatus.CANCELLED ||
     statusLower === PaymentStatus.FAILED ||
     statusLower === PaymentStatus.REFUNDED ||
-    statusLower === ClaimStatus.REJECTED ||
     statusLower === RefundStatus.REJECTED
   ) {
     return 'destructive';
@@ -76,7 +71,6 @@ function getStatusVariant(status: BillStatusType): 'default' | 'secondary' | 'de
   // Draft/Initial states - outline
   if (
     statusLower === BillStatus.DRAFT ||
-    statusLower === ClaimStatus.DRAFT ||
     statusLower === PaymentStatus.UNPAID ||
     statusLower === RefundStatus.REQUESTED
   ) {
@@ -97,7 +91,6 @@ function getStatusColorClasses(status: BillStatusType): string {
   if (
     statusLower === BillStatus.PAID ||
     statusLower === PaymentStatus.PAID ||
-    statusLower === ClaimStatus.APPROVED ||
     statusLower === RefundStatus.PROCESSED
   ) {
     return 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200';
@@ -107,21 +100,15 @@ function getStatusColorClasses(status: BillStatusType): string {
   if (
     statusLower === BillStatus.PARTIAL ||
     statusLower === PaymentStatus.PARTIAL ||
-    statusLower === ClaimStatus.PARTIAL ||
     statusLower === BillStatus.PENDING ||
     statusLower === PaymentStatus.PENDING ||
-    statusLower === ClaimStatus.PENDING ||
     statusLower === RefundStatus.PENDING
   ) {
     return 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200';
   }
 
-  // Orange - Sent/Submitted/Appealed
-  if (
-    statusLower === BillStatus.SENT ||
-    statusLower === ClaimStatus.SUBMITTED ||
-    statusLower === ClaimStatus.APPEALED
-  ) {
+  // Orange - Sent
+  if (statusLower === BillStatus.SENT) {
     return 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200';
   }
 
@@ -132,8 +119,6 @@ function getStatusColorClasses(status: BillStatusType): string {
     statusLower === BillStatus.CANCELLED ||
     statusLower === PaymentStatus.FAILED ||
     statusLower === PaymentStatus.REFUNDED ||
-    statusLower === ClaimStatus.REJECTED ||
-    statusLower === ClaimStatus.CANCELLED ||
     statusLower === RefundStatus.REJECTED ||
     statusLower === RefundStatus.CANCELLED
   ) {
@@ -143,7 +128,6 @@ function getStatusColorClasses(status: BillStatusType): string {
   // Blue - Draft/Unpaid/Requested
   if (
     statusLower === BillStatus.DRAFT ||
-    statusLower === ClaimStatus.DRAFT ||
     statusLower === PaymentStatus.UNPAID ||
     statusLower === RefundStatus.REQUESTED
   ) {
@@ -175,7 +159,6 @@ function getDotColor(status: BillStatusType): string {
   if (
     statusLower === BillStatus.PAID ||
     statusLower === PaymentStatus.PAID ||
-    statusLower === ClaimStatus.APPROVED ||
     statusLower === RefundStatus.PROCESSED
   ) {
     return 'bg-green-500';
@@ -185,7 +168,6 @@ function getDotColor(status: BillStatusType): string {
     statusLower === BillStatus.OVERDUE ||
     statusLower === BillStatus.VOID ||
     statusLower === PaymentStatus.FAILED ||
-    statusLower === ClaimStatus.REJECTED ||
     statusLower === RefundStatus.REJECTED
   ) {
     return 'bg-red-500';
@@ -194,7 +176,6 @@ function getDotColor(status: BillStatusType): string {
   if (
     statusLower === BillStatus.PENDING ||
     statusLower === PaymentStatus.PENDING ||
-    statusLower === ClaimStatus.PENDING ||
     statusLower === RefundStatus.PENDING
   ) {
     return 'bg-yellow-500';
@@ -207,7 +188,7 @@ function getDotColor(status: BillStatusType): string {
  * BillStatusBadge Component
  * 
  * Displays a status badge with appropriate styling based on the status value.
- * Supports BillStatus, PaymentStatus, ClaimStatus, and RefundStatus enums.
+ * Supports BillStatus, PaymentStatus, and RefundStatus enums.
  */
 export function BillStatusBadge({
   status,
@@ -257,16 +238,6 @@ export function PaymentStatusBadge({
   status,
   ...props
 }: Omit<BillStatusBadgeProps, 'status'> & { status: PaymentStatus }) {
-  return <BillStatusBadge status={status} {...props} />;
-}
-
-/**
- * ClaimStatusBadge - Convenience component for insurance claim status
- */
-export function ClaimStatusBadge({
-  status,
-  ...props
-}: Omit<BillStatusBadgeProps, 'status'> & { status: ClaimStatus }) {
   return <BillStatusBadge status={status} {...props} />;
 }
 

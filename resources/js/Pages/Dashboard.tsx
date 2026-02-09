@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -447,36 +447,6 @@ export default function Dashboard({
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Quick Access Buttons */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Quick Actions</CardTitle>
-                                    <CardDescription>Access important features quickly</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <Link href="/patients/create" className="block">
-                                            <Button className="w-full h-14 flex flex-col items-center justify-center">
-                                                <UserPlus className="h-5 w-5 mb-1" />
-                                                <span className="text-sm">New Patient</span>
-                                            </Button>
-                                        </Link>
-                                        <Link href="/appointments/create" className="block">
-                                            <Button className="w-full h-14 flex flex-col items-center justify-center">
-                                                <Calendar className="h-5 w-5 mb-1" />
-                                                <span className="text-sm">Book Appointment</span>
-                                            </Button>
-                                        </Link>
-                                        <Link href="/doctors/create" className="block">
-                                            <Button className="w-full h-14 flex flex-col items-center justify-center">
-                                                <Stethoscope className="h-5 w-5 mb-1" />
-                                                <span className="text-sm">New Doctor</span>
-                                            </Button>
-                                        </Link>
                                     </div>
                                 </CardContent>
                             </Card>

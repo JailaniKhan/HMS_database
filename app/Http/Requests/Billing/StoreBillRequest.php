@@ -26,7 +26,6 @@ class StoreBillRequest extends FormRequest
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'primary_insurance_id' => 'nullable|exists:patient_insurances,id',
             'billing_address' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:1000',
         ];
@@ -44,6 +43,11 @@ class StoreBillRequest extends FormRequest
 
     protected function failedValidation(Validator $validator): void
     {
+        if ($this->inertia()) {
+            parent::failedValidation($validator);
+            return;
+        }
+        
         throw new HttpResponseException(
             response()->json([
                 'success' => false,

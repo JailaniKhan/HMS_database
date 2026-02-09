@@ -16,7 +16,6 @@ class Bill extends Model
         'patient_id',
         'doctor_id',
         'created_by',
-        'primary_insurance_id',
         'bill_date',
         'due_date',
         'sub_total',
@@ -28,9 +27,6 @@ class Bill extends Model
         'amount_paid',
         'amount_due',
         'balance_due',
-        'insurance_claim_amount',
-        'insurance_approved_amount',
-        'patient_responsibility',
         'payment_status',
         'status',
         'notes',
@@ -55,9 +51,6 @@ class Bill extends Model
         'amount_paid' => 'decimal:2',
         'amount_due' => 'decimal:2',
         'balance_due' => 'decimal:2',
-        'insurance_claim_amount' => 'decimal:2',
-        'insurance_approved_amount' => 'decimal:2',
-        'patient_responsibility' => 'decimal:2',
         'billing_address' => 'array',
         'last_payment_date' => 'datetime',
         'reminder_last_sent' => 'datetime',
@@ -108,11 +101,6 @@ class Bill extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function primaryInsurance()
-    {
-        return $this->belongsTo(PatientInsurance::class, 'primary_insurance_id');
-    }
-
     public function voidedBy()
     {
         return $this->belongsTo(User::class, 'voided_by');
@@ -126,11 +114,6 @@ class Bill extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
-    }
-
-    public function insuranceClaims()
-    {
-        return $this->hasMany(InsuranceClaim::class);
     }
 
     public function refunds()
@@ -186,12 +169,6 @@ class Bill extends Model
     public function scopeByDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('bill_date', [$startDate, $endDate]);
-    }
-
-    public function scopeHasInsurance($query)
-    {
-        return $query->whereNotNull('primary_insurance_id')
-                     ->where('insurance_claim_amount', '>', 0);
     }
 
     /**

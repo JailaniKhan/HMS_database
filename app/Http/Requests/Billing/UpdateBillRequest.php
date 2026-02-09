@@ -42,7 +42,6 @@ class UpdateBillRequest extends FormRequest
             'items.*.unit_price' => 'required_with:items|numeric|min:0',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'primary_insurance_id' => 'nullable|exists:patient_insurances,id',
         ];
     }
 
@@ -77,7 +76,6 @@ class UpdateBillRequest extends FormRequest
             'items.*.discount_percentage.numeric' => 'The discount percentage must be a number.',
             'items.*.discount_percentage.min' => 'The discount percentage must be at least 0.',
             'items.*.discount_percentage.max' => 'The discount percentage may not be greater than 100.',
-            'primary_insurance_id.exists' => 'The selected insurance does not exist.',
         ];
     }
 

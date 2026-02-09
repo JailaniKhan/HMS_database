@@ -23,7 +23,6 @@ class BillResource extends JsonResource
             'patient_id' => $this->patient_id,
             'doctor_id' => $this->doctor_id,
             'created_by' => $this->created_by,
-            'primary_insurance_id' => $this->primary_insurance_id,
 
             // Dates
             'bill_date' => $this->bill_date?->toISOString(),
@@ -42,11 +41,6 @@ class BillResource extends JsonResource
             'amount_paid' => number_format($this->amount_paid, 2),
             'amount_due' => number_format($this->amount_due, 2),
             'balance_due' => number_format($this->balance_due, 2),
-            'insurance_claim_amount' => number_format($this->insurance_claim_amount, 2),
-            'insurance_approved_amount' => $this->when($this->insurance_approved_amount, function () {
-                return number_format($this->insurance_approved_amount, 2);
-            }),
-            'patient_responsibility' => number_format($this->patient_responsibility, 2),
 
             // Status fields
             'payment_status' => $this->payment_status,
@@ -93,30 +87,12 @@ class BillResource extends JsonResource
                 return PaymentResource::collection($this->payments);
             }),
 
-            'insurance_claims' => $this->whenLoaded('insuranceClaims', function () {
-                return InsuranceClaimResource::collection($this->insuranceClaims);
-            }),
-
             'refunds' => $this->whenLoaded('refunds', function () {
                 return BillRefundResource::collection($this->refunds);
             }),
 
             'status_history' => $this->whenLoaded('statusHistory', function () {
                 return BillStatusHistoryResource::collection($this->statusHistory);
-            }),
-
-            'primary_insurance' => $this->whenLoaded('primaryInsurance', function () {
-                return [
-                    'id' => $this->primaryInsurance->id,
-                    'policy_number' => $this->primaryInsurance->policy_number,
-                    'insurance_provider' => $this->when($this->primaryInsurance->insuranceProvider, function () {
-                        return [
-                            'id' => $this->primaryInsurance->insuranceProvider->id,
-                            'name' => $this->primaryInsurance->insuranceProvider->name,
-                            'code' => $this->primaryInsurance->insuranceProvider->code,
-                        ];
-                    }),
-                ];
             }),
 
             'voided_by_user' => $this->whenLoaded('voidedBy', function () {

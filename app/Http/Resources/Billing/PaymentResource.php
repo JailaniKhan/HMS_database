@@ -34,7 +34,6 @@ class PaymentResource extends JsonResource
             'change_due' => $this->when($this->change_due, function () {
                 return number_format($this->change_due, 2);
             }),
-            'insurance_claim_id' => $this->insurance_claim_id,
             'received_by' => $this->received_by,
             'notes' => $this->notes,
             'status' => $this->status,
@@ -47,14 +46,6 @@ class PaymentResource extends JsonResource
                     'id' => $this->receivedBy->id,
                     'name' => $this->receivedBy->name,
                     'username' => $this->receivedBy->username,
-                ];
-            }),
-
-            'insurance_claim' => $this->whenLoaded('insuranceClaim', function () {
-                return [
-                    'id' => $this->insuranceClaim->id,
-                    'claim_number' => $this->insuranceClaim->claim_number,
-                    'status' => $this->insuranceClaim->status,
                 ];
             }),
         ];

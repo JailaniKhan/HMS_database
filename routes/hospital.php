@@ -7,9 +7,6 @@ use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Appointment\AppointmentController;
 use App\Http\Controllers\Billing\BillController;
 use App\Http\Controllers\Billing\PaymentController;
-use App\Http\Controllers\Billing\InsuranceClaimController;
-use App\Http\Controllers\Billing\InsuranceProviderController;
-use App\Http\Controllers\Billing\PatientInsuranceController;
 use App\Http\Controllers\Billing\BillingReportController;
 use App\Http\Controllers\Pharmacy\MedicineController;
 use App\Http\Controllers\Pharmacy\MedicineCategoryController;
@@ -67,9 +64,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::put('/{doctor}', [DoctorController::class, 'update'])->name('doctors.update');
         Route::post('/{doctor}/delete', [DoctorController::class, 'destroy'])->name('doctors.destroy.post');
         Route::delete('/{doctor}', [DoctorController::class, 'destroy'])->name('doctors.destroy');
-        
-        // Removed workaround route to prevent conflicts
-        // Route::put('/', [DoctorController::class, 'update'])->name('doctors.update.workaround');
         
         // General parameterized route MUST come last
         Route::get('/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
@@ -129,14 +123,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::post('/{bill}/payments', [PaymentController::class, 'store'])
             ->name('billing.payments.store')
             ->middleware('check.permission:record-payments');
-
-        // Insurance Claims for Bill
-        Route::get('/{bill}/claims', [InsuranceClaimController::class, 'index'])
-            ->name('billing.claims.index')
-            ->middleware('check.permission:view-insurance-claims');
-        Route::post('/{bill}/claims', [InsuranceClaimController::class, 'store'])
-            ->name('billing.claims.store')
-            ->middleware('check.permission:create-insurance-claims');
     });
 
     // Payments (Global)
@@ -150,98 +136,6 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->middleware('check.permission:process-refunds');
     });
 
-    // Insurance Providers
-    Route::middleware('check.permission:view-insurance-providers')->prefix('insurance/providers')->group(function () {
-        Route::get('/', [InsuranceProviderController::class, 'index'])
-            ->name('insurance.providers.index');
-        Route::get('/create', [InsuranceProviderController::class, 'create'])
-            ->name('insurance.providers.create')
-            ->middleware('check.permission:create-insurance-providers');
-        Route::post('/', [InsuranceProviderController::class, 'store'])
-            ->name('insurance.providers.store')
-            ->middleware('check.permission:create-insurance-providers');
-        Route::get('/{provider}', [InsuranceProviderController::class, 'show'])
-            ->name('insurance.providers.show');
-        Route::get('/{provider}/edit', [InsuranceProviderController::class, 'edit'])
-            ->name('insurance.providers.edit')
-            ->middleware('check.permission:edit-insurance-providers');
-        Route::put('/{provider}', [InsuranceProviderController::class, 'update'])
-            ->name('insurance.providers.update')
-            ->middleware('check.permission:edit-insurance-providers');
-        Route::delete('/{provider}', [InsuranceProviderController::class, 'destroy'])
-            ->name('insurance.providers.destroy')
-            ->middleware('check.permission:delete-insurance-providers');
-    });
-
-    // Insurance Claims (Global)
-    Route::middleware('check.permission:view-insurance-claims')->prefix('insurance/claims')->group(function () {
-        Route::get('/', [InsuranceClaimController::class, 'index'])
-            ->name('insurance.claims.index');
-        Route::get('/create', [InsuranceClaimController::class, 'create'])
-            ->name('insurance.claims.create')
-            ->middleware('check.permission:create-insurance-claims');
-        Route::post('/', [InsuranceClaimController::class, 'store'])
-            ->name('insurance.claims.store')
-            ->middleware('check.permission:create-insurance-claims');
-        Route::get('/{claim}', [InsuranceClaimController::class, 'show'])
-            ->name('insurance.claims.show');
-        Route::get('/{claim}/edit', [InsuranceClaimController::class, 'edit'])
-            ->name('insurance.claims.edit')
-            ->middleware('check.permission:edit-insurance-claims');
-        Route::put('/{claim}', [InsuranceClaimController::class, 'update'])
-            ->name('insurance.claims.update')
-            ->middleware('check.permission:edit-insurance-claims');
-        Route::delete('/{claim}', [InsuranceClaimController::class, 'destroy'])
-            ->name('insurance.claims.destroy')
-            ->middleware('check.permission:delete-insurance-claims');
-        Route::post('/{claim}/submit', [InsuranceClaimController::class, 'submit'])
-            ->name('insurance.claims.submit')
-            ->middleware('check.permission:submit-insurance-claims');
-        Route::post('/{claim}/process', [InsuranceClaimController::class, 'process'])
-            ->name('insurance.claims.process')
-            ->middleware('check.permission:process-insurance-claims');
-    });
-
-    // Patient Insurance (Per-Patient - existing)
-    Route::middleware('check.permission:view-patients')->prefix('patients/{patient}')->group(function () {
-        Route::get('/insurance', [PatientInsuranceController::class, 'index'])
-            ->name('patients.insurance.index');
-        Route::post('/insurance', [PatientInsuranceController::class, 'store'])
-            ->name('patients.insurance.store')
-            ->middleware('check.permission:edit-patients');
-        Route::get('/insurance/{insurance}', [PatientInsuranceController::class, 'show'])
-            ->name('patients.insurance.show');
-        Route::put('/insurance/{insurance}', [PatientInsuranceController::class, 'update'])
-            ->name('patients.insurance.update')
-            ->middleware('check.permission:edit-patients');
-        Route::delete('/insurance/{insurance}', [PatientInsuranceController::class, 'destroy'])
-            ->name('patients.insurance.destroy')
-            ->middleware('check.permission:edit-patients');
-    });
-
-    // Patient Insurance (Standalone - Centralized Management)
-    Route::middleware('check.permission:view-billing')->prefix('billing/patient-insurance')->group(function () {
-        Route::get('/', [PatientInsuranceController::class, 'globalIndex'])
-            ->name('billing.patient-insurance.index');
-        Route::get('/create', [PatientInsuranceController::class, 'create'])
-            ->name('billing.patient-insurance.create')
-            ->middleware('check.permission:manage-billing');
-        Route::post('/', [PatientInsuranceController::class, 'store'])
-            ->name('billing.patient-insurance.store')
-            ->middleware('check.permission:manage-billing');
-        Route::get('/{insurance}', [PatientInsuranceController::class, 'show'])
-            ->name('billing.patient-insurance.show');
-        Route::get('/{insurance}/edit', [PatientInsuranceController::class, 'edit'])
-            ->name('billing.patient-insurance.edit')
-            ->middleware('check.permission:manage-billing');
-        Route::put('/{insurance}', [PatientInsuranceController::class, 'update'])
-            ->name('billing.patient-insurance.update')
-            ->middleware('check.permission:manage-billing');
-        Route::delete('/{insurance}', [PatientInsuranceController::class, 'destroy'])
-            ->name('billing.patient-insurance.destroy')
-            ->middleware('check.permission:manage-billing');
-    });
-
     // Billing Reports
     Route::middleware('check.permission:view-billing-reports')->prefix('reports/billing')->group(function () {
         Route::get('/', [BillingReportController::class, 'index'])
@@ -252,8 +146,6 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->name('reports.billing.outstanding');
         Route::get('/payment-methods', [BillingReportController::class, 'paymentMethodReport'])
             ->name('reports.billing.payment-methods');
-        Route::get('/insurance-claims', [BillingReportController::class, 'insuranceClaimsReport'])
-            ->name('reports.billing.insurance-claims');
         Route::get('/transactions', [BillingReportController::class, 'transactionsReport'])
             ->name('reports.billing.transactions');
         Route::get('/department-revenue', [BillingReportController::class, 'departmentRevenueReport'])
@@ -268,8 +160,6 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->name('reports.billing.refunds');
         Route::get('/provider-performance', [BillingReportController::class, 'providerPerformanceReport'])
             ->name('reports.billing.provider-performance');
-        Route::get('/pending-claims', [BillingReportController::class, 'pendingClaimsReport'])
-            ->name('reports.billing.pending-claims');
     });
 
     // Pharmacy Routes

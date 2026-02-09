@@ -10,7 +10,6 @@ use App\Http\Requests\Billing\VoidBillRequest;
 use App\Http\Resources\Billing\BillResource;
 use App\Http\Resources\Billing\BillItemResource;
 use App\Http\Resources\Billing\PaymentResource;
-use App\Http\Resources\Billing\InsuranceClaimResource;
 use App\Http\Resources\Billing\BillRefundResource;
 use App\Http\Resources\Billing\BillStatusHistoryResource;
 use App\Http\Resources\PatientResource;
@@ -18,7 +17,6 @@ use App\Models\Bill;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\DepartmentService;
-use App\Models\PatientInsurance;
 use App\Services\Billing\BillItemService;
 use App\Services\Billing\BillCalculationService;
 use App\Services\Billing\InvoiceGenerationService;
@@ -134,9 +132,6 @@ class BillController extends Controller
      */
     public function index(Request $request): Response|JsonResponse
     {
-        // Permission check is handled by the check.permission middleware on the route
-        // No additional authorization needed here
-
         try {
             $query = Bill::with(['patient', 'doctor', 'createdBy']);
 
@@ -182,7 +177,6 @@ class BillController extends Controller
 
             $bills = $query->paginate($request->get('per_page', 15));
 
-            // Check if API request
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => true,
@@ -220,27 +214,15 @@ class BillController extends Controller
      */
     public function create(Request $request): Response|JsonResponse|RedirectResponse
     {
-        // Permission check is handled by the check.permission middleware on the route
-
         try {
             $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name', 'phone')->get();
             $doctors = Doctor::select('id', 'doctor_id', 'full_name', 'specialization')->get();
             $services = DepartmentService::active()->with('department')->get();
 
-            // Load patient insurances if patient_id is provided
-            $patientInsurances = [];
-            if ($request->has('patient_id')) {
-                $patientInsurances = PatientInsurance::byPatient($request->patient_id)
-                    ->valid()
-                    ->with('insuranceProvider')
-                    ->get();
-            }
-
             $data = [
                 'patients' => $patients,
                 'doctors' => $doctors,
                 'services' => $services,
-                'patient_insurances' => $patientInsurances,
             ];
 
             if ($request->wantsJson() || $request->is('api/*')) {
@@ -268,8 +250,6 @@ class BillController extends Controller
      */
     public function store(StoreBillRequest $request): RedirectResponse|JsonResponse
     {
-        // Permission check is handled by the check.permission middleware on the route
-
         try {
             DB::beginTransaction();
 
@@ -282,7 +262,6 @@ class BillController extends Controller
                 'due_date' => $request->due_date,
                 'notes' => $request->notes,
                 'billing_address' => $request->billing_address,
-                'primary_insurance_id' => $request->primary_insurance_id,
             ]);
 
             // Add bill items
@@ -295,18 +274,10 @@ class BillController extends Controller
             // Calculate totals
             $this->calculationService->calculateTotals($bill);
 
-            // Handle insurance if provided
-            if ($request->primary_insurance_id) {
-                $insurance = PatientInsurance::find($request->primary_insurance_id);
-                if ($insurance) {
-                    $this->calculationService->calculateInsuranceCoverage($bill, $insurance);
-                }
-            }
-
             DB::commit();
 
             // Load relationships for response
-            $bill->load(['patient', 'doctor', 'items', 'primaryInsurance']);
+            $bill->load(['patient', 'doctor', 'items']);
 
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
@@ -343,10 +314,8 @@ class BillController extends Controller
                 'createdBy',
                 'items',
                 'payments.receivedBy',
-                'insuranceClaims.patientInsurance.insuranceProvider',
                 'refunds',
                 'statusHistory.changedBy',
-                'primaryInsurance.insuranceProvider',
             ])->findOrFail($id);
 
             // Authorization check
@@ -382,7 +351,7 @@ class BillController extends Controller
     public function edit(Request $request, string $id): Response|JsonResponse|RedirectResponse
     {
         try {
-            $bill = Bill::with(['patient', 'doctor', 'items', 'primaryInsurance'])->findOrFail($id);
+            $bill = Bill::with(['patient', 'doctor', 'items'])->findOrFail($id);
 
             // Authorization check
             if (!$this->canModifyBill($bill)) {
@@ -401,17 +370,12 @@ class BillController extends Controller
             $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name', 'phone')->get();
             $doctors = Doctor::select('id', 'doctor_id', 'full_name', 'specialization')->get();
             $services = DepartmentService::active()->with('department')->get();
-            $patientInsurances = PatientInsurance::byPatient($bill->patient_id)
-                ->valid()
-                ->with('insuranceProvider')
-                ->get();
 
             $data = [
                 'bill' => new BillResource($bill),
                 'patients' => $patients,
                 'doctors' => $doctors,
                 'services' => $services,
-                'patient_insurances' => $patientInsurances,
             ];
 
             if ($request->wantsJson() || $request->is('api/*')) {
@@ -469,13 +433,10 @@ class BillController extends Controller
             if ($request->has('billing_address')) {
                 $updateData['billing_address'] = $request->billing_address;
             }
-            if ($request->has('primary_insurance_id')) {
-                $updateData['primary_insurance_id'] = $request->primary_insurance_id;
-            }
 
             $bill->update($updateData);
 
-            // BUSINESS LOGIC FIX: Validate and update items
+            // Validate and update items
             if ($request->has('items') && is_array($request->items)) {
                 // Validate all items belong to this bill if IDs provided
                 $requestItemIds = collect($request->items)
@@ -504,18 +465,10 @@ class BillController extends Controller
                 $this->calculationService->calculateTotals($bill);
             }
 
-            // Recalculate insurance if insurance changed
-            if ($request->has('primary_insurance_id') && $request->primary_insurance_id) {
-                $insurance = PatientInsurance::find($request->primary_insurance_id);
-                if ($insurance) {
-                    $this->calculationService->calculateInsuranceCoverage($bill, $insurance);
-                }
-            }
-
             DB::commit();
 
             // Load relationships for response
-            $bill->load(['patient', 'doctor', 'items', 'primaryInsurance']);
+            $bill->load(['patient', 'doctor', 'items']);
 
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
@@ -708,7 +661,6 @@ class BillController extends Controller
             $bill->update(['reminder_last_sent' => now()]);
 
             // TODO: Implement actual email/SMS sending logic here
-            // For now, just log the reminder
             Log::info('Payment reminder sent', [
                 'bill_id' => $bill->id,
                 'patient_id' => $bill->patient_id,
@@ -739,11 +691,7 @@ class BillController extends Controller
         $this->authorize('view-billing');
 
         try {
-            $patient = Patient::with([
-                'insurances' => function ($query) {
-                    $query->valid()->with('insuranceProvider');
-                },
-            ])->findOrFail($patientId);
+            $patient = Patient::findOrFail($patientId);
 
             // SECURITY FIX: Implement proper authorization
             $user = auth()->user();
@@ -777,7 +725,6 @@ class BillController extends Controller
                 'success' => true,
                 'data' => [
                     'patient' => new PatientResource($patient),
-                    'insurances' => $patient->insurances,
                     'recent_bills' => BillResource::collection($recentBills),
                     'outstanding_balance' => $outstandingBalance,
                 ],
@@ -862,15 +809,12 @@ class BillController extends Controller
 
     /**
      * Get all bill items across all bills (API endpoint for frontend).
-     * SECURITY FIX: Added authorization and pagination
      */
     public function getAllItems(Request $request): JsonResponse
     {
-        // SECURITY FIX: Require proper authorization
         $this->authorize('view-billing');
 
         try {
-            // PERFORMANCE FIX: Use pagination instead of loading all
             $perPage = min(max($request->input('per_page', 50), 1), 100);
             
             $bills = Bill::with([
