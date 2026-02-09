@@ -3,23 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Heading from '@/components/heading';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import LaboratoryLayout from '@/layouts/LaboratoryLayout';
 import { LabStatusBadge, PriorityBadge } from '@/components/laboratory';
 import {
     FlaskConical,
     ClipboardList,
     FileText,
-    Plus,
     ArrowRight,
     Clock,
     CheckCircle2,
     Activity,
-    Zap,
-    AlertTriangle,
     Calendar,
-    Microscope,
-    Beaker,
-    Droplets,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LaboratoryDashboardStats, LaboratoryActivity } from '@/types/lab-test';
@@ -71,15 +65,6 @@ const quickActions = [
     },
 ];
 
-// Category icons mapping
-const categoryIcons: Record<string, React.ElementType> = {
-    hematology: Droplets,
-    biochemistry: FlaskConical,
-    microbiology: Microscope,
-    immunology: Activity,
-    urinalysis: Beaker,
-};
-
 export default function LaboratoryIndex({
     stats,
     recentRequests,
@@ -104,83 +89,25 @@ export default function LaboratoryIndex({
     };
 
     return (
-        <HospitalLayout>
+        <LaboratoryLayout
+            header={
+                <div>
+                    <Heading title="Laboratory Dashboard" />
+                    <p className="text-muted-foreground mt-1">
+                        Overview of laboratory operations and activities
+                    </p>
+                </div>
+            }
+            alerts={{
+                criticalResults,
+                statRequests,
+                abnormalResults: stats.abnormalResults,
+                pendingRequests: stats.pendingRequests,
+            }}
+        >
             <Head title="Laboratory Dashboard" />
 
             <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <Heading title="Laboratory Dashboard" />
-                        <p className="text-muted-foreground mt-1">
-                            Overview of laboratory operations and activities
-                        </p>
-                    </div>
-
-                    <div className="flex gap-2">
-                        <Link href="/laboratory/lab-test-requests/create">
-                            <Button className="bg-primary hover:bg-primary/90">
-                                <Plus className="mr-2 h-4 w-4" />
-                                New Request
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Critical Alerts */}
-                {(criticalResults > 0 || statRequests > 0) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {criticalResults > 0 && (
-                            <Card className="bg-gradient-to-r from-red-500/5 to-orange-500/5 border-red-500/20">
-                                <CardContent className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center animate-pulse">
-                                            <AlertTriangle className="h-5 w-5 text-red-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium text-red-700">
-                                                {criticalResults} Critical Result{criticalResults > 1 ? 's' : ''} Requiring Attention
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Immediate physician notification required
-                                            </p>
-                                        </div>
-                                        <Link href="/laboratory/lab-test-results?abnormal_only=true">
-                                            <Button variant="outline" size="sm" className="border-red-500/30 text-red-700 hover:bg-red-50">
-                                                View
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {statRequests > 0 && (
-                            <Card className="bg-gradient-to-r from-red-500/5 to-orange-500/5 border-red-500/20">
-                                <CardContent className="p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center animate-pulse">
-                                            <Zap className="h-5 w-5 text-red-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium text-red-700">
-                                                {statRequests} STAT Request{statRequests > 1 ? 's' : ''} Pending
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Immediate processing required
-                                            </p>
-                                        </div>
-                                        <Link href="/laboratory/lab-test-requests?test_type=stat">
-                                            <Button variant="outline" size="sm" className="border-red-500/30 text-red-700 hover:bg-red-50">
-                                                View
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-                )}
 
                 {/* Statistics Overview */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -489,6 +416,6 @@ export default function LaboratoryIndex({
                     </Link>
                 </div>
             </div>
-        </HospitalLayout>
+        </LaboratoryLayout>
     );
 }

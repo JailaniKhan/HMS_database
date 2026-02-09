@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import {
     TrendingUp,
     ArrowLeft,
@@ -94,7 +94,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
     };
 
     return (
-        <HospitalLayout header="Sales Report">
+        <PharmacyLayout header="Sales Report">
             <Head title="Sales Report" />
 
             {/* Header */}
@@ -364,6 +364,6 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                     )}
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

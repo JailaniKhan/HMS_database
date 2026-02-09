@@ -19,7 +19,7 @@ import {
     Boxes,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { MedicineCategory } from '@/types/pharmacy';
 
 interface CategoryValuation {
@@ -103,7 +103,7 @@ export default function Valuation({
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Stock Valuation" />
 
@@ -372,6 +372,6 @@ export default function Valuation({
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

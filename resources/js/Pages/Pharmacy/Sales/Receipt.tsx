@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -83,7 +84,7 @@ export default function Receipt({ sale, pharmacy }: ReceiptProps) {
     };
 
     return (
-        <>
+        <PharmacyLayout>
             <Head title={`Receipt - ${sale.sale_id}`} />
             
             {/* Print-only styles */}
@@ -322,6 +323,6 @@ export default function Receipt({ sale, pharmacy }: ReceiptProps) {
                     </Card>
                 </div>
             </div>
-        </>
+        </PharmacyLayout>
     );
 }

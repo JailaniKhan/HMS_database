@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import {
     AlertCircle,
     ArrowLeft,
@@ -113,7 +113,7 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
     };
 
     return (
-        <HospitalLayout header="Expiry Report">
+        <PharmacyLayout header="Expiry Report">
             <Head title="Expiry Report" />
 
             {/* Header */}
@@ -445,6 +445,6 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                     )}
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

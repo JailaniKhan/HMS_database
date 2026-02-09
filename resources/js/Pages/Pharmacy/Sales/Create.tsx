@@ -43,7 +43,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, CartItem } from '@/types/pharmacy';
 
 interface Patient {
@@ -250,7 +250,7 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
     // Success state after sale completion
     if (saleComplete) {
         return (
-            <HospitalLayout>
+            <PharmacyLayout>
                 <div className="min-h-[80vh] flex items-center justify-center">
                     <Card className="w-full max-w-md">
                         <CardContent className="pt-6 text-center">
@@ -279,12 +279,12 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                         </CardContent>
                     </Card>
                 </div>
-            </HospitalLayout>
+            </PharmacyLayout>
         );
     }
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="New Sale - POS" />
                 
@@ -720,6 +720,6 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                     </DialogContent>
                 </Dialog>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

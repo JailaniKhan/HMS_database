@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { StockBadge } from '@/components/pharmacy';
 import { ExpiryBadge } from '@/components/pharmacy';
 import { PriceDisplay } from '@/components/pharmacy';
@@ -156,7 +156,15 @@ export default function PharmacyDashboard({
     };
 
     return (
-        <HospitalLayout header="Pharmacy Dashboard">
+        <PharmacyLayout
+            header={<h1 className="text-xl font-semibold">Pharmacy Dashboard</h1>}
+            alerts={{
+                lowStock: stats.lowStockCount,
+                expiringSoon: stats.expiringSoonCount,
+                expired: stats.expiredCount,
+                critical: stats.criticalAlerts,
+            }}
+        >
             <Head title="Pharmacy Dashboard" />
 
             {/* Quick Actions */}
@@ -387,6 +395,6 @@ export default function PharmacyDashboard({
                     )}
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

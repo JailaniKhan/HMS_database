@@ -1,4 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ export default function CategoryCreate() {
   };
 
   return (
-    <>
+    <PharmacyLayout>
       <Head title="Add New Category" />
       
       <div className="space-y-6">
@@ -166,6 +167,6 @@ export default function CategoryCreate() {
           </div>
         </form>
       </div>
-    </>
+    </PharmacyLayout>
   );
 }

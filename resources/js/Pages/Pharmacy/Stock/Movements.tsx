@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine } from '@/types/pharmacy';
 
 interface StockMovement {
@@ -224,7 +224,7 @@ export default function Movements({ movements, medicines, filters = {} }: Moveme
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Stock Movements" />
 
@@ -418,6 +418,6 @@ export default function Movements({ movements, medicines, filters = {} }: Moveme
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

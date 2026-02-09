@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine } from '@/types/pharmacy';
 
 interface StockAdjustment {
@@ -190,7 +190,7 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Stock Adjustments" />
 
@@ -502,6 +502,6 @@ export default function Adjustments({ medicines, recentAdjustments, preselectedM
                     </Card>
                 </div>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

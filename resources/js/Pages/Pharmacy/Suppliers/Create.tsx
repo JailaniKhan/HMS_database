@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Heading from '@/components/heading';
 import { ArrowLeft } from 'lucide-react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 
 export default function SupplierCreate() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -15,7 +15,7 @@ export default function SupplierCreate() {
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Add Supplier" />
 
@@ -126,6 +126,6 @@ export default function SupplierCreate() {
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

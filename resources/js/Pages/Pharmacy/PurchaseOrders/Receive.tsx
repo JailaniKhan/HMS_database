@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, PurchaseOrder, PurchaseOrderItem, Supplier } from '@/types/pharmacy';
 
 interface PurchaseOrderItemWithReceived extends PurchaseOrderItem {
@@ -289,7 +289,7 @@ export default function Receive({ purchaseOrder }: ReceiveProps) {
 
     if (!canReceive) {
         return (
-            <HospitalLayout>
+            <PharmacyLayout>
                 <div className="space-y-6">
                     <Head title="Receive Items" />
                     <Card className="py-12">
@@ -305,12 +305,12 @@ export default function Receive({ purchaseOrder }: ReceiveProps) {
                         </CardContent>
                     </Card>
                 </div>
-            </HospitalLayout>
+            </PharmacyLayout>
         );
     }
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Receive Items" />
 
@@ -659,6 +659,6 @@ export default function Receive({ purchaseOrder }: ReceiveProps) {
                     </Card>
                 </form>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

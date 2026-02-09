@@ -1,4 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -116,7 +117,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
   const selectedCategory = categories.find(c => c.id.toString() === data.category_id);
 
   return (
-    <>
+    <PharmacyLayout>
       <Head title="Add New Medicine" />
       
       <div className="space-y-6">
@@ -610,6 +611,6 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
           </div>
         </form>
       </div>
-    </>
+    </PharmacyLayout>
   );
 }

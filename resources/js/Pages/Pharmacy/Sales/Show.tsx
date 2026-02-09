@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Sale, SalesItem } from '@/types/pharmacy';
 
 interface SaleWithDetails extends Sale {
@@ -143,7 +143,7 @@ export default function SaleShow({ sale, timeline = [] }: SaleShowProps) {
     const canVoid = sale.status !== 'cancelled' && sale.status !== 'refunded';
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title={`Sale ${sale.sale_id}`} />
                 
@@ -563,6 +563,6 @@ export default function SaleShow({ sale, timeline = [] }: SaleShowProps) {
                     </div>
                 </div>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import {
     TrendingUp,
     Package,
@@ -66,7 +66,7 @@ const reportCards = [
 
 export default function ReportsIndex({ stats }: ReportsIndexProps) {
     return (
-        <HospitalLayout header="Pharmacy Reports">
+        <PharmacyLayout header="Pharmacy Reports">
             <Head title="Pharmacy Reports" />
 
             {/* Stats Overview */}
@@ -238,6 +238,6 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                     </div>
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

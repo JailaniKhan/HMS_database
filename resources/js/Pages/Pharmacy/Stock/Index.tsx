@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, MedicineCategory } from '@/types/pharmacy';
 
 interface StockItem extends Medicine {
@@ -158,7 +158,7 @@ export default function StockIndex({ medicines, categories, stats, filters = {} 
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Stock Management" />
 
@@ -431,6 +431,6 @@ export default function StockIndex({ medicines, categories, stats, filters = {} 
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

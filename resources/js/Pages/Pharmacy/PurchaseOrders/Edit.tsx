@@ -25,7 +25,7 @@ import {
     AlertCircle,
 } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, Supplier, PurchaseOrder, PurchaseOrderItem } from '@/types/pharmacy';
 
 interface PurchaseOrderItemForm {
@@ -138,7 +138,7 @@ export default function PurchaseOrderEdit({ purchaseOrder, suppliers, medicines 
 
     if (!canEdit) {
         return (
-            <HospitalLayout>
+            <PharmacyLayout>
                 <div className="space-y-6">
                     <Head title="Edit Purchase Order" />
                     <Card className="py-12">
@@ -154,12 +154,12 @@ export default function PurchaseOrderEdit({ purchaseOrder, suppliers, medicines 
                         </CardContent>
                     </Card>
                 </div>
-            </HospitalLayout>
+            </PharmacyLayout>
         );
     }
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Edit Purchase Order" />
 
@@ -433,6 +433,6 @@ export default function PurchaseOrderEdit({ purchaseOrder, suppliers, medicines 
                     </div>
                 </form>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

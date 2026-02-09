@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import HospitalLayout from '@/layouts/PharmacyLayout';
 import type { Sale } from '@/types/pharmacy';
 
 interface Patient {

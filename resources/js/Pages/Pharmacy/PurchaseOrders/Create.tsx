@@ -35,7 +35,7 @@ import {
     AlertCircle,
 } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, Supplier } from '@/types/pharmacy';
 
 interface PurchaseOrderItem {
@@ -155,7 +155,7 @@ export default function PurchaseOrderCreate({ suppliers, medicines }: PurchaseOr
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Create Purchase Order" />
 
@@ -493,6 +493,6 @@ export default function PurchaseOrderCreate({ suppliers, medicines }: PurchaseOr
                     </div>
                 </form>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

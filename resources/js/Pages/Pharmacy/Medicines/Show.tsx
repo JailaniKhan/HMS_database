@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -93,7 +94,7 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
   const totalSalesRevenue = recentSales.reduce((sum, sale) => sum + sale.total_price, 0);
 
   return (
-    <>
+    <PharmacyLayout>
       <Head title={`${medicine.name} - Medicine Details`} />
       
       <div className="space-y-6">
@@ -503,6 +504,6 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </PharmacyLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -106,7 +107,7 @@ export default function MedicineEdit({ medicine, categories }: MedicineEditProps
   const expiryStatus = getExpiryStatus();
 
   return (
-    <>
+    <PharmacyLayout>
       <Head title={`Edit Medicine - ${medicine.medicine_id}`} />
       
       <div className="space-y-6">
@@ -623,6 +624,6 @@ export default function MedicineEdit({ medicine, categories }: MedicineEditProps
           </div>
         </form>
       </div>
-    </>
+    </PharmacyLayout>
   );
 }

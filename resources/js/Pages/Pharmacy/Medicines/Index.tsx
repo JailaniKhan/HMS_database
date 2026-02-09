@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -158,7 +159,7 @@ export default function MedicineIndex({
   };
 
   return (
-    <>
+    <PharmacyLayout>
       <Head title="Medicines" />
       
       <div className="space-y-6">
@@ -441,6 +442,6 @@ export default function MedicineIndex({
           </div>
         )}
       </div>
-    </>
+    </PharmacyLayout>
   );
 }

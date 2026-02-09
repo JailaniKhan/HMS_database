@@ -45,7 +45,7 @@ import {
     Calendar,
 } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, CartItem } from '@/types/pharmacy';
 
 interface Patient {
@@ -324,7 +324,7 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
     // Success state after sale completion
     if (saleComplete) {
         return (
-            <HospitalLayout>
+            <PharmacyLayout>
                 <div className="min-h-[80vh] flex items-center justify-center">
                     <Card className="w-full max-w-md">
                         <CardContent className="pt-6 text-center">
@@ -353,12 +353,12 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
                         </CardContent>
                     </Card>
                 </div>
-            </HospitalLayout>
+            </PharmacyLayout>
         );
     }
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Dispense Prescription" />
                 
@@ -929,6 +929,6 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
                     </DialogContent>
                 </Dialog>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

@@ -21,7 +21,7 @@ import {
     Phone,
 } from 'lucide-react';
 import { useState } from 'react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Supplier } from '@/types/pharmacy';
 
 interface SupplierIndexProps {
@@ -44,7 +44,7 @@ export default function SupplierIndex({ suppliers }: SupplierIndexProps) {
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Suppliers" />
 
@@ -178,6 +178,6 @@ export default function SupplierIndex({ suppliers }: SupplierIndexProps) {
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

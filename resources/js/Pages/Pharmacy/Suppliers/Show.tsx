@@ -11,7 +11,7 @@ import {
     Edit,
     Calendar,
 } from 'lucide-react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Supplier } from '@/types/pharmacy';
 
 interface SupplierShowProps {
@@ -20,7 +20,7 @@ interface SupplierShowProps {
 
 export default function SupplierShow({ supplier }: SupplierShowProps) {
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title={supplier.name} />
 
@@ -141,6 +141,6 @@ export default function SupplierShow({ supplier }: SupplierShowProps) {
                     )}
                 </div>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

@@ -18,7 +18,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, PurchaseOrder, PurchaseOrderItem, Supplier } from '@/types/pharmacy';
 
 interface PurchaseOrderWithDetails extends PurchaseOrder {
@@ -120,7 +120,7 @@ export default function PurchaseOrderShow({ purchaseOrder }: PurchaseOrderShowPr
     const totalOrdered = purchaseOrder.items.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title={`Purchase Order ${purchaseOrder.po_number}`} />
 
@@ -514,6 +514,6 @@ export default function PurchaseOrderShow({ purchaseOrder }: PurchaseOrderShowPr
                     </div>
                 </div>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

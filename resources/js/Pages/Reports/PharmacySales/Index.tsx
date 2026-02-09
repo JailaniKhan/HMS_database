@@ -2,11 +2,11 @@ import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pill } from 'lucide-react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 
 export default function PharmacySalesReportIndex() {
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="min-h-screen bg-gray-50 p-4 md:p-8">
                 <Head title="Pharmacy Sales Reports" />
                 
@@ -46,6 +46,6 @@ export default function PharmacySalesReportIndex() {
                     </Card>
                 </div>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { AlertCircle, AlertTriangle, Package, RefreshCw, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import type { MedicineAlert } from '@/types/pharmacy';
@@ -79,7 +79,7 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
     };
 
     return (
-        <HospitalLayout header="Pharmacy Alerts">
+        <PharmacyLayout header="Pharmacy Alerts">
             <Head title="Pharmacy Alerts" />
 
             {/* Stats Overview */}
@@ -319,6 +319,6 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
                     )}
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

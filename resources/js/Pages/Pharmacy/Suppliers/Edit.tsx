@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Heading from '@/components/heading';
 import { ArrowLeft } from 'lucide-react';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Supplier } from '@/types/pharmacy';
 
 interface SupplierEditProps {
@@ -20,7 +20,7 @@ export default function SupplierEdit({ supplier }: SupplierEditProps) {
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title={`Edit ${supplier.name}`} />
 
@@ -137,6 +137,6 @@ export default function SupplierEdit({ supplier }: SupplierEditProps) {
                     </CardContent>
                 </Card>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

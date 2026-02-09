@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import HospitalLayout from '@/layouts/HospitalLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import {
     Package,
     ArrowLeft,
@@ -94,7 +94,7 @@ export default function StockReport({ medicines, filters, summary, categories }:
     };
 
     return (
-        <HospitalLayout header="Stock Report">
+        <PharmacyLayout header="Stock Report">
             <Head title="Stock Report" />
 
             {/* Header */}
@@ -361,6 +361,6 @@ export default function StockReport({ medicines, filters, summary, categories }:
                     )}
                 </CardContent>
             </Card>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }
