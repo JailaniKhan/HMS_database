@@ -97,14 +97,7 @@ return new class extends Migration
             }
         });
 
-        Schema::table('purchase_orders', function (Blueprint $table) {
-            if (!$this->indexExists('purchase_orders', 'idx_po_supplier')) {
-                $table->index('supplier_id', 'idx_po_supplier');
-            }
-            if (!$this->indexExists('purchase_orders', 'idx_po_status')) {
-                $table->index('status', 'idx_po_status');
-            }
-        });
+        // Sales indexes already added above
     }
 
     /**
@@ -152,10 +145,7 @@ return new class extends Migration
             $table->dropIndex('idx_sales_date');
         });
 
-        Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->dropIndex('idx_po_supplier');
-            $table->dropIndex('idx_po_status');
-        });
+        // Sales indexes already removed above
     }
 
     private function indexExists(string $table, string $indexName): bool

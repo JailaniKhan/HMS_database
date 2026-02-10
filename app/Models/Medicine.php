@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\MedicineCategory;
-use App\Models\PurchaseOrderItem;
 use App\Models\SalesItem;
 use App\Models\MedicineAlert;
 
@@ -50,11 +49,6 @@ class Medicine extends Model
     public function category()
     {
         return $this->belongsTo(MedicineCategory::class, 'category_id');
-    }
-
-    public function purchaseOrderItems()
-    {
-        return $this->hasMany(PurchaseOrderItem::class);
     }
 
     public function salesItems()

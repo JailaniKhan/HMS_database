@@ -25,8 +25,6 @@ import {
     FileBarChart,
     Building,
     Package,
-    ClipboardList,
-    Truck,
     AlertTriangle,
     List,
     Shield,
@@ -169,16 +167,6 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                         title: 'Stock',
                         href: '/pharmacy/stock',
                         icon: Package,
-                    },
-                    {
-                        title: 'Purchase Orders',
-                        href: '/pharmacy/purchase-orders',
-                        icon: ClipboardList,
-                    },
-                    {
-                        title: 'Suppliers',
-                        href: '/pharmacy/suppliers',
-                        icon: Truck,
                     },
                     {
                         title: 'Alerts',

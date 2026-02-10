@@ -98,15 +98,6 @@ Route::prefix('v1')->group(function () {
 
         // Pharmacy routes
         Route::prefix('pharmacy')->group(function () {
-            // Purchase Orders API routes
-            Route::get('/purchase-orders', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'index']);
-            Route::get('/purchase-orders/{purchaseOrder}', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'show']);
-            Route::post('/purchase-orders', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'store']);
-            Route::put('/purchase-orders/{purchaseOrder}', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'update']);
-            Route::delete('/purchase-orders/{purchaseOrder}', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'destroy']);
-            Route::put('/purchase-orders/{purchaseOrder}/status', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'updateStatus']);
-            Route::get('/purchase-orders/{purchaseOrder}/receive', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'receivePage']);
-            Route::post('/purchase-orders/{purchaseOrder}/receive', [App\Http\Controllers\Pharmacy\PurchaseOrderController::class, 'receive']);
         });
     });
 });

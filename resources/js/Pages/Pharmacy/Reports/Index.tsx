@@ -7,7 +7,6 @@ import {
     Package,
     AlertCircle,
     DollarSign,
-    ShoppingCart,
     FileText,
     Download,
     BarChart3,
@@ -53,16 +52,8 @@ const reportCards = [
         href: '/pharmacy/reports/expiry',
         features: ['Expiring soon', 'Already expired', 'Batch tracking', 'Expiry alerts'],
     },
-    {
-        id: 'purchase',
-        title: 'Purchase Report',
-        description: 'Purchase orders and supplier analysis',
-        icon: ShoppingCart,
-        color: 'bg-purple-500/10 text-purple-600',
-        href: '/pharmacy/reports/purchases',
-        features: ['Purchase history', 'Supplier performance', 'Order status', 'Cost analysis'],
-    },
 ];
+// Removed Purchase Report section (Purchase orders and supplier analysis)
 
 export default function ReportsIndex({ stats }: ReportsIndexProps) {
     return (

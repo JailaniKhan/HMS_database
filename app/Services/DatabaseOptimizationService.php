@@ -117,9 +117,6 @@ class DatabaseOptimizationService
             case 'medicines':
                 $eagerLoads = ['category', 'alerts'];
                 break;
-            case 'purchase_orders':
-                $eagerLoads = ['supplier', 'items.medicine'];
-                break;
             case 'sales':
                 $eagerLoads = ['patient', 'items.medicine'];
                 break;

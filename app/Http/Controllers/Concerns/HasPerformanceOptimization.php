@@ -79,18 +79,6 @@ trait HasPerformanceOptimization
     }
 
     /**
-     * Get suppliers (cached)
-     */
-    protected function getSuppliers(): mixed
-    {
-        return $this->getCachedStaticData('suppliers', function () {
-            return \App\Models\Supplier::select('id', 'name', 'phone', 'email', 'status')
-                ->orderBy('name')
-                ->get();
-        }, 60);
-    }
-
-    /**
      * Get insurance providers (cached)
      */
     protected function getInsuranceProviders(): mixed
@@ -164,7 +152,6 @@ trait HasPerformanceOptimization
             'bill' => ['id', 'bill_id', 'patient_id', 'doctor_id', 'total_amount', 'payment_status', 'bill_date'],
             'appointment' => ['id', 'patient_id', 'doctor_id', 'appointment_date', 'status'],
             'department' => ['id', 'name'],
-            'supplier' => ['id', 'name', 'phone', 'email', 'status'],
         ];
 
         $columns = $defaults[$model] ?? ['id', 'name'];

@@ -327,7 +327,7 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
                     </div>
                     <div>
                       <CardTitle>Manufacturer & Pricing</CardTitle>
-                      <CardDescription>Supplier and pricing information</CardDescription>
+                      <CardDescription>Manufacturer and pricing information</CardDescription>
                     </div>
                   </div>
                 </CardHeader>

@@ -29,7 +29,6 @@ createServer((page) =>
                 .replace(/^pharmacy\.medicines\./, 'Pharmacy/Medicines/')
                 .replace(/^pharmacy\.stock\./, 'Pharmacy/Stock/')
                 .replace(/^pharmacy\.sales\./, 'Pharmacy/Sales/')
-                .replace(/^pharmacy\.purchase-orders\./, 'Pharmacy/PurchaseOrders/')
                 .replace(/^pharmacy\.alerts\./, 'Pharmacy/Alerts/')
                 .replace(/^laboratory\.lab-tests\./, 'Laboratory/LabTests/')
                 .replace(/^laboratory\.lab-test-results\./, 'Laboratory/LabTestResults/')

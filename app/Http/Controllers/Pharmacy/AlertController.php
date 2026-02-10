@@ -52,14 +52,27 @@ class AlertController extends Controller
         
         $alerts = $query->latest()->paginate(10)->withQueryString();
         
-        // Calculate statistics
+        // Calculate statistics - include dynamic checks from medicines
+        $lowStockCount = Medicine::where('stock_quantity', '<=', 10)
+            ->where('stock_quantity', '>', 0)
+            ->count();
+        
+        $expiringSoonCount = Medicine::whereDate('expiry_date', '>=', now())
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->where('stock_quantity', '>', 0)
+            ->count();
+        
+        $expiredCount = Medicine::whereDate('expiry_date', '<', now())
+            ->where('stock_quantity', '>', 0)
+            ->count();
+        
         $stats = [
-            'total' => MedicineAlert::count(),
-            'pending' => MedicineAlert::where('status', 'pending')->count(),
+            'total' => MedicineAlert::count() + $lowStockCount + $expiringSoonCount + $expiredCount,
+            'pending' => MedicineAlert::where('status', 'pending')->count() + $lowStockCount + $expiringSoonCount + $expiredCount,
             'resolved' => MedicineAlert::where('status', 'resolved')->count(),
             'critical' => MedicineAlert::where('priority', 'high')
                 ->where('status', 'pending')
-                ->count(),
+                ->count() + $expiredCount,
         ];
         
         return Inertia::render('Pharmacy/Alerts/Index', [
@@ -148,8 +161,9 @@ class AlertController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        // For now, just redirect back with a message
-        // In a real implementation, we would dispatch the command
-        return redirect()->back()->withErrors(['success' => 'Expiry alert check would be triggered in a real implementation. In production, this runs as a scheduled task.']);
+        // Run the expiry check command
+        \Artisan::call('alerts:check-expiry');
+        $output = \Artisan::output();
+        
+        return redirect()->back()->with('success', 'Alert check completed. ' . $output);
     }
-}

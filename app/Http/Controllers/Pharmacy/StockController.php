@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Pharmacy;
 use App\Http\Controllers\Controller;
 use App\Models\Medicine;
 use App\Models\MedicineCategory;
-use App\Models\PurchaseOrder;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;

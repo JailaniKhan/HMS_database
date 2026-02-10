@@ -41,16 +41,6 @@ return new class extends Migration
             }
         });
 
-        // Purchase orders additional indexes
-        Schema::table('purchase_order_items', function (Blueprint $table) {
-            if (!$this->indexExists('purchase_order_items', 'idx_po_items_medicine')) {
-                $table->index('medicine_id', 'idx_po_items_medicine');
-            }
-            if (!$this->indexExists('purchase_order_items', 'idx_po_items_order')) {
-                $table->index('purchase_order_id', 'idx_po_items_order');
-            }
-        });
-
         // Sales items additional indexes
         Schema::table('sales_items', function (Blueprint $table) {
             if (!$this->indexExists('sales_items', 'idx_sales_items_medicine')) {
@@ -79,11 +69,6 @@ return new class extends Migration
         Schema::table('audit_logs', function (Blueprint $table) {
             $table->dropIndex('idx_audit_user_time');
             $table->dropIndex('idx_audit_module_severity');
-        });
-
-        Schema::table('purchase_order_items', function (Blueprint $table) {
-            $table->dropIndex('idx_po_items_medicine');
-            $table->dropIndex('idx_po_items_order');
         });
 
         Schema::table('sales_items', function (Blueprint $table) {

@@ -35,7 +35,6 @@ export default function PharmacySalesReportIndex() {
                                 <li>Top selling medicines</li>
                                 <li>Inventory levels</li>
                                 <li>Expired medicine reports</li>
-                                <li>Supplier purchase reports</li>
                             </ul>
                             <div className="pt-4">
                                 <Button className="bg-blue-600 hover:bg-blue-700">

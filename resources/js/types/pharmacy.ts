@@ -119,51 +119,6 @@ export interface PrescriptionFormData {
     }[];
 }
 
-// Purchase Order Types
-export interface PurchaseOrder {
-    id: number;
-    po_number: string;
-    supplier_id: number;
-    user_id: number;
-    order_date: string;
-    expected_delivery: string | null;
-    status: 'draft' | 'sent' | 'partial' | 'received' | 'cancelled';
-    total_amount: number;
-    notes: string | null;
-    created_at: string;
-    updated_at: string;
-    supplier?: Supplier;
-    user?: {
-        id: number;
-        name: string;
-    };
-    items?: PurchaseOrderItem[];
-}
-
-export interface PurchaseOrderItem {
-    id: number;
-    purchase_order_id: number;
-    medicine_id: number;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    received_quantity: number;
-    created_at: string;
-    updated_at: string;
-    medicine?: Medicine;
-}
-
-export interface PurchaseOrderFormData {
-    supplier_id: string;
-    expected_delivery: string;
-    notes: string;
-    items: {
-        medicine_id: string;
-        quantity: number;
-        unit_price: number;
-    }[];
-}
-
 // Patient Type (for pharmacy context)
 export interface Patient {
     id: number;
@@ -190,29 +145,6 @@ export interface Doctor {
     license_number?: string;
     created_at: string;
     updated_at: string;
-}
-
-// Supplier Types
-export interface Supplier {
-    id: number;
-    name: string;
-    contact_person: string | null;
-    email: string | null;
-    phone: string | null;
-    address: string | null;
-    notes: string | null;
-    status: 'active' | 'inactive';
-    created_at: string;
-    updated_at: string;
-}
-
-export interface SupplierFormData {
-    name: string;
-    contact_person: string;
-    email: string;
-    phone: string;
-    address: string;
-    status: 'active' | 'inactive';
 }
 
 // Stock Movement Types
@@ -292,14 +224,6 @@ export interface SaleSearchFilters {
     date_from?: string;
     date_to?: string;
     patient_id?: string;
-}
-
-export interface PurchaseOrderSearchFilters {
-    query?: string;
-    status?: 'all' | 'draft' | 'sent' | 'partial' | 'received' | 'cancelled';
-    supplier_id?: string;
-    date_from?: string;
-    date_to?: string;
 }
 
 export interface StockMovementFilters {
