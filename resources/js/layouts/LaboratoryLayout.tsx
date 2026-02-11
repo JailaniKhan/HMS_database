@@ -272,8 +272,8 @@ export default function LaboratoryLayout({
     }, [hasPermission, isAuthenticated]);
 
     // Determine if any critical alerts exist
-    const hasCriticalAlerts = alerts.criticalResults && alerts.criticalResults > 0;
-    const hasStatRequests = alerts.statRequests && alerts.statRequests > 0;
+    const hasCriticalAlerts = (alerts.criticalResults ?? 0) > 0;
+    const hasStatRequests = (alerts.statRequests ?? 0) > 0;
 
     return (
         <AppShell variant="sidebar">
@@ -350,7 +350,7 @@ export default function LaboratoryLayout({
                 {(hasCriticalAlerts || hasStatRequests) && (
                     <div className="px-6 pt-4">
                         <div className="grid gap-3 md:grid-cols-2">
-                            {hasCriticalAlerts && (
+                            {(alerts.criticalResults ?? 0) > 0 && (
                                 <Card className="bg-gradient-to-r from-red-500/10 to-orange-500/5 border-red-500/30">
                                     <CardContent className="p-4">
                                         <div className="flex items-center gap-3">
@@ -376,7 +376,7 @@ export default function LaboratoryLayout({
                                 </Card>
                             )}
 
-                            {hasStatRequests && (
+                            {(alerts.statRequests ?? 0) > 0 && (
                                 <Card className="bg-gradient-to-r from-orange-500/10 to-amber-500/5 border-orange-500/30">
                                     <CardContent className="p-4">
                                         <div className="flex items-center gap-3">
@@ -435,10 +435,10 @@ export default function LaboratoryLayout({
                     </div>
 
                     {/* Pending/Abnormal Stats Bar */}
-                    {(alerts.pendingRequests || alerts.abnormalResults) && (
+                    {((alerts.pendingRequests ?? 0) > 0 || (alerts.abnormalResults ?? 0) > 0) && (
                         <div className="px-6 pb-3">
                             <div className="flex flex-wrap items-center gap-2">
-                                {alerts.pendingRequests && alerts.pendingRequests > 0 && (
+                                {(alerts.pendingRequests ?? 0) > 0 && (
                                     <Link href="/laboratory/lab-test-requests?status=pending">
                                         <Badge className="bg-blue-500 hover:bg-blue-600 cursor-pointer">
                                             <Clock className="h-3 w-3 mr-1" />
@@ -446,7 +446,7 @@ export default function LaboratoryLayout({
                                         </Badge>
                                     </Link>
                                 )}
-                                {alerts.abnormalResults && alerts.abnormalResults > 0 && (
+                                {(alerts.abnormalResults ?? 0) > 0 && (
                                     <Link href="/laboratory/lab-test-results?status=abnormal">
                                         <Badge className="bg-amber-500 hover:bg-amber-600 cursor-pointer">
                                             <AlertCircle className="h-3 w-3 mr-1" />

@@ -253,7 +253,11 @@ class MedicineController extends Controller
             ->get();
         
         // Get stock history
-        $stockHistory = [];
+        $stockHistory = \App\Models\StockMovement::forMedicine($medicineId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
         
         return Inertia::render('Pharmacy/Medicines/Show', [
             'medicine' => $medicine,

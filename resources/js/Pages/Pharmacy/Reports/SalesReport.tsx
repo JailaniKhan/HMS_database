@@ -313,7 +313,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                                             {sale.items?.length || 0} items
                                         </td>
                                         <td className="py-3 px-4 text-right font-medium">
-                                            ${sale.grand_total.toFixed(2)}
+                                            ${Number(sale.grand_total).toFixed(2)}
                                         </td>
                                         <td className="py-3 px-4">
                                             <Badge variant="outline" className="capitalize">

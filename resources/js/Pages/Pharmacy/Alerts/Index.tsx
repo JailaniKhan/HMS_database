@@ -1,11 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
-import { AlertCircle, AlertTriangle, Package, RefreshCw, CheckCircle, Clock } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Package, RefreshCw, CheckCircle, Clock, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 import type { MedicineAlert } from '@/types/pharmacy';
 
 interface AlertsIndexProps {
@@ -29,19 +30,21 @@ interface AlertsIndexProps {
     };
 }
 
-const alertTypeIcons = {
+const alertTypeIcons: Record<string, typeof Package> = {
     low_stock: Package,
     expired: AlertCircle,
     expiring_soon: Clock,
+    low_stock_expiring: AlertTriangle,
 };
 
-const alertTypeLabels = {
+const alertTypeLabels: Record<string, string> = {
     low_stock: 'Low Stock',
     expired: 'Expired',
     expiring_soon: 'Expiring Soon',
+    low_stock_expiring: 'Low Stock & Expiring',
 };
 
-const severityColors = {
+const priorityColors: Record<string, string> = {
     low: 'bg-blue-100 text-blue-800 border-blue-200',
     medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     high: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -54,6 +57,22 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps) {
+    const { flash } = usePage().props as any;
+    const [showMessage, setShowMessage] = useState<string | null>(null);
+    const [messageType, setMessageType] = useState<'success' | 'warning' | null>(null);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setShowMessage(flash.success);
+            setMessageType('success');
+            setTimeout(() => setShowMessage(null), 5000);
+        } else if (flash?.warning) {
+            setShowMessage(flash.warning);
+            setMessageType('warning');
+            setTimeout(() => setShowMessage(null), 5000);
+        }
+    }, [flash]);
+
     const handleFilterChange = (key: string, value: string) => {
         router.get(
             route('pharmacy.alerts.index'),
@@ -62,10 +81,13 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
         );
     };
 
-    const handleResolve = (alertId: number) => {
+    const handleResolve = (alertId: number | string) => {
         if (confirm('Are you sure you want to mark this alert as resolved?')) {
-            router.put(route('pharmacy.alerts.update-status', alertId), {
+            router.post(`/pharmacy/alerts/${alertId}/status`, {
                 status: 'resolved',
+            }, {
+                preserveState: false,
+                preserveScroll: true,
             });
         }
     };
@@ -81,6 +103,21 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
     return (
         <PharmacyLayout header="Pharmacy Alerts">
             <Head title="Pharmacy Alerts" />
+
+            {/* Flash Messages */}
+            {showMessage && (
+                <div className={`p-4 rounded-lg flex items-center justify-between ${
+                    messageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                    <div className="flex items-center gap-2">
+                        {messageType === 'success' ? <CheckCircle className="size-5" /> : <AlertTriangle className="size-5" />}
+                        <span>{showMessage}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setShowMessage(null)}>
+                        <X className="size-4" />
+                    </Button>
+                </div>
+            )}
 
             {/* Stats Overview */}
             <div className="grid gap-4 md:grid-cols-4">
@@ -232,13 +269,13 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
                     ) : (
                         <div className="space-y-4">
                             {alerts.data.map((alert) => {
-                                const Icon = alertTypeIcons[alert.type] || AlertCircle;
+                                const Icon = alertTypeIcons[alert.alert_type] || AlertCircle;
                                 return (
                                     <div
                                         key={alert.id}
                                         className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                                     >
-                                        <div className={`p-3 rounded-lg ${severityColors[alert.severity]}`}>
+```                                        <div className={`p-3 rounded-lg ${priorityColors[alert.priority]}`}>
                                             <Icon className="size-5" />
                                         </div>
 
@@ -247,8 +284,8 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
                                                 <h4 className="font-semibold">
                                                     {alert.medicine?.name || 'Unknown Medicine'}
                                                 </h4>
-                                                <Badge variant="outline" className={severityColors[alert.severity]}>
-                                                    {alert.severity}
+                                                <Badge variant="outline" className={priorityColors[alert.priority]}>
+                                                    {alert.priority}
                                                 </Badge>
                                                 <Badge className={statusColors[alert.status]}>
                                                     {alert.status}
@@ -258,13 +295,13 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
                                                 {alert.message}
                                             </p>
                                             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                                <span>Type: {alertTypeLabels[alert.type]}</span>
+                                                <span>Type: {alertTypeLabels[alert.alert_type] || alert.alert_type}</span>
                                                 <span>•</span>
                                                 <span>Created: {format(new Date(alert.created_at), 'MMM d, yyyy HH:mm')}</span>
-                                                {alert.resolved_at && (
+                                                {alert.status === 'resolved' && alert.updated_at && (
                                                     <>
                                                         <span>•</span>
-                                                        <span>Resolved: {format(new Date(alert.resolved_at), 'MMM d, yyyy HH:mm')}</span>
+                                                        <span>Updated: {format(new Date(alert.updated_at), 'MMM d, yyyy HH:mm')}</span>
                                                     </>
                                                 )}
                                             </div>

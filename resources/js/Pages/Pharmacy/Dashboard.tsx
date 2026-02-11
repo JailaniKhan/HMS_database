@@ -54,14 +54,7 @@ const quickActions = [
         icon: Pill,
         color: 'bg-green-500/10 text-green-600 border-green-500/20',
     },
-    {
-        id: 'purchase-order',
-        label: 'Purchase Order',
-        description: 'Create a new purchase order',
-        href: '/pharmacy/purchase-orders/create',
-        icon: ClipboardList,
-        color: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-    },
+    
     {
         id: 'view-alerts',
         label: 'View Alerts',

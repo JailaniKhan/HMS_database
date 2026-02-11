@@ -206,6 +206,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/sales/create', [SalesController::class, 'create'])->name('pharmacy.sales.create');
         Route::get('/sales/dispense', [SalesController::class, 'dispense'])->name('pharmacy.sales.dispense');
         Route::post('/sales', [SalesController::class, 'store'])->name('pharmacy.sales.store');
+        
+        // Quick Patient Creation for Sales (returns JSON)
+        Route::post('/quick-patient', [PatientController::class, 'quickStore'])->name('pharmacy.quick-patient.store');
         Route::get('/sales/{sale}', [SalesController::class, 'show'])->name('pharmacy.sales.show');
         Route::post('/sales/{sale}/void', [SalesController::class, 'void'])->name('pharmacy.sales.void');
         Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])->name('pharmacy.sales.receipt');
@@ -216,7 +219,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/alerts/pending', [AlertController::class, 'pending'])->name('pharmacy.alerts.pending');
         Route::get('/alerts/resolved', [AlertController::class, 'resolved'])->name('pharmacy.alerts.resolved');
         Route::get('/alerts/trigger-check', [AlertController::class, 'triggerCheck'])->name('pharmacy.alerts.trigger-check');
-        Route::put('/alerts/{alert}/status', [AlertController::class, 'updateStatus'])->name('pharmacy.alerts.update-status');
+        Route::post('/alerts/{id}/status', [AlertController::class, 'updateStatus'])->name('pharmacy.alerts.update-status');
 
         // Reports Routes
         Route::get('/reports', [\App\Http\Controllers\Pharmacy\ReportController::class, 'index'])->name('pharmacy.reports.index');

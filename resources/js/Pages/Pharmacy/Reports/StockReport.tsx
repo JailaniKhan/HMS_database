@@ -284,7 +284,7 @@ export default function StockReport({ medicines, filters, summary, categories }:
                             <tbody>
                                 {medicines.data.map((medicine) => {
                                     const status = getStockStatus(medicine);
-                                    const stockValue = medicine.stock_quantity * medicine.unit_price;
+                                    const stockValue = Number(medicine.stock_quantity) * Number(medicine.unit_price);
                                     return (
                                         <tr key={medicine.id} className="border-b hover:bg-muted/50">
                                             <td className="py-3 px-4">
@@ -311,10 +311,10 @@ export default function StockReport({ medicines, filters, summary, categories }:
                                                 {medicine.reorder_level}
                                             </td>
                                             <td className="py-3 px-4 text-right">
-                                                ${medicine.unit_price.toFixed(2)}
+                                                ${Number(medicine.unit_price).toFixed(2)}
                                             </td>
                                             <td className="py-3 px-4 text-right font-medium">
-                                                ${stockValue.toFixed(2)}
+                                                ${Number(stockValue).toFixed(2)}
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <Badge className={stockStatusColors[status]}>

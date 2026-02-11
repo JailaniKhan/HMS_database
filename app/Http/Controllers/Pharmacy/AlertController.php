@@ -32,27 +32,45 @@ class AlertController extends Controller
             'severity' => $request->query('severity', ''),
         ];
         
-        // Build the query with filters
-        $query = MedicineAlert::with('medicine');
+        // Get dynamic alerts from medicines (low stock, expiring, expired)
+        $dynamicAlerts = $this->getDynamicAlerts($filters);
+        
+        // Get stored alerts from database
+        $storedAlertsQuery = MedicineAlert::with('medicine');
         
         // Apply type filter
         if (!empty($filters['type'])) {
-            $query->where('alert_type', $filters['type']);
+            $storedAlertsQuery->where('alert_type', $filters['type']);
         }
         
         // Apply status filter
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $storedAlertsQuery->where('status', $filters['status']);
         }
         
         // Apply severity/priority filter
         if (!empty($filters['severity'])) {
-            $query->where('priority', $filters['severity']);
+            $storedAlertsQuery->where('priority', $filters['severity']);
         }
         
-        $alerts = $query->latest()->paginate(10)->withQueryString();
+        $storedAlerts = $storedAlertsQuery->latest()->get();
         
-        // Calculate statistics - include dynamic checks from medicines
+        // Merge dynamic and stored alerts
+        $allAlerts = $dynamicAlerts->concat($storedAlerts);
+        
+        // Manual pagination for the merged collection
+        $perPage = 10;
+        $currentPage = $request->query('page', 1);
+        $total = $allAlerts->count();
+        $alerts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allAlerts->forPage($currentPage, $perPage)->values(),
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
+        // Calculate statistics
         $lowStockCount = Medicine::where('stock_quantity', '<=', 10)
             ->where('stock_quantity', '>', 0)
             ->count();
@@ -67,12 +85,11 @@ class AlertController extends Controller
             ->count();
         
         $stats = [
-            'total' => MedicineAlert::count() + $lowStockCount + $expiringSoonCount + $expiredCount,
-            'pending' => MedicineAlert::where('status', 'pending')->count() + $lowStockCount + $expiringSoonCount + $expiredCount,
-            'resolved' => MedicineAlert::where('status', 'resolved')->count(),
-            'critical' => MedicineAlert::where('priority', 'high')
-                ->where('status', 'pending')
-                ->count() + $expiredCount,
+            'total' => $allAlerts->count(),
+            'pending' => $allAlerts->where('status', 'pending')->count(),
+            'resolved' => $storedAlerts->where('status', 'resolved')->count(),
+            'critical' => $allAlerts->where('priority', 'high')->where('status', 'pending')->count() 
+                + $allAlerts->where('priority', 'critical')->where('status', 'pending')->count(),
         ];
         
         return Inertia::render('Pharmacy/Alerts/Index', [
@@ -80,6 +97,107 @@ class AlertController extends Controller
             'filters' => $filters,
             'stats' => $stats,
         ]);
+    }
+    
+    /**
+     * Get dynamic alerts from medicine conditions.
+     */
+    private function getDynamicAlerts(array $filters): \Illuminate\Support\Collection
+    {
+        $alerts = collect();
+        $id = 0;
+        
+        // Get expired medicines
+        $expiredMedicines = Medicine::whereDate('expiry_date', '<', now())
+            ->where('stock_quantity', '>', 0)
+            ->get();
+        
+        foreach ($expiredMedicines as $medicine) {
+            $alert = [
+                'id' => 'expired_' . $medicine->id,
+                'medicine_id' => $medicine->id,
+                'alert_type' => 'expired',
+                'message' => "Medicine {$medicine->name} has expired on {$medicine->expiry_date->format('Y-m-d')}",
+                'priority' => 'critical',
+                'status' => 'pending',
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'medicine' => $medicine,
+            ];
+            
+            if (empty($filters['type']) || $filters['type'] === 'expired') {
+                if (empty($filters['status']) || $filters['status'] === 'pending') {
+                    if (empty($filters['severity']) || $filters['severity'] === 'critical') {
+                        $alerts->push((object)$alert);
+                    }
+                }
+            }
+        }
+        
+        // Get medicines expiring soon (next 30 days)
+        $expiringSoonMedicines = Medicine::whereDate('expiry_date', '>=', now())
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->where('stock_quantity', '>', 0)
+            ->get();
+        
+        foreach ($expiringSoonMedicines as $medicine) {
+            $daysUntilExpiry = now()->diffInDays($medicine->expiry_date, false);
+            $priority = $daysUntilExpiry <= 7 ? 'high' : 'medium';
+            
+            $alert = [
+                'id' => 'expiring_' . $medicine->id,
+                'medicine_id' => $medicine->id,
+                'alert_type' => 'expiring_soon',
+                'message' => "Medicine {$medicine->name} is expiring soon on {$medicine->expiry_date->format('Y-m-d')} ({$daysUntilExpiry} days left)",
+                'priority' => $priority,
+                'status' => 'pending',
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'medicine' => $medicine,
+            ];
+            
+            if (empty($filters['type']) || $filters['type'] === 'expiring_soon') {
+                if (empty($filters['status']) || $filters['status'] === 'pending') {
+                    if (empty($filters['severity']) || $filters['severity'] === $priority) {
+                        $alerts->push((object)$alert);
+                    }
+                }
+            }
+        }
+        
+        // Get low stock medicines
+        $lowStockMedicines = Medicine::where('stock_quantity', '<=', 10)
+            ->where('stock_quantity', '>', 0)
+            ->get();
+        
+        foreach ($lowStockMedicines as $medicine) {
+            $priority = $medicine->stock_quantity <= 5 ? 'high' : 'medium';
+            
+            $alert = [
+                'id' => 'lowstock_' . $medicine->id,
+                'medicine_id' => $medicine->id,
+                'alert_type' => 'low_stock',
+                'message' => "Medicine {$medicine->name} is low in stock. Only {$medicine->stock_quantity} units remaining (reorder level: {$medicine->reorder_level})",
+                'priority' => $priority,
+                'status' => 'pending',
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'medicine' => $medicine,
+            ];
+            
+            if (empty($filters['type']) || $filters['type'] === 'low_stock') {
+                if (empty($filters['status']) || $filters['status'] === 'pending') {
+                    if (empty($filters['severity']) || $filters['severity'] === $priority) {
+                        $alerts->push((object)$alert);
+                    }
+                }
+            }
+        }
+        
+        return $alerts;
     }
 
     /**
@@ -138,6 +256,14 @@ class AlertController extends Controller
             abort(403, 'Unauthorized access');
         }
         
+        // Check if this is a dynamic alert (e.g., lowstock_2, expired_5, expiring_3)
+        if (is_string($id) && (str_starts_with($id, 'lowstock_') || str_starts_with($id, 'expired_') || str_starts_with($id, 'expiring_'))) {
+            // Dynamic alerts can't be resolved directly - they are based on current medicine conditions
+            // The user needs to fix the underlying issue (restock, remove expired medicine, etc.)
+            return redirect()->back()->with('warning', 'This is a dynamic alert based on current medicine conditions. To resolve it, please update the medicine directly (e.g., restock for low stock, or dispose of expired medicine).');
+        }
+        
+        // For stored database alerts
         $alert = MedicineAlert::findOrFail($id);
         
         $request->validate([
@@ -146,7 +272,7 @@ class AlertController extends Controller
         
         $alert->update(['status' => $request->status]);
         
-        return redirect()->back()->withErrors(['success' => 'Alert status updated successfully.']);
+        return redirect()->back()->with('success', 'Alert status updated successfully.');
     }
 
     /**
@@ -167,3 +293,4 @@ class AlertController extends Controller
         
         return redirect()->back()->with('success', 'Alert check completed. ' . $output);
     }
+}

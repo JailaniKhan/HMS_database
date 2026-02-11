@@ -11,7 +11,7 @@ export type PriceSize = 'sm' | 'md' | 'lg' | 'xl';
 export type PriceVariant = 'default' | 'discounted' | 'total' | 'subtotal';
 
 export interface PriceDisplayProps extends React.HTMLAttributes<HTMLSpanElement> {
-    amount: number;
+    amount: number | null | undefined;
     currency?: string;
     size?: PriceSize;
     variant?: PriceVariant;
@@ -47,7 +47,10 @@ const variantConfig: Record<PriceVariant, { icon: LucideIcon; className: string 
     },
 };
 
-const formatAmount = (amount: number, currency: string, showDecimal: boolean): string => {
+const formatAmount = (amount: number | null | undefined, currency: string, showDecimal: boolean): string => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+        return '$0.00';
+    }
     const formatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: currency,
@@ -92,7 +95,7 @@ const PriceDisplay = React.forwardRef<HTMLSpanElement, PriceDisplayProps>(
                 <span className={cn(strikethrough && 'line-through opacity-50')}>
                     {formatAmount(amount, currency, showDecimal)}
                 </span>
-                {originalAmount !== undefined && originalAmount > amount && (
+                {originalAmount !== undefined && originalAmount > (amount || 0) && (
                     <span className="ml-2 text-muted-foreground line-through text-sm">
                         {formatAmount(originalAmount, currency, showDecimal)}
                     </span>

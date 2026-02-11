@@ -102,9 +102,15 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
     }
   };
 
-  // Calculate total sales
-  const totalSalesQuantity = recentSales.reduce((sum, sale) => sum + sale.quantity, 0);
-  const totalSalesRevenue = recentSales.reduce((sum, sale) => sum + sale.total_price, 0);
+  // Calculate total sales - ensure proper number conversion
+  const totalSalesQuantity = recentSales.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
+  const totalSalesRevenue = recentSales.reduce((sum, sale) => {
+    const price = sale.total_price;
+    // Handle null, undefined, or string values
+    if (price === null || price === undefined) return sum;
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return sum + (isNaN(numPrice) ? 0 : numPrice);
+  }, 0);
 
   return (
     <PharmacyLayout>

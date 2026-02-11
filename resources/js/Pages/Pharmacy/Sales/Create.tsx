@@ -175,20 +175,49 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
         setData('patient_id', '');
     };
 
-    const handleQuickAddPatient = () => {
-        // In a real implementation, this would make an API call to create the patient
-        // For now, we'll just simulate it
-        const newPatient: Patient = {
-            id: Date.now(), // Temporary ID
-            patient_id: `TMP-${Date.now()}`,
-            first_name: quickPatient.first_name,
-            father_name: quickPatient.last_name,
-            phone: quickPatient.phone,
-        };
-        setSelectedPatient(newPatient);
-        setData('patient_id', newPatient.id.toString());
-        setShowQuickAddPatient(false);
-        setQuickPatient({ first_name: '', last_name: '', phone: '' });
+    const handleQuickAddPatient = async () => {
+        try {
+            // Make API call to create the patient using web route
+            const response = await fetch('/pharmacy/quick-patient', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    first_name: quickPatient.first_name,
+                    father_name: quickPatient.last_name,
+                    phone: quickPatient.phone,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create patient');
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                const newPatient: Patient = {
+                    id: result.data.id,
+                    patient_id: result.data.patient_id,
+                    first_name: result.data.first_name,
+                    father_name: result.data.father_name,
+                    phone: result.data.phone,
+                };
+                setSelectedPatient(newPatient);
+                setData('patient_id', newPatient.id.toString());
+                setShowQuickAddPatient(false);
+                setQuickPatient({ first_name: '', last_name: '', phone: '' });
+            } else {
+                throw new Error(result.message || 'Failed to create patient');
+            }
+        } catch (error) {
+            console.error('Error creating patient:', error);
+            alert('Failed to create patient: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
     };
 
     // Checkout handler
@@ -460,11 +489,11 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <Label>Last Name</Label>
+                                                            <Label>Father's Name</Label>
                                                             <Input
                                                                 value={quickPatient.last_name}
                                                                 onChange={(e) => setQuickPatient(prev => ({ ...prev, last_name: e.target.value }))}
-                                                                placeholder="Doe"
+                                                                placeholder="Smith"
                                                             />
                                                         </div>
                                                     </div>
@@ -478,7 +507,7 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                                     </div>
                                                     <Button 
                                                         onClick={handleQuickAddPatient}
-                                                        disabled={!quickPatient.first_name || !quickPatient.last_name}
+                                                        disabled={!quickPatient.first_name}
                                                         className="w-full"
                                                     >
                                                         Add Patient

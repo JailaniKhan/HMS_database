@@ -164,7 +164,10 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
         });
     };
 
-    const formatCurrency = (amount: number) => {
+    const formatCurrency = (amount: number | null | undefined) => {
+        if (amount === null || amount === undefined || isNaN(amount)) {
+            return '$0.00';
+        }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',

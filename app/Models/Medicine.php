@@ -46,6 +46,8 @@ class Medicine extends Model
         'expiry_date' => 'date',
     ];
 
+    protected $appends = ['dosage_form'];
+
     public function category()
     {
         return $this->belongsTo(MedicineCategory::class, 'category_id');
@@ -59,5 +61,23 @@ class Medicine extends Model
     public function alerts()
     {
         return $this->hasMany(MedicineAlert::class);
+    }
+
+    /**
+     * Get the dosage form attribute.
+     * Maps the 'form' database column to 'dosage_form' for API/frontend compatibility.
+     */
+    public function getDosageFormAttribute(): ?string
+    {
+        return $this->attributes['form'] ?? null;
+    }
+
+    /**
+     * Set the dosage form attribute.
+     * Maps 'dosage_form' to the 'form' database column.
+     */
+    public function setDosageFormAttribute(?string $value): void
+    {
+        $this->attributes['form'] = $value;
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MedicineCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,6 +73,9 @@ class MedicineCategoryController extends Controller
         
         MedicineCategory::create($validator->validated());
         
+        // Clear the medicine categories cache so new category appears immediately
+        Cache::forget('medicine_categories');
+        
         return redirect()->route('pharmacy.categories.index')
             ->with('success', 'Category created successfully.');
     }
@@ -120,6 +124,9 @@ class MedicineCategoryController extends Controller
         
         $category->update($validator->validated());
         
+        // Clear the medicine categories cache so updated category appears immediately
+        Cache::forget('medicine_categories');
+        
         return redirect()->route('pharmacy.categories.index')
             ->with('success', 'Category updated successfully.');
     }
@@ -145,6 +152,9 @@ class MedicineCategoryController extends Controller
         }
         
         $category->delete();
+        
+        // Clear the medicine categories cache so deleted category is removed immediately
+        Cache::forget('medicine_categories');
         
         return redirect()->route('pharmacy.categories.index')
             ->with('success', 'Category deleted successfully.');

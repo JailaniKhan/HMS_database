@@ -32,12 +32,12 @@ class DashboardController extends Controller
         // Get recent activities
         $recentActivities = $this->getRecentActivities();
         
-        // Get low stock medicines (quantity <= 10)
-        $lowStockMedicines = Medicine::where('quantity', '>', 0)
-            ->where('quantity', '<=', 10)
-            ->orderBy('quantity', 'asc')
+        // Get low stock medicines (stock_quantity <= 10)
+        $lowStockMedicines = Medicine::where('stock_quantity', '>', 0)
+            ->where('stock_quantity', '<=', 10)
+            ->orderBy('stock_quantity', 'asc')
             ->limit(5)
-            ->get(['id', 'name', 'quantity']);
+            ->get(['id', 'name', 'stock_quantity as quantity']);
         
         // Get expiring medicines (within 30 days)
         $expiringMedicines = Medicine::whereDate('expiry_date', '>=', now())
@@ -77,9 +77,9 @@ class DashboardController extends Controller
             ->where('status', '!=', 'voided')
             ->sum('total_amount');
         
-        // Low stock count (quantity <= 10)
-        $lowStockCount = Medicine::where('quantity', '>', 0)
-            ->where('quantity', '<=', 10)
+        // Low stock count (stock_quantity <= 10)
+        $lowStockCount = Medicine::where('stock_quantity', '>', 0)
+            ->where('stock_quantity', '<=', 10)
             ->count();
         
         // Expiring soon count (within 30 days)
@@ -88,7 +88,7 @@ class DashboardController extends Controller
             ->count();
         
         // Critical alerts count (out of stock + expired)
-        $outOfStockCount = Medicine::where('quantity', '<=', 0)->count();
+        $outOfStockCount = Medicine::where('stock_quantity', '<=', 0)->count();
         $expiredCount = Medicine::whereDate('expiry_date', '<', now())->count();
         $criticalAlerts = $outOfStockCount + $expiredCount;
 

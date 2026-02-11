@@ -21,6 +21,7 @@ import {
     AlertTriangle,
     ArrowRight,
     BarChart3,
+    Building2,
     LayoutGrid,
     Package,
     Pill,
@@ -82,6 +83,11 @@ const pharmacyNavItems: (NavItem & { permission?: string })[] = [
         title: 'Dashboard',
         href: '/pharmacy',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Hospital Dashboard',
+        href: '/dashboard',
+        icon: Building2,
     },
     {
         title: 'Point of Sale',
@@ -258,7 +264,6 @@ export default function PharmacyLayout({
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarHeader>
-
                 <SidebarContent className="px-2 flex-1 overflow-y-auto">
                     {filteredNavItems.length > 0 ? (
                         <NavMain items={filteredNavItems} />
@@ -287,11 +292,11 @@ export default function PharmacyLayout({
                             </Link>
                         </div>
                     )}
+                   
                     <NavFooter items={footerNavItems} className="mt-auto" />
                     <NavUser />
                 </SidebarFooter>
             </Sidebar>
-
             <SidebarInset className="bg-background">
                 {/* Header */}
                 <header className="flex flex-col border-b">
@@ -327,7 +332,7 @@ export default function PharmacyLayout({
                     {(alerts.lowStock || alerts.expiringSoon || alerts.expired) && (
                         <div className="px-6 pb-3">
                             <div className="flex flex-wrap items-center gap-2">
-                                {alerts.expired && alerts.expired > 0 && (
+                                {(alerts.expired ?? 0) > 0 && (
                                     <Link href="/pharmacy/alerts?type=expired">
                                         <Badge variant="destructive" className="cursor-pointer hover:opacity-90">
                                             <AlertCircle className="h-3 w-3 mr-1" />
@@ -335,7 +340,7 @@ export default function PharmacyLayout({
                                         </Badge>
                                     </Link>
                                 )}
-                                {alerts.expiringSoon && alerts.expiringSoon > 0 && (
+                                {(alerts.expiringSoon ?? 0) > 0 && (
                                     <Link href="/pharmacy/alerts?type=expiring">
                                         <Badge className="bg-orange-500 hover:bg-orange-600 cursor-pointer">
                                             <AlertTriangle className="h-3 w-3 mr-1" />
@@ -343,7 +348,7 @@ export default function PharmacyLayout({
                                         </Badge>
                                     </Link>
                                 )}
-                                {alerts.lowStock && alerts.lowStock > 0 && (
+                                {(alerts.lowStock ?? 0) > 0 && (
                                     <Link href="/pharmacy/alerts?type=low-stock">
                                         <Badge className="bg-amber-500 hover:bg-amber-600 cursor-pointer">
                                             <TrendingDown className="h-3 w-3 mr-1" />

@@ -302,4 +302,81 @@ class PatientController extends Controller
             return redirect()->back()->withErrors(['error' => 'Failed to delete patient: ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Quick store a newly created patient for pharmacy sales (returns JSON).
+     */
+    public function quickStore(Request $request)
+    {
+        $user = auth()->user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('create-patients')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $sanitizedData = $this->sanitizeInput($validated);
+
+        DB::beginTransaction();
+        try {
+            // Generate a simple sequential patient ID starting from P00001
+            $maxNumber = Patient::where('patient_id', 'LIKE', 'P%')
+                ->selectRaw('MAX(CAST(SUBSTRING(patient_id, 2) AS UNSIGNED)) as max_num')
+                ->value('max_num') ?? 0;
+
+            $nextNumber = $maxNumber + 1;
+            $patientId = 'P' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+            // Create patient record with sanitized data
+            $patient = Patient::create([
+                'patient_id' => $patientId,
+                'first_name' => $sanitizedData['first_name'],
+                'father_name' => $sanitizedData['father_name'],
+                'phone' => $sanitizedData['phone'],
+            ]);
+            
+            // Create user account for patient with secure password
+            $fullName = $validated['first_name'] . ($validated['father_name'] ? ' ' . $validated['father_name'] : '');
+            $user = User::create([
+                'name' => $fullName,
+                'username' => $patientId,
+                'password' => bcrypt(\Illuminate\Support\Str::password(16, true, true, true, true)),
+                'role' => 'patient',
+            ]);
+            
+            // Associate user with patient
+            $patient->user()->associate($user);
+            $patient->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Patient created successfully',
+                'data' => [
+                    'id' => $patient->id,
+                    'patient_id' => $patient->patient_id,
+                    'first_name' => $patient->first_name,
+                    'father_name' => $patient->father_name,
+                    'phone' => $patient->phone,
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create patient: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

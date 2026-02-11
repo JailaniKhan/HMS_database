@@ -52,7 +52,8 @@ class SalesController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $query = Sale::with(['items.medicine', 'patient', 'soldBy']);
+        $query = Sale::with(['items.medicine', 'patient', 'soldBy'])
+            ->withCount('items');
         
         // Apply search filter
         if ($request->filled('query')) {
@@ -365,6 +366,122 @@ class SalesController extends Controller
             return redirect()->back()
                 ->withErrors(['error' => 'Failed to void sale: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Show the receipt for the specified sale.
+     */
+    public function receipt(string $id): Response
+    {
+        $user = Auth::user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('view-pharmacy')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $sale = Sale::with(['items.medicine', 'patient', 'soldBy'])->findOrFail($id);
+        
+        return Inertia::render('Pharmacy/Sales/Receipt', [
+            'sale' => $sale,
+        ]);
+    }
+
+    /**
+     * Print the receipt for the specified sale.
+     */
+    public function printReceipt(string $id)
+    {
+        $user = Auth::user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('view-pharmacy')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $sale = Sale::with(['items.medicine', 'patient', 'soldBy'])->findOrFail($id);
+        
+        return Inertia::render('Pharmacy/Sales/PrintReceipt', [
+            'sale' => $sale,
+        ]);
+    }
+
+    /**
+     * Export sales data.
+     */
+    public function export(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('view-pharmacy')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $query = Sale::with(['items.medicine', 'patient', 'soldBy']);
+        
+        // Apply filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        $sales = $query->latest()->get();
+        
+        // Generate CSV or Excel export
+        $filename = 'pharmacy_sales_' . now()->format('Y_m_d_H_i_s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+        
+        $callback = function () use ($sales) {
+            $file = fopen('php://output', 'w');
+            
+            // Header row
+            fputcsv($file, [
+                'Sale ID',
+                'Date',
+                'Patient',
+                'Items',
+                'Subtotal',
+                'Discount',
+                'Total',
+                'Payment Method',
+                'Status',
+                'Sold By',
+            ]);
+            
+            // Data rows
+            foreach ($sales as $sale) {
+                $items = $sale->items->map(function ($item) {
+                    return $item->medicine->name . ' (x' . $item->quantity . ')';
+                })->implode(', ');
+                
+                fputcsv($file, [
+                    $sale->sale_id,
+                    $sale->created_at->format('Y-m-d H:i:s'),
+                    $sale->patient ? $sale->patient->full_name : 'Walk-in Customer',
+                    $items,
+                    $sale->subtotal,
+                    $sale->discount_amount ?? 0,
+                    $sale->grand_total,
+                    $sale->payment_method,
+                    $sale->status,
+                    $sale->soldBy ? $sale->soldBy->name : 'N/A',
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
