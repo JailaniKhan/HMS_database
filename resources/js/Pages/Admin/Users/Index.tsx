@@ -44,7 +44,19 @@ interface UsersIndexProps extends PageProps {
 }
 
 export default function UsersIndex({ users, auth }: UsersIndexProps) {
-    if (!(auth.user.role === 'Super Admin' || auth.user.permissions?.includes('manage-users'))) {
+    // Safety check for auth data
+    if (!auth?.user) {
+        return (
+            <HospitalLayout header="User Management">
+                <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-red-600">Authentication Error</h2>
+                    <p className="text-gray-600">Unable to verify user permissions. Please refresh the page or log in again.</p>
+                </div>
+            </HospitalLayout>
+        );
+    }
+
+    if (!(auth.user.is_super_admin || auth.user.permissions?.includes('manage-users'))) {
         return (
             <HospitalLayout header="User Management">
                 <div className="text-center py-8">
@@ -71,7 +83,12 @@ export default function UsersIndex({ users, auth }: UsersIndexProps) {
             return;
         }
         if (confirm('Are you sure you want to delete this user?')) {
-            router.delete(`/admin/users/${user.id}`);
+            // Use router.visit with POST method and _method spoofing for DELETE
+            router.visit(`/admin/users/${user.id}`, {
+                method: 'post',
+                data: { _method: 'DELETE' },
+                preserveScroll: true,
+            });
         }
     };
 

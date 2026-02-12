@@ -41,7 +41,10 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
 
     const handleDelete = () => {
         setIsDeleting(true);
-        router.delete(`/admin/users/${user.id}`, {
+        // Use router.visit with POST method and _method spoofing for DELETE
+        router.visit(`/admin/users/${user.id}`, {
+            method: 'post',
+            data: { _method: 'DELETE' },
             onSuccess: () => {
                 setIsDeleteDialogOpen(false);
             },
@@ -342,7 +345,10 @@ export default function UserShow({ user, canDelete, canEdit, currentUserRole }: 
                                                             size="sm"
                                                             onClick={() => {
                                                                 if (window.confirm(`Remove permission '${permission.name}' from this user?`)) {
-                                                                    router.delete(`/admin/users/${user.id}/permissions/${permission.id}`, {
+                                                                    // Use router.visit with POST method and _method spoofing for DELETE
+                                                                    router.visit(`/admin/users/${user.id}/permissions/${permission.id}`, {
+                                                                        method: 'post',
+                                                                        data: { _method: 'DELETE' },
                                                                         onSuccess: () => {
                                                                             // Page will reload automatically with updated data
                                                                         },

@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, User, Settings, KeyRound, Activity,AlertTriangle, Calendar, Stethoscope, TestTube, BarChart3 } from 'lucide-react';
+import { Shield, User, KeyRound, Activity,AlertTriangle, BarChart3 } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
                             </Card>
                         </Link>
                         
-                        <Link href="/admin/settings" className="block">
+                        {/* <Link href="/admin/settings" className="block">
                             <Card className="hover:shadow-md transition-shadow">
                                 <CardHeader className="flex flex-row items-center justify-between pb-4">
                                     <div>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                                     </Button>
                                 </CardContent>
                             </Card>
-                        </Link>
+                        </Link> */}
                         
                             <Link href="/admin/security" className="block">
                                 <Card className="hover:shadow-md transition-shadow">
@@ -302,37 +302,6 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
-                    
-                    <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-                        <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <Link href="/admin/users/create" className="block">
-                                <Card className="hover:shadow-md transition-shadow p-4 text-center">
-                                    <User className="mx-auto h-8 w-8 text-blue-600 mb-2" />
-                                    <h3 className="font-medium">Add User</h3>
-                                </Card>
-                            </Link>
-                            <Link href="/patients/create" className="block">
-                                <Card className="hover:shadow-md transition-shadow p-4 text-center">
-                                    <Stethoscope className="mx-auto h-8 w-8 text-green-600 mb-2" />
-                                    <h3 className="font-medium">New Patient</h3>
-                                </Card>
-                            </Link>
-                            <Link href="/appointments/create" className="block">
-                                <Card className="hover:shadow-md transition-shadow p-4 text-center">
-                                    <Calendar className="mx-auto h-8 w-8 text-purple-600 mb-2" />
-                                    <h3 className="font-medium">Schedule</h3>
-                                </Card>
-                            </Link>
-                            <Link href="/lab-tests" className="block">
-                                <Card className="hover:shadow-md transition-shadow p-4 text-center">
-                                    <TestTube className="mx-auto h-8 w-8 text-orange-600 mb-2" />
-                                    <h3 className="font-medium">Lab Tests</h3>
-                                </Card>
-                            </Link>
-                        </div>
-                    </div>
-                    
                     <div className="bg-white rounded-lg p-6 shadow-sm">
                         <h2 className="text-xl font-semibold mb-4">Administrative Functions</h2>
                         <p className="text-gray-600 mb-4">

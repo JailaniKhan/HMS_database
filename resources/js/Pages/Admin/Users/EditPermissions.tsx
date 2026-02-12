@@ -245,9 +245,13 @@ export default function UserEditPermissions({ user, allPermissions, userPermissi
         setShowImpactDialog(false);
         setIsSubmitting(true);
 
-        router.put(`/admin/users/${user.id}/permissions`, {
-            permissions: selectedPermissions,
-        }, {
+        // Use router.visit with POST method and _method spoofing for PUT
+        router.visit(`/admin/users/${user.id}/permissions`, {
+            method: 'post',
+            data: {
+                permissions: selectedPermissions,
+                _method: 'PUT',
+            },
             onSuccess: () => {
                 setIsSubmitting(false);
             },

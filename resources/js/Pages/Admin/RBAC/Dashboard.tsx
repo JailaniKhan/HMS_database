@@ -9,10 +9,8 @@ import {
   Users, 
   Clock, 
   AlertTriangle, 
-  Building, 
   UserCog,
   Eye,
-  Plus,
   RefreshCw,
   BarChart3,
   PieChart,
@@ -25,7 +23,6 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { RBACStats, ActivityLog, Role } from '@/types/rbac';
-import { RoleCard } from '@/components/rbac/RoleCard';
 
 interface StatCardProps {
   title: string;
@@ -129,7 +126,6 @@ interface Props {
 }
 
 const quickActions = [
-  { title: 'Manage Roles', icon: Building, href: '/admin/roles', color: 'blue' },
   { title: 'Permission Matrix', icon: Key, href: '/admin/permissions', color: 'purple' },
   { title: 'User Assignments', icon: Users, href: '/admin/rbac/user-assignments', color: 'green' },
   { title: 'Audit Logs', icon: UserCog, href: '/admin/rbac/audit-logs', color: 'orange' },
@@ -139,7 +135,6 @@ export default function RBACDashboard({
   stats, 
   roleDistribution, 
   recentActivities = [],
-  topRoles = []
 }: Props) {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -184,10 +179,6 @@ export default function RBACDashboard({
               >
                 <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
                 Refresh Data
-              </Button>
-              <Button className="gap-2" onClick={() => window.location.href = '/admin/roles/create'}>
-                <Plus className="h-4 w-4" />
-                New Role
               </Button>
             </div>
           </div>
@@ -301,36 +292,7 @@ export default function RBACDashboard({
             </Card>
           </div>
 
-          {/* Top Roles Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-blue-600" />
-                Top Roles Overview
-              </CardTitle>
-              <CardDescription>Highest priority roles in the system</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {topRoles && topRoles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {topRoles.map((role, index) => (
-                    <RoleCard
-                      key={role.id || index}
-                      roleData={role}
-                      compact={true}
-                      className="h-full"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Building className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>No roles found</p>
-                  <p className="text-sm mt-1">Create your first role to get started</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+         
 
           {/* Recent Activities */}
           <Card>

@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,7 @@ interface EditUserProps extends PageProps {
 }
 
 export default function UserEdit({ user, roles }: EditUserProps) {
-    const { data, setData, put, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         name: user.name,
         username: user.username,
         password: '',
@@ -100,8 +100,19 @@ export default function UserEdit({ user, roles }: EditUserProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(`/admin/users/${user.id}`, {
+
+        // Use router.visit with explicit POST method and _method spoofing
+        router.visit(`/admin/users/${user.id}`, {
+            method: 'post',
+            data: {
+                ...data,
+                _method: 'PUT',
+            },
+            preserveScroll: true,
             onSuccess: () => reset('password', 'password_confirmation'),
+            onError: (errors) => {
+                console.error('Update failed:', errors);
+            },
         });
     };
 
