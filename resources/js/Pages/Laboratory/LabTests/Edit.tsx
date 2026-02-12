@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -97,7 +97,7 @@ export default function LabTestEdit({ labTest }: LabTestEditProps) {
   const [autoGenerateCode, setAutoGenerateCode] = useState(false);
   const [codeEdited, setCodeEdited] = useState(false);
 
-  const { data, setData, put, processing, errors, reset } = useForm({
+  const { data, setData, processing, errors, reset } = useForm({
     name: labTest.name,
     code: labTest.test_id,
     description: labTest.description || '',
@@ -112,7 +112,22 @@ export default function LabTestEdit({ labTest }: LabTestEditProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    put(`/laboratory/lab-tests/${labTest.id}`);
+    
+    // Use router.visit with explicit POST method and _method spoofing
+    router.visit(`/laboratory/lab-tests/${labTest.id}`, {
+      method: 'post',
+      data: {
+        ...data,
+        _method: 'PUT',
+      },
+      preserveScroll: true,
+      onSuccess: () => {
+        console.log('Lab test update successful');
+      },
+      onError: (errors) => {
+        console.error('Lab test update failed:', errors);
+      },
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

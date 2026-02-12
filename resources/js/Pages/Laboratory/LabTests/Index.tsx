@@ -296,7 +296,15 @@ export default function LabTestIndex({ labTests, query = '', status = '', catego
                 onDeactivate={() => {
                   // Handle deactivate/activate action
                   const newStatus = test.status === 'active' ? 'inactive' : 'active';
-                  router.patch(`/laboratory/lab-tests/${test.id}/status`, { status: newStatus });
+                  // Use router.visit with POST method and _method spoofing for PATCH
+                  router.visit(`/laboratory/lab-tests/${test.id}/status`, {
+                    method: 'post',
+                    data: {
+                      status: newStatus,
+                      _method: 'PATCH',
+                    },
+                    preserveScroll: true,
+                  });
                 }}
               />
             ))}

@@ -56,6 +56,15 @@ interface Props {
   roles: Role[];
 }
 
+// Protected roles that cannot be changed
+const PROTECTED_ROLES = ['Super Admin', 'Sub Super Admin', 'sub super admin', 'super admin'];
+
+// Check if a user has a protected role
+const hasProtectedRole = (user: User): boolean => {
+  const roleName = user.roleModel?.name || user.role;
+  return PROTECTED_ROLES.includes(roleName || '');
+};
+
 export default function UserAssignments({ users: usersData, roles }: Props) {
   const { props } = usePage();
   const csrfToken = (props as any).csrf?.token; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -89,10 +98,13 @@ export default function UserAssignments({ users: usersData, roles }: Props) {
 
   const handleRoleChange = (userId: number, newRoleId: string) => {
     if (confirm('Are you sure you want to change this user\'s role?')) {
-      router.put(`/admin/rbac/users/${userId}/role`, {
-        role_id: parseInt(newRoleId),
-        _token: csrfToken,
-      }, {
+      router.visit(`/admin/rbac/users/${userId}/role`, {
+        method: 'post',
+        data: {
+          role_id: parseInt(newRoleId),
+          _method: 'PUT',
+          _token: csrfToken,
+        },
         preserveScroll: true,
       });
     }
@@ -268,7 +280,7 @@ export default function UserAssignments({ users: usersData, roles }: Props) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {user.role !== 'Super Admin' && (
+                        {!hasProtectedRole(user) ? (
                           <Select
                             value={user.role_id?.toString() || ''}
                             onValueChange={(value) => handleRoleChange(user.id, value)}
@@ -277,13 +289,18 @@ export default function UserAssignments({ users: usersData, roles }: Props) {
                               <SelectValue placeholder="Assign role" />
                             </SelectTrigger>
                             <SelectContent>
-                              {roles.filter(r => r.name !== 'Super Admin').map((role) => (
+                              {roles.filter(r => !PROTECTED_ROLES.includes(r.name)).map((role) => (
                                 <SelectItem key={role.id} value={role.id.toString()}>
                                   {role.display_name || role.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 px-3 py-1">
+                            <Shield className="h-3 w-3 mr-1" />
+                            Protected Role
+                          </Badge>
                         )}
                         <Link href={`/admin/users/${user.id}/edit`}>
                           <Button variant="outline" size="sm" className="gap-2">

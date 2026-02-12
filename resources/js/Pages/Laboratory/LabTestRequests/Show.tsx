@@ -76,8 +76,14 @@ export default function LabTestRequestShow({ labTestRequest }: LabTestRequestSho
   };
 
   const handleStatusTransition = (newStatus: LabTestRequestStatus) => {
-    router.patch(`/laboratory/lab-test-requests/${labTestRequest.id}/status`, {
-      status: newStatus,
+    // Use router.visit with POST method and _method spoofing for PATCH
+    router.visit(`/laboratory/lab-test-requests/${labTestRequest.id}/status`, {
+      method: 'post',
+      data: {
+        status: newStatus,
+        _method: 'PATCH',
+      },
+      preserveScroll: true,
     });
   };
 

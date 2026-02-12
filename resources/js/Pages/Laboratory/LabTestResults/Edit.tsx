@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -118,7 +118,7 @@ export default function LabTestResultEdit({ labTestResult, patients, labTests, c
   const isVerified = labTestResult.status === 'verified';
   const isEditable = !isVerified;
 
-  const { data, setData, put, processing, errors } = useForm({
+  const { data, setData, processing, errors } = useForm({
     lab_test_id: labTestResult.lab_test_id?.toString() || '',
     patient_id: labTestResult.patient_id?.toString() || '',
     performed_at: labTestResult.performed_at?.split('T')[0] || '',
@@ -169,10 +169,28 @@ export default function LabTestResultEdit({ labTestResult, patients, labTests, c
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const performedDateTime = `${data.performed_at}T${data.performed_time}`;
-    put(`/laboratory/lab-test-results/${labTestResult.id}`, {
-      ...data,
-      performed_at: performedDateTime,
-    } as Record<string, unknown>);
+    
+    // Use router.visit with explicit POST method and _method spoofing
+    router.visit(`/laboratory/lab-test-results/${labTestResult.id}`, {
+      method: 'post',
+      data: {
+        lab_test_id: data.lab_test_id,
+        patient_id: data.patient_id,
+        performed_at: performedDateTime,
+        results: JSON.stringify(data.results),
+        status: data.status,
+        notes: data.notes,
+        abnormal_flags: data.abnormal_flags,
+        _method: 'PUT',
+      },
+      preserveScroll: true,
+      onSuccess: () => {
+        console.log('Lab test result update successful');
+      },
+      onError: (errors) => {
+        console.error('Lab test result update failed:', errors);
+      },
+    });
   };
 
   const getStatusIcon = (status: string) => {

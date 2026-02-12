@@ -44,7 +44,16 @@ class LabTestResultController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $labTestResults = LabTestResult::with('test', 'patient')->latest()->paginate(10);
+        $labTestResults = LabTestResult::with('test', 'patient')
+            ->latest()
+            ->paginate(10)
+            ->through(function ($result) {
+                // Map 'test' relationship to 'labTest' for frontend compatibility
+                $data = $result->toArray();
+                $data['labTest'] = $data['test'] ?? null;
+                unset($data['test']);
+                return $data;
+            });
         
         // Get filter options
         $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name')->get();
@@ -278,6 +287,72 @@ class LabTestResultController extends Controller
                 'error' => $e->getMessage(),
             ]);
             return redirect()->back()->with('error', 'Failed to update lab test result: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Show the verify form for the specified lab test result.
+     */
+    public function verify(LabTestResult $labTestResult): Response
+    {
+        $user = Auth::user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('verify-lab-test-results')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Load relationships
+        $labTestResult->load(['patient', 'test', 'performedBy']);
+        
+        return Inertia::render('Laboratory/LabTestResults/Verify', [
+            'labTestResult' => $labTestResult
+        ]);
+    }
+
+    /**
+     * Verify the specified lab test result.
+     */
+    public function verifyPost(Request $request, LabTestResult $labTestResult): RedirectResponse
+    {
+        $user = Auth::user();
+        
+        // Check if user has appropriate permission
+        if (!$user->hasPermission('verify-lab-test-results')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Check if already verified
+        if ($labTestResult->status === 'verified') {
+            return redirect()->back()->with('error', 'This result has already been verified.');
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            $labTestResult->update([
+                'status' => 'verified',
+                'verified_at' => now(),
+                'verified_by' => $user->id,
+            ]);
+            
+            // Log the verification
+            Log::info('Lab test result verified', [
+                'result_id' => $labTestResult->id,
+                'verified_by' => $user->id,
+            ]);
+
+            DB::commit();
+            
+            return redirect()->route('laboratory.lab-test-results.index')
+                ->with('success', 'Lab test result verified successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error verifying lab test result', [
+                'result_id' => $labTestResult->id,
+                'error' => $e->getMessage(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to verify lab test result: ' . $e->getMessage());
         }
     }
 

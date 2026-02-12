@@ -181,14 +181,26 @@ class RBACController extends Controller
             $this->authorize('view-user-assignments');
         }
 
+        // Roles to exclude from user assignments
+        $excludedRoles = ['Patient', 'Doctor', 'patient', 'doctor'];
+
         $users = User::with(['roleModel'])
+            ->where(function ($query) use ($excludedRoles) {
+                $query->whereHas('roleModel', function ($q) use ($excludedRoles) {
+                    $q->whereNotIn('name', $excludedRoles);
+                })->orWhereNull('role_id');
+            })
             ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
+                });
             })
             ->paginate(20);
 
-        $roles = Role::orderBy('priority', 'desc')->get();
+        $roles = Role::orderBy('priority', 'desc')
+            ->whereNotIn('name', $excludedRoles)
+            ->get();
 
         return Inertia::render('Admin/RBAC/UserAssignments', [
             'users' => $users,
@@ -214,6 +226,21 @@ class RBACController extends Controller
         $validated = $request->validate([
             'role_id' => 'required|exists:roles,id',
         ]);
+
+        // Define protected roles that cannot be changed/assigned
+        $protectedRoles = ['Super Admin', 'Sub Super Admin', 'sub super admin', 'super admin'];
+
+        // Check if the target user currently has a protected role
+        $userCurrentRole = $user->roleModel?->name ?? $user->role;
+        if (in_array($userCurrentRole, $protectedRoles)) {
+            return redirect()->back()->withErrors(['error' => 'Cannot change role for protected users (Super Admin, Sub Super Admin)']);
+        }
+
+        // Check if the new role is a protected role
+        $newRole = Role::find($validated['role_id']);
+        if ($newRole && in_array($newRole->name, $protectedRoles)) {
+            return redirect()->back()->withErrors(['error' => 'Cannot assign protected roles (Super Admin, Sub Super Admin) through this interface']);
+        }
 
         try {
             $user->update(['role_id' => $validated['role_id']]);

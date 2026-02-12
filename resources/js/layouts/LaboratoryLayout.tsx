@@ -34,6 +34,7 @@ import {
     Activity,
     Droplets,
     AlertCircle,
+    Building2,
 } from 'lucide-react';
 import { ReactNode, useMemo, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
@@ -84,6 +85,11 @@ function usePermissionChecker() {
 
 // Laboratory-specific navigation items
 const laboratoryNavItems: (NavItem & { permission?: string })[] = [
+    {
+        title: 'Hospital Dashboard',
+        href: '/dashboard',
+        icon: Building2,
+    },
     {
         title: 'Dashboard',
         href: '/laboratory',
@@ -209,16 +215,7 @@ const laboratoryNavItems: (NavItem & { permission?: string })[] = [
                 href: '/laboratory/reports',
                 icon: FileText,
             },
-            {
-                title: 'Test Statistics',
-                href: '/laboratory/reports/statistics',
-                icon: Activity,
-            },
-            {
-                title: 'Turnaround Times',
-                href: '/laboratory/reports/turnaround',
-                icon: Clock,
-            },
+    
         ],
     },
 ];

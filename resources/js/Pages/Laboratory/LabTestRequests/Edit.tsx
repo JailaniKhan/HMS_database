@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -87,7 +87,7 @@ export default function LabTestRequestEdit({ labTestRequest, patients, doctors }
   const [doctorSearch, setDoctorSearch] = useState(`Dr. ${labTestRequest.doctor.full_name}`);
   const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
 
-  const { data, setData, put, processing, errors, reset } = useForm({
+  const { data, setData, processing, errors, reset } = useForm({
     patient_id: labTestRequest.patient_id.toString(),
     doctor_id: labTestRequest.doctor_id.toString(),
     test_name: labTestRequest.test_name,
@@ -128,7 +128,22 @@ export default function LabTestRequestEdit({ labTestRequest, patients, doctors }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    put(`/laboratory/lab-test-requests/${labTestRequest.id}`);
+    
+    // Use router.visit with explicit POST method and _method spoofing
+    router.visit(`/laboratory/lab-test-requests/${labTestRequest.id}`, {
+      method: 'post',
+      data: {
+        ...data,
+        _method: 'PUT',
+      },
+      preserveScroll: true,
+      onSuccess: () => {
+        console.log('Lab test request update successful');
+      },
+      onError: (errors) => {
+        console.error('Lab test request update failed:', errors);
+      },
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -151,7 +166,22 @@ export default function LabTestRequestEdit({ labTestRequest, patients, doctors }
   const handleStatusTransition = (newStatus: LabTestRequestStatus) => {
     setData('status', newStatus);
     setTimeout(() => {
-      put(`/laboratory/lab-test-requests/${labTestRequest.id}`);
+      // Use router.visit with explicit POST method and _method spoofing
+      router.visit(`/laboratory/lab-test-requests/${labTestRequest.id}`, {
+        method: 'post',
+        data: {
+          ...data,
+          status: newStatus,
+          _method: 'PUT',
+        },
+        preserveScroll: true,
+        onSuccess: () => {
+          console.log('Lab test request status update successful');
+        },
+        onError: (errors) => {
+          console.error('Lab test request status update failed:', errors);
+        },
+      });
     }, 100);
   };
 

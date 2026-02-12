@@ -16,6 +16,7 @@ use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
 use App\Http\Controllers\Laboratory\LabTestController;
 use App\Http\Controllers\Laboratory\LabTestResultController;
+use App\Http\Controllers\Laboratory\QualityControlController;
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\Department\DepartmentServiceController;
 use App\Http\Controllers\Medical\MedicalRecordController;
@@ -236,20 +237,26 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/lab-tests', [LabTestController::class, 'index'])->name('laboratory.lab-tests.index');
         Route::get('/lab-tests/create', [LabTestController::class, 'create'])->name('laboratory.lab-tests.create');
         Route::post('/lab-tests', [LabTestController::class, 'store'])->name('laboratory.lab-tests.store');
-        Route::get('/lab-tests/{labTest}', [LabTestController::class, 'show'])->name('laboratory.lab-tests.show');
+        // More specific routes MUST come before parameterized routes
         Route::get('/lab-tests/{labTest}/edit', [LabTestController::class, 'edit'])->name('laboratory.lab-tests.edit');
         Route::put('/lab-tests/{labTest}', [LabTestController::class, 'update'])->name('laboratory.lab-tests.update');
         Route::delete('/lab-tests/{labTest}', [LabTestController::class, 'destroy'])->name('laboratory.lab-tests.destroy');
         Route::patch('/lab-tests/{labTest}/status', [LabTestController::class, 'updateStatus'])->name('laboratory.lab-tests.update-status');
         Route::post('/lab-tests/{labTest}/duplicate', [LabTestController::class, 'duplicate'])->name('laboratory.lab-tests.duplicate');
+        // General parameterized route MUST come last
+        Route::get('/lab-tests/{labTest}', [LabTestController::class, 'show'])->name('laboratory.lab-tests.show');
 
         Route::get('/lab-test-results', [LabTestResultController::class, 'index'])->name('laboratory.lab-test-results.index');
         Route::get('/lab-test-results/create', [LabTestResultController::class, 'create'])->name('laboratory.lab-test-results.create');
         Route::post('/lab-test-results', [LabTestResultController::class, 'store'])->name('laboratory.lab-test-results.store');
-        Route::get('/lab-test-results/{labTestResult}', [LabTestResultController::class, 'show'])->name('laboratory.lab-test-results.show');
+        // More specific routes MUST come before parameterized routes
         Route::get('/lab-test-results/{labTestResult}/edit', [LabTestResultController::class, 'edit'])->name('laboratory.lab-test-results.edit');
+        Route::get('/lab-test-results/{labTestResult}/verify', [LabTestResultController::class, 'verify'])->name('laboratory.lab-test-results.verify');
+        Route::post('/lab-test-results/{labTestResult}/verify', [LabTestResultController::class, 'verifyPost'])->name('laboratory.lab-test-results.verify.post');
         Route::put('/lab-test-results/{labTestResult}', [LabTestResultController::class, 'update'])->name('laboratory.lab-test-results.update');
         Route::delete('/lab-test-results/{labTestResult}', [LabTestResultController::class, 'destroy'])->name('laboratory.lab-test-results.destroy');
+        // General parameterized route MUST come last
+        Route::get('/lab-test-results/{labTestResult}', [LabTestResultController::class, 'show'])->name('laboratory.lab-test-results.show');
 
         // Lab Test Request Routes
         Route::middleware('check.permission:view-lab-test-requests')->group(function () {
@@ -274,6 +281,16 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::put('/lab-test-requests/{labTestRequest}/status', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'updateStatus'])->name('laboratory.lab-test-requests.update-status');
             Route::patch('/lab-test-requests/{labTestRequest}/status', [\App\Http\Controllers\Laboratory\LabTestRequestController::class, 'updateStatus'])->name('laboratory.lab-test-requests.update-status-patch');
         });
+
+        // Quality Control Routes
+        Route::get('/quality-control', [QualityControlController::class, 'index'])
+            ->name('laboratory.quality-control.index')
+            ->middleware('check.permission:laboratory.quality.view');
+
+        // Laboratory Reports Routes
+        Route::get('/reports', [\App\Http\Controllers\Laboratory\LabReportController::class, 'index'])
+            ->name('laboratory.reports.index')
+            ->middleware('check.permission:laboratory.reports.view');
     });
 
     // Department Routes

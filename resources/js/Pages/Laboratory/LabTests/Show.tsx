@@ -122,7 +122,15 @@ export default function LabTestShow({ labTest, recentResults = [] }: LabTestShow
 
   const handleStatusToggle = () => {
     const newStatus = labTest.status === 'active' ? 'inactive' : 'active';
-    router.patch(`/laboratory/lab-tests/${labTest.id}/status`, { status: newStatus });
+    // Use router.visit with POST method and _method spoofing for PATCH
+    router.visit(`/laboratory/lab-tests/${labTest.id}/status`, {
+      method: 'post',
+      data: {
+        status: newStatus,
+        _method: 'PATCH',
+      },
+      preserveScroll: true,
+    });
   };
 
   const handleDuplicate = () => {
