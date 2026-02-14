@@ -155,12 +155,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </CardHeader>
 
                     <CardContent className="px-4 sm:px-8 pb-4 sm:pb-6 relative">
-                        {/* Error alert - Centered */}
+                        {/* Error alert - Prominently displayed */}
                         {(formErrors.general || Object.keys(errors).length > 0) && (
-                            <Alert variant="destructive" className="mb-6 animate-in slide-in-from-top-2 duration-300 text-center">
-                                <AlertCircle className="h-5 w-5 mx-auto" />
-                                <AlertDescription className="text-center">
-                                    {formErrors.general || 'Invalid credentials. Please try again.'}
+                            <Alert variant="destructive" className="mb-6 animate-in slide-in-from-top-2 duration-300">
+                                <AlertCircle className="h-5 w-5" />
+                                <AlertDescription>
+                                    <span className="font-semibold">Authentication Failed</span>
+                                    <p className="mt-1 text-sm">
+                                        {formErrors.general || formErrors.username || 'The credentials you entered do not match our records. Please check your username and password.'}
+                                    </p>
                                 </AlertDescription>
                             </Alert>
                         )}
@@ -182,7 +185,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         onChange={(e) => handleInputChange('username', e.target.value)}
                                         className={`pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 transition-all duration-200 focus:ring-4 focus:ring-blue-500/20 ${
                                             formErrors.username || errors.username
-                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
                                                 : 'border-gray-200 focus:border-blue-500'
                                         }`}
                                         placeholder="Enter your username"
@@ -218,7 +221,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         onChange={(e) => handleInputChange('password', e.target.value)}
                                         className={`pl-10 sm:pl-11 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border-2 transition-all duration-200 focus:ring-4 focus:ring-blue-500/20 ${
                                             formErrors.password || errors.password
-                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
                                                 : 'border-gray-200 focus:border-blue-500'
                                         }`}
                                         placeholder="Enter your password"
@@ -339,6 +342,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 }
                 .animation-delay-4000 {
                     animation-delay: 4s;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+                    20%, 40%, 60%, 80% { transform: translateX(4px); }
+                }
+                .animate-shake {
+                    animation: shake 0.5s ease-in-out;
                 }
                 `}
             </style>
