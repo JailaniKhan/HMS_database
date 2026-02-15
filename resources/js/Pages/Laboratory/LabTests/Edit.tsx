@@ -11,9 +11,9 @@ import Heading from '@/components/heading';
 import LaboratoryLayout from '@/layouts/LaboratoryLayout';
 import { 
   ArrowLeft, 
+  Currency,
   Save, 
   FlaskConical, 
-  DollarSign, 
   Clock,
   FileText,
   Activity,

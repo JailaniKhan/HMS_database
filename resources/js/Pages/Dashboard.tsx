@@ -7,7 +7,6 @@ import {
   Users, 
   Stethoscope, 
   Calendar, 
-  DollarSign, 
   AlertCircle,
   TrendingUp,
   TrendingDown,
@@ -21,7 +20,9 @@ import {
   Shield,
   UserCheck,
   Building2,
-  Activity as ActivityIcon
+  Activity as ActivityIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { useState } from 'react';
@@ -126,6 +127,8 @@ interface DashboardProps extends PageProps {
   };
   recent_activities: Array<{
     id: number;
+    user_name: string;
+    user_role: string;
     title: string;
     description: string;
     time: string;
@@ -142,9 +145,9 @@ interface DashboardProps extends PageProps {
 // Utility Functions
 // ============================================================================
 const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('ps-AF', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'AFN',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -296,6 +299,8 @@ export default function Dashboard({
   auth
 }: DashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activityPage, setActivityPage] = useState(0);
+  const activitiesPerPage = 6;
   const isSuperAdmin = auth?.user?.is_super_admin;
   const canViewAdminActivities = isSuperAdmin || auth?.user?.permissions?.includes('view-admin-activities');
 
@@ -345,7 +350,7 @@ export default function Dashboard({
               title="Total Revenue"
               amount={summary?.total_revenue || 0}
               subtitle="Combined revenue from all sources"
-              icon={<DollarSign className="h-6 w-6 text-purple-600" />}
+              icon={<span className="text-lg font-bold text-purple-600">؋</span>}
               bgColor="bg-purple-100"
             />
             <RevenueCard
@@ -583,47 +588,122 @@ export default function Dashboard({
           {/* Recent Activities */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent System Activities
-              </CardTitle>
-              <CardDescription>Latest activities across all modules</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Recent System Activities
+                  </CardTitle>
+                  <CardDescription>Latest activities across all modules</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {recent_activities?.length || 0} total
+                  </span>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recent_activities && recent_activities.length > 0 ? (
-                  recent_activities.slice(0, 9).map((activity) => (
-                    <div 
-                      key={activity.id} 
-                      className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className={`p-2 rounded-full ${
-                        activity.type === 'patient' ? 'bg-blue-100 text-blue-600' :
-                        activity.type === 'appointment' ? 'bg-yellow-100 text-yellow-600' :
-                        activity.type === 'billing' ? 'bg-purple-100 text-purple-600' :
-                        activity.type === 'pharmacy' ? 'bg-green-100 text-green-600' :
-                        activity.type === 'laboratory' ? 'bg-cyan-100 text-cyan-600' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {activity.type === 'patient' && <Users className="h-4 w-4" />}
-                        {activity.type === 'appointment' && <Calendar className="h-4 w-4" />}
-                        {activity.type === 'billing' && <CreditCard className="h-4 w-4" />}
-                        {activity.type === 'pharmacy' && <Package className="h-4 w-4" />}
-                        {activity.type === 'laboratory' && <FlaskConical className="h-4 w-4" />}
-                        {activity.type === 'doctor' && <Stethoscope className="h-4 w-4" />}
-                        {activity.type === 'system' && <ActivityIcon className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{activity.title}</p>
-                        <p className="text-sm text-muted-foreground truncate">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-4 col-span-3">No recent activities</p>
-                )}
+              {/* Scrollable container with fixed height */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded-lg border">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+                  {recent_activities && recent_activities.length > 0 ? (
+                    (
+                      recent_activities
+                        .slice(activityPage * activitiesPerPage, (activityPage + 1) * activitiesPerPage)
+                        .map((activity) => (
+                          <div 
+                            key={activity.id} 
+                            className="flex items-start gap-3 p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg hover:from-blue-50 hover:to-blue-50/30 transition-all duration-200 border border-gray-100 hover:border-blue-200 shadow-sm hover:shadow-md"
+                          >
+                            <div className={`p-2.5 rounded-full ${
+                              activity.type === 'patient' ? 'bg-blue-100 text-blue-600' :
+                              activity.type === 'appointment' ? 'bg-yellow-100 text-yellow-600' :
+                              activity.type === 'billing' ? 'bg-purple-100 text-purple-600' :
+                              activity.type === 'pharmacy' ? 'bg-green-100 text-green-600' :
+                              activity.type === 'laboratory' ? 'bg-cyan-100 text-cyan-600' :
+                              activity.type === 'doctors' ? 'bg-red-100 text-red-600' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {activity.type === 'patient' && <Users className="h-4 w-4" />}
+                              {activity.type === 'appointment' && <Calendar className="h-4 w-4" />}
+                              {activity.type === 'billing' && <CreditCard className="h-4 w-4" />}
+                              {activity.type === 'pharmacy' && <Package className="h-4 w-4" />}
+                              {activity.type === 'laboratory' && <FlaskConical className="h-4 w-4" />}
+                              {activity.type === 'doctors' && <Stethoscope className="h-4 w-4" />}
+                              {activity.type === 'system' && <ActivityIcon className="h-4 w-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-semibold text-sm text-gray-900">{activity.title}</p>
+                              </div>
+                              <p className="text-sm text-muted-foreground truncate mb-2">{activity.description}</p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  {activity.user_name || 'System'}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {activity.user_role || 'System'}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {activity.time}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    )
+                  ) : (
+                    <p className="text-center text-muted-foreground py-8 col-span-2">No recent activities</p>
+                  )}
+                </div>
               </div>
+              
+              {/* Pagination Controls */}
+              {recent_activities && recent_activities.length > activitiesPerPage && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {activityPage * activitiesPerPage + 1} to {Math.min((activityPage + 1) * activitiesPerPage, recent_activities.length)} of {recent_activities.length}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActivityPage(activityPage - 1)}
+                      disabled={activityPage === 0}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.ceil(recent_activities.length / activitiesPerPage) }, (_, i) => (
+                        <Button
+                          key={i}
+                          variant={activityPage === i ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setActivityPage(i)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {i + 1}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActivityPage(activityPage + 1)}
+                      disabled={(activityPage + 1) * activitiesPerPage >= recent_activities.length}
+                      className="gap-1"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

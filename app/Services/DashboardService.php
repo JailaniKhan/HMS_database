@@ -426,9 +426,9 @@ class DashboardService
     /**
      * Get recent activities
      */
-    protected function getRecentActivities(int $limit = 10): array
+    protected function getRecentActivities(int $limit = 20): array
     {
-        return AuditLog::select('id', 'action', 'description', 'module', 'logged_at')
+        return AuditLog::select('id', 'user_id', 'user_name', 'user_role', 'action', 'description', 'module', 'logged_at')
             ->whereIn('module', ['patients', 'appointments', 'billing', 'doctors', 'pharmacy', 'laboratory'])
             ->orderBy('logged_at', 'desc')
             ->limit($limit)
@@ -436,6 +436,8 @@ class DashboardService
             ->map(function ($log) {
                 return [
                     'id' => $log->id,
+                    'user_name' => $log->user_name ?? 'System',
+                    'user_role' => $log->user_role ?? 'System',
                     'title' => $this->formatActivityTitle($log->action),
                     'description' => $log->description ?? $log->action,
                     'time' => $log->logged_at->diffForHumans(),
