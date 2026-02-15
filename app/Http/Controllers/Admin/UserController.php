@@ -36,7 +36,9 @@ class UserController extends Controller
             
             // Super Admin can see all users, otherwise filter by admin roles
             if ($currentUser->isSuperAdmin()) {
+                // Exclude patients and doctors from admin user list
                 $users = User::with('roleModel')
+                             ->whereNotIn('role', ['patient', 'doctor'])
                              ->orderBy('id', 'asc')
                              ->paginate(10);
             } else {

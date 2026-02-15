@@ -26,7 +26,6 @@ import {
     Building,
     Package,
     AlertTriangle,
-    List,
     Shield,
     Lock,
 } from 'lucide-react';
@@ -102,7 +101,7 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                 icon: User,
             },
             {
-                title: 'Appointments',
+                title: 'Reception',
                 href: '/appointments',
                 icon: Calendar,
             },
@@ -111,38 +110,38 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
                 href: '/departments',
                 icon: Building,
             },
-            {
-                title: 'Billing',
-                href: '/billing',
-                icon: Building,
-                items: [
-                    {
-                        title: 'Dashboard',
-                        href: '/billing/parts/dashboard',
-                        icon: LayoutGrid,
-                    },
-                    {
-                        title: 'Create Bill',
-                        href: '/billing',
-                        icon: FileText,
-                    },
-                    {
-                        title: 'Bill Parts',
-                        href: '/billing/parts',
-                        icon: List,
-                    },
-                    {
-                        title: 'Payments',
-                        href: '/payments',
-                        icon: FileText,
-                    },
-                    {
-                        title: 'Reports',
-                        href: '/reports/billing',
-                        icon: FileBarChart,
-                    },
-                ],
-            },
+            // {
+            //     title: 'Billing',
+            //     href: '/billing',
+            //     icon: Building,
+            //     items: [
+            //         {
+            //             title: 'Dashboard',
+            //             href: '/billing/parts/dashboard',
+            //             icon: LayoutGrid,
+            //         },
+            //         {
+            //             title: 'Create Bill',
+            //             href: '/billing',
+            //             icon: FileText,
+            //         },
+            //         {
+            //             title: 'Bill Parts',
+            //             href: '/billing/parts',
+            //             icon: List,
+            //         },
+            //         {
+            //             title: 'Payments',
+            //             href: '/payments',
+            //             icon: FileText,
+            //         },
+            //         {
+            //             title: 'Reports',
+            //             href: '/reports/billing',
+            //             icon: FileBarChart,
+            //         },
+            //     ],
+            // },
             {
                 title: 'Pharmacy',
                 href: '/pharmacy',

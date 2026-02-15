@@ -27,21 +27,48 @@ class DashboardService
         try {
             $dateRange = $this->getDateRange($period);
             
+            Log::info('DashboardStats: Starting to fetch data for period: ' . $period);
+            
+            $summary = $this->getSummaryStats($dateRange);
+            Log::info('DashboardStats: Summary fetched successfully');
+            
+            $patients = $this->getPatientStats($dateRange);
+            Log::info('DashboardStats: Patients fetched successfully');
+            
+            $appointments = $this->getAppointmentStats($dateRange);
+            Log::info('DashboardStats: Appointments fetched successfully');
+            
+            $financial = $this->getFinancialStats($dateRange);
+            Log::info('DashboardStats: Financial fetched successfully');
+            
+            $pharmacy = $this->getPharmacyStats($dateRange);
+            Log::info('DashboardStats: Pharmacy fetched successfully');
+            
+            $laboratory = $this->getLaboratoryStats($dateRange);
+            Log::info('DashboardStats: Laboratory fetched successfully');
+            
+            $departments = $this->getDepartmentStats($dateRange);
+            Log::info('DashboardStats: Departments fetched successfully');
+            
             return [
-                'summary' => $this->getSummaryStats($dateRange),
-                'patients' => $this->getPatientStats($dateRange),
-                'appointments' => $this->getAppointmentStats($dateRange),
-                'financial' => $this->getFinancialStats($dateRange),
-                'pharmacy' => $this->getPharmacyStats($dateRange),
-                'laboratory' => $this->getLaboratoryStats($dateRange),
-                'departments' => $this->getDepartmentStats($dateRange),
+                'summary' => $summary,
+                'patients' => $patients,
+                'appointments' => $appointments,
+                'financial' => $financial,
+                'pharmacy' => $pharmacy,
+                'laboratory' => $laboratory,
+                'departments' => $departments,
                 'recent_activities' => $this->getRecentActivities(),
                 'trends' => $this->getTrendsData(),
                 'period' => $period,
                 'last_updated' => now()->toIso8601String(),
             ];
         } catch (\Exception $e) {
-            Log::error('Dashboard stats error: ' . $e->getMessage());
+            Log::error('Dashboard stats error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return $this->getDefaultStats();
         }
     }
@@ -80,10 +107,12 @@ class DashboardService
         // Get total counts (all time)
         $totalPatients = Patient::count();
         $totalDoctors = Doctor::count(); // Show all doctors, not just active
+        $totalDepartments = Department::count();
         
         Log::info('Dashboard Summary Stats - Totals:', [
             'total_patients' => $totalPatients,
             'total_doctors' => $totalDoctors,
+            'total_departments' => $totalDepartments,
         ]);
         
         // Today's revenue from appointments + pharmacy sales
@@ -101,6 +130,7 @@ class DashboardService
             'total_patients' => $totalPatients,
             'new_patients' => Patient::whereBetween('created_at', $dateRange)->count(),
             'total_doctors' => $totalDoctors,
+            'total_departments' => $totalDepartments,
             'total_appointments' => Appointment::whereBetween('appointment_date', $dateRange)->count(),
             'completed_appointments' => Appointment::whereBetween('appointment_date', $dateRange)
                 ->where('status', 'completed')->count(),
@@ -549,20 +579,73 @@ class DashboardService
                 'total_patients' => 0,
                 'new_patients' => 0,
                 'total_doctors' => 0,
+                'total_departments' => 0,
                 'total_appointments' => 0,
                 'completed_appointments' => 0,
                 'total_revenue' => 0,
+                'appointment_revenue' => 0,
+                'pharmacy_revenue' => 0,
                 'pending_bills' => 0,
                 'outstanding_amount' => 0,
             ],
-            'patients' => [],
-            'appointments' => [],
-            'financial' => [],
-            'pharmacy' => [],
-            'laboratory' => [],
-            'departments' => [],
+            'patients' => [
+                'total' => 0,
+                'new_today' => 0,
+                'new_this_period' => 0,
+                'gender_distribution' => [],
+                'age_distribution' => [],
+                'blood_group_distribution' => [],
+            ],
+            'appointments' => [
+                'total' => 0,
+                'by_status' => [],
+                'by_department' => [],
+                'today_schedule' => [],
+                'upcoming_count' => 0,
+            ],
+            'financial' => [
+                'total_revenue' => 0,
+                'appointment_revenue' => 0,
+                'pharmacy_revenue' => 0,
+                'bill_revenue' => 0,
+                'payment_methods' => [],
+                'outstanding_bills' => 0,
+                'outstanding_amount' => 0,
+                'aging' => [
+                    'current' => 0,
+                    '30_60' => 0,
+                    '60_90' => 0,
+                    '90_plus' => 0,
+                ],
+                'avg_bill_amount' => 0,
+            ],
+            'pharmacy' => [
+                'today_sales' => 0,
+                'today_revenue' => 0,
+                'period_revenue' => 0,
+                'low_stock_count' => 0,
+                'expiring_count' => 0,
+                'expired_count' => 0,
+                'total_medicines' => 0,
+                'top_medicines' => [],
+                'pending_prescriptions' => 0,
+            ],
+            'laboratory' => [
+                'total_today' => 0,
+                'completed_today' => 0,
+                'pending_count' => 0,
+                'by_status' => [],
+                'pending_tests' => [],
+            ],
+            'departments' => [
+                'total' => 0,
+                'departments' => [],
+            ],
             'recent_activities' => [],
-            'trends' => [],
+            'trends' => [
+                'daily' => [],
+                'monthly' => [],
+            ],
             'period' => 'today',
             'last_updated' => now()->toIso8601String(),
         ];

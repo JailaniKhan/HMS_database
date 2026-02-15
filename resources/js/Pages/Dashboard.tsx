@@ -20,7 +20,6 @@ import {
   Activity,
   Shield,
   UserCheck,
-  FileText,
   Building2,
   Activity as ActivityIcon
 } from 'lucide-react';
@@ -81,6 +80,7 @@ interface DashboardProps extends PageProps {
     total_patients: number;
     new_patients: number;
     total_doctors: number;
+    total_departments: number;
     total_appointments: number;
     completed_appointments: number;
     total_revenue: number;
@@ -340,7 +340,7 @@ export default function Dashboard({
           )}
 
           {/* Revenue Overview - Prominent Display */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <RevenueCard
               title="Total Revenue"
               amount={summary?.total_revenue || 0}
@@ -362,13 +362,13 @@ export default function Dashboard({
               icon={<Package className="h-6 w-6 text-green-600" />}
               bgColor="bg-green-100"
             />
-            <RevenueCard
+            {/* <RevenueCard
               title="Outstanding Amount"
               amount={summary?.outstanding_amount || 0}
               subtitle="Pending bill payments"
               icon={<CreditCard className="h-6 w-6 text-red-600" />}
               bgColor="bg-red-100"
-            />
+            /> */}
           </div>
 
           {/* Main Stats - Vertical Layout */}
@@ -399,14 +399,14 @@ export default function Dashboard({
                 bgColor="bg-yellow-100"
                 iconColor="text-yellow-600"
               />
-              <StatCard
+              {/* <StatCard
                 title="Pending Bills"
                 value={formatNumber(summary?.pending_bills || 0)}
                 subtitle="Require attention"
                 icon={<FileText className="h-5 w-5 text-orange-600" />}
                 bgColor="bg-orange-100"
                 iconColor="text-orange-600"
-              />
+              /> */}
             </div>
 
             {/* Middle Column - Department Status */}
@@ -438,7 +438,7 @@ export default function Dashboard({
               />
               <StatCard
                 title="Departments"
-                value={formatNumber(summary?.total_doctors || 0)}
+                value={formatNumber(summary?.total_departments || 0)}
                 subtitle="Active departments"
                 icon={<Building2 className="h-5 w-5 text-teal-600" />}
                 bgColor="bg-teal-100"

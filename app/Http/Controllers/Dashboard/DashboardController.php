@@ -46,11 +46,16 @@ class DashboardController extends Controller
             
             // Get admin activities and stats for admin users
             $adminData = [];
-            if ($user->isSuperAdmin() || $user->hasPermission('view-admin-activities')) {
-                $adminData = [
-                    'admin_activities' => $this->dashboardService->getAdminActivities(20),
-                    'admin_stats' => $this->dashboardService->getAdminStats(),
-                ];
+            try {
+                if ($user->isSuperAdmin() || $user->hasPermission('view-admin-activities')) {
+                    $adminData = [
+                        'admin_activities' => $this->dashboardService->getAdminActivities(20),
+                        'admin_stats' => $this->dashboardService->getAdminStats(),
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Admin data fetch failed: ' . $e->getMessage());
+                $adminData = [];
             }
             
             // Debug: Log what we're sending to the frontend
@@ -73,6 +78,7 @@ class DashboardController extends Controller
                     'total_patients' => 0,
                     'new_patients' => 0,
                     'total_doctors' => 0,
+                    'total_departments' => 0,
                     'total_appointments' => 0,
                     'completed_appointments' => 0,
                     'total_revenue' => 0,

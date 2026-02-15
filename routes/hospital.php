@@ -22,13 +22,12 @@ use App\Http\Controllers\Department\DepartmentServiceController;
 use App\Http\Controllers\Medical\MedicalRecordController;
 use App\Http\Controllers\Medical\ClinicalAssessmentController;
 use App\Http\Controllers\Admin\RBACController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return inertia('Dashboard');
-    })->name('dashboard')->middleware('check.permission:view-dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('check.permission:view-dashboard');
 
     // Patient Routes
     Route::middleware('check.permission:view-patients')->prefix('patients')->group(function () {

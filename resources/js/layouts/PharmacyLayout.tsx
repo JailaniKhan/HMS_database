@@ -80,14 +80,14 @@ function usePermissionChecker() {
 // Pharmacy-specific navigation items
 const pharmacyNavItems: (NavItem & { permission?: string })[] = [
     {
+        title: 'Home',
+        href: '/dashboard',
+        icon: Building2,
+    },
+    {
         title: 'Dashboard',
         href: '/pharmacy',
         icon: LayoutGrid,
-    },
-    {
-        title: 'Hospital Dashboard',
-        href: '/dashboard',
-        icon: Building2,
     },
     {
         title: 'Point of Sale',

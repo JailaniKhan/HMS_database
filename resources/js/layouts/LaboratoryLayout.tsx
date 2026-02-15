@@ -86,7 +86,7 @@ function usePermissionChecker() {
 // Laboratory-specific navigation items
 const laboratoryNavItems: (NavItem & { permission?: string })[] = [
     {
-        title: 'Hospital Dashboard',
+        title: 'Home',
         href: '/dashboard',
         icon: Building2,
     },
