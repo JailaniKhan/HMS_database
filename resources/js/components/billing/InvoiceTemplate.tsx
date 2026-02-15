@@ -409,7 +409,7 @@ export function InvoiceTemplate({
                 <p className="text-xs text-muted-foreground uppercase">Claim Amount</p>
                 <CurrencyDisplay
                   amount={activeInsuranceClaim.claim_amount}
-                  currency="USD"
+                  currency="AFN"
                   weight="medium"
                 />
               </div>
@@ -418,7 +418,7 @@ export function InvoiceTemplate({
                   <p className="text-xs text-muted-foreground uppercase">Approved Amount</p>
                   <CurrencyDisplay
                     amount={activeInsuranceClaim.approved_amount}
-                    currency="USD"
+                    currency="AFN"
                     weight="medium"
                     color="success"
                   />
@@ -453,7 +453,7 @@ export function InvoiceTemplate({
                   <InvoiceItemRow
                     key={item.id || index}
                     item={item}
-                    currency="USD"
+                    currency="AFN"
                     index={index}
                   />
                 ))
@@ -483,7 +483,7 @@ export function InvoiceTemplate({
                   <PaymentInfoRow
                     key={payment.id}
                     payment={payment}
-                    currency="USD"
+                    currency="AFN"
                   />
                 ))}
               </div>
@@ -503,14 +503,14 @@ export function InvoiceTemplate({
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>
-                  <CurrencyDisplay amount={subtotal} currency="USD" showSymbol={false} />
+                  <CurrencyDisplay amount={subtotal} currency="AFN" showSymbol={false} />
                 </span>
               </div>
               {totalDiscount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount</span>
                   <span>
-                    <CurrencyDisplay amount={-totalDiscount} currency="USD" showSymbol={false} />
+                    <CurrencyDisplay amount={-totalDiscount} currency="AFN" showSymbol={false} />
                   </span>
                 </div>
               )}
@@ -518,21 +518,21 @@ export function InvoiceTemplate({
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
                   <span>
-                    <CurrencyDisplay amount={taxAmount} currency="USD" showSymbol={false} />
+                    <CurrencyDisplay amount={taxAmount} currency="AFN" showSymbol={false} />
                   </span>
                 </div>
               )}
               <div className="border-t pt-3 flex justify-between font-semibold">
                 <span>Total</span>
                 <span>
-                  <CurrencyDisplay amount={totalAmount} currency="USD" weight="bold" />
+                  <CurrencyDisplay amount={totalAmount} currency="AFN" weight="bold" />
                 </span>
               </div>
               {amountPaid > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Amount Paid</span>
                   <span>
-                    <CurrencyDisplay amount={-amountPaid} currency="USD" showSymbol={false} />
+                    <CurrencyDisplay amount={-amountPaid} currency="AFN" showSymbol={false} />
                   </span>
                 </div>
               )}
@@ -542,7 +542,7 @@ export function InvoiceTemplate({
                   <span>
                     <CurrencyDisplay
                       amount={-bill.insurance_claim_amount}
-                      currency="USD"
+                      currency="AFN"
                       showSymbol={false}
                     />
                   </span>
@@ -553,7 +553,7 @@ export function InvoiceTemplate({
                 <span>
                   <CurrencyDisplay
                     amount={balanceDue}
-                    currency="USD"
+                    currency="AFN"
                     weight="bold"
                     color={balanceDue > 0 ? 'danger' : 'success'}
                   />

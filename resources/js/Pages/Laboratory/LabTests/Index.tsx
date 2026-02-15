@@ -129,7 +129,7 @@ export default function LabTestIndex({ labTests, query = '', status = '', catego
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'AFN',
     }).format(amount);
   };
 

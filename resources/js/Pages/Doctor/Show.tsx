@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
-import { Phone, MapPin, User, ArrowLeft, Pencil, FileText, DollarSign, Calendar, Building2, Stethoscope, Trash2 } from 'lucide-react';
+import { Phone, MapPin, User, ArrowLeft, Pencil, FileText, Currency, Calendar, Building2, Stethoscope, Trash2 } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { useState } from 'react';
 
@@ -226,7 +226,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">Consultation Fees</span>
                                         <span className="font-semibold flex items-center">
-                                            <DollarSign className="h-4 w-4" />
+                                            <Currency className="h-4 w-4" />
                                             {doctor.fees || 0}
                                         </span>
                                     </div>
@@ -234,7 +234,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">Salary</span>
                                         <span className="font-medium flex items-center">
-                                            <DollarSign className="h-4 w-4" />
+                                            <Currency className="h-4 w-4" />
                                             {doctor.salary || 0}
                                         </span>
                                     </div>
@@ -242,7 +242,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">Bonus</span>
                                         <span className="font-medium flex items-center">
-                                            <DollarSign className="h-4 w-4" />
+                                            <Currency className="h-4 w-4" />
                                             {doctor.bonus || 0}
                                         </span>
                                     </div>
@@ -286,7 +286,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                 
                                 <Link href={`/billing?doctor_id=${doctor.id}`} className="block">
                                     <Button variant="outline" size="sm" className="w-full justify-start">
-                                        <DollarSign className="mr-2 h-4 w-4" />
+                                        <Currency className="mr-2 h-4 w-4" />
                                         View Billing
                                     </Button>
                                 </Link>

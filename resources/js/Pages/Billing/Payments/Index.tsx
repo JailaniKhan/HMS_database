@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import Heading from '@/components/heading';
 import {
-    DollarSign,
+    Currency,
     Calendar,
     Search,
     FileText,
@@ -293,7 +293,7 @@ export default function PaymentIndex({ payments, filters = {}, statistics }: Pay
                                         <p className="text-2xl font-bold mt-1">{statistics.total_payments}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <DollarSign className="h-5 w-5 text-blue-600" />
+                                        <Currency className="h-5 w-5 text-blue-600" />
                                     </div>
                                 </div>
                             </CardContent>

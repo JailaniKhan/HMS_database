@@ -22,7 +22,7 @@ import {
     Ban,
     Receipt,
     User,
-    DollarSign,
+    Currency,
     ShoppingCart,
     CreditCard,
     Wallet,
@@ -87,7 +87,7 @@ export default function SaleShow({ sale, timeline = [] }: SaleShowProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
         }).format(amount);
     };
 
@@ -114,7 +114,7 @@ export default function SaleShow({ sale, timeline = [] }: SaleShowProps) {
             case 'insurance':
                 return <Landmark className="h-5 w-5" />;
             default:
-                return <DollarSign className="h-5 w-5" />;
+                return <Currency className="h-5 w-5" />;
         }
     };
 

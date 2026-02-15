@@ -22,7 +22,7 @@ import {
 import Heading from '@/components/heading';
 import {
     ArrowLeft,
-    DollarSign,
+    Currency,
     TrendingUp,
     TrendingDown,
     Calendar,
@@ -565,7 +565,7 @@ export default function OutstandingPage({
                         title="Total Outstanding"
                         value={<CurrencyDisplay amount={totals.total_outstanding} />}
                         subtitle={`${totals.count_total} bills pending`}
-                        icon={DollarSign}
+                        icon={Currency}
                         color="blue"
                         trend={totals.overdue_growth_percent && totals.overdue_growth_percent >= 0 ? 'up' : 'down'}
                         trendValue={`${Math.abs(totals.overdue_growth_percent || 0).toFixed(1)}% vs previous`}

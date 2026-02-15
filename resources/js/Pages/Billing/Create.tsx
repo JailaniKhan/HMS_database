@@ -76,7 +76,7 @@ interface BillItem {
 
 // Currency formatter helper
 const formatCurrencySimple = (amount: number): string => {
-    return formatCurrency(amount, { currency: 'USD', locale: 'en-US' });
+    return formatCurrency(amount, { currency: 'AFN', locale: 'en-US' });
 };
 
 // Get icon for item type
@@ -696,7 +696,7 @@ const Create = ({ patients, doctors, services }: CreateProps) => {
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="fixed">Fixed ($)</SelectItem>
+                                                                <SelectItem value="fixed">Fixed (؋)</SelectItem>
                                                                 <SelectItem value="percentage">Percent (%)</SelectItem>
                                                             </SelectContent>
                                                         </Select>

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { FilterBar, type FilterConfig, type FilterState } from '@/components/pharmacy/FilterBar';
 import Heading from '@/components/heading';
 import { 
-    DollarSign, 
+    Currency, 
     Calendar, 
     User, 
     PlusCircle, 
@@ -170,7 +170,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
         }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
         }).format(amount);
     };
 
@@ -197,7 +197,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
             case 'insurance':
                 return <Landmark className="h-4 w-4" />;
             default:
-                return <DollarSign className="h-4 w-4" />;
+                return <Currency className="h-4 w-4" />;
         }
     };
 
@@ -265,7 +265,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                                         <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.total_revenue)}</p>
                                     </div>
                                     <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                                        <DollarSign className="h-5 w-5 text-green-600" />
+                                        <Currency className="h-5 w-5 text-green-600" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -367,7 +367,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center">
-                                                        <DollarSign className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                        <Currency className="mr-2 h-4 w-4 text-muted-foreground" />
                                                         <div>
                                                             <p className="font-semibold">{formatCurrency(sale.grand_total || sale.total_amount)}</p>
                                                             {sale.discount > 0 && (

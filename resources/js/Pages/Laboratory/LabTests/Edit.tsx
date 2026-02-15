@@ -423,7 +423,7 @@ export default function LabTestEdit({ labTest }: LabTestEditProps) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <Currency className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
                   <CardTitle>Pricing & Timing</CardTitle>
@@ -439,7 +439,7 @@ export default function LabTestEdit({ labTest }: LabTestEditProps) {
                     Cost <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="cost"
                       name="cost"

@@ -70,7 +70,7 @@ export function formatCurrency(
   } = {}
 ): string {
   const {
-    currency = 'USD',
+    currency = 'AFN',
     locale = 'en-US',
     decimals = 2,
     showSymbol = true,
@@ -101,7 +101,7 @@ export function formatCurrency(
  */
 export function formatCompactCurrency(
   amount: number,
-  currency: CurrencyCode = 'USD',
+  currency: CurrencyCode = 'AFN',
   locale: string = 'en-US'
 ): string {
   const formatter = new Intl.NumberFormat(locale, {
@@ -121,7 +121,7 @@ export function formatCompactCurrency(
  */
 export function CurrencyDisplay({
   amount,
-  currency = 'USD',
+  currency = 'AFN',
   locale = 'en-US',
   decimals = 2,
   size = 'md',
@@ -254,7 +254,7 @@ export function CurrencyDisplay({
  */
 export function CurrencyInputDisplay({
   amount,
-  currency = 'USD',
+  currency = 'AFN',
   className,
   ...props
 }: Omit<CurrencyDisplayProps, 'size' | 'weight'>) {
@@ -266,7 +266,7 @@ export function CurrencyInputDisplay({
       )}
     >
       <span className="text-muted-foreground mr-2">
-        {currency === 'USD' ? '$' : currency}
+        {currency === 'AFN' ? '؋' : currency}
       </span>
       <CurrencyDisplay
         amount={amount}
@@ -285,7 +285,7 @@ export function CurrencyInputDisplay({
  */
 export function CompactCurrencyDisplay({
   amount,
-  currency = 'USD',
+  currency = 'AFN',
   locale = 'en-US',
   className,
   ...props

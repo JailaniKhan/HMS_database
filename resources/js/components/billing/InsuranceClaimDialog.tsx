@@ -94,7 +94,7 @@ interface InsuranceClaimValidationErrors {
 // Constants
 // ============================================================================
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'AFN';
 
 const MIN_CLAIM_AMOUNT = 0.01;
 const MAX_CLAIM_AMOUNT = 999999999.99;
@@ -549,7 +549,7 @@ export function InsuranceClaimDialog({
               <Label htmlFor="claimAmount">Claim Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currency === 'USD' ? '$' : currency}
+                  {currency === 'AFN' ? '؋' : currency}
                 </span>
                 <Input
                   id="claimAmount"

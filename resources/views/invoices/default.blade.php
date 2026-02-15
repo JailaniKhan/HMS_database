@@ -385,15 +385,15 @@
                         <td>{{ $item['description'] }}</td>
                         <td class="text-center">{{ ucfirst($item['category']) }}</td>
                         <td class="text-center">{{ $item['quantity'] }}</td>
-                        <td class="text-right">${{ number_format($item['unit_price'], 2) }}</td>
+                        <td class="text-right">؋{{ number_format($item['unit_price'], 2) }}</td>
                         <td class="text-right">
                             @if($item['discount'] > 0)
-                                ${{ number_format($item['discount'], 2) }}
+                                -؋{{ number_format($item['discount'], 2) }}
                             @else
                                 -
                             @endif
                         </td>
-                        <td class="text-right">${{ number_format($item['total'], 2) }}</td>
+                        <td class="text-right">؋{{ number_format($item['total'], 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -405,28 +405,28 @@
             <table class="summary-table">
                 <tr>
                     <td class="label">Subtotal:</td>
-                    <td class="value">${{ number_format($summary['subtotal'], 2) }}</td>
+                    <td class="value">؋{{ number_format($summary['subtotal'], 2) }}</td>
                 </tr>
                 @if($summary['discount'] > 0)
                 <tr>
                     <td class="label">Discount:</td>
-                    <td class="value" style="color: #dc2626;">-${{ number_format($summary['discount'], 2) }}</td>
+                    <td class="value" style="color: #dc2626;">-؋{{ number_format($summary['discount'], 2) }}</td>
                 </tr>
                 @endif
                 @if($summary['tax'] > 0)
                 <tr>
                     <td class="label">Tax:</td>
-                    <td class="value">${{ number_format($summary['tax'], 2) }}</td>
+                    <td class="value">؋{{ number_format($summary['tax'], 2) }}</td>
                 </tr>
                 @endif
                 <tr class="total-row">
                     <td class="label">Total Amount:</td>
-                    <td class="value">${{ number_format($summary['total'], 2) }}</td>
+                    <td class="value">؋{{ number_format($summary['total'], 2) }}</td>
                 </tr>
                 @if($summary['amount_paid'] > 0)
                 <tr>
                     <td class="label">Amount Paid:</td>
-                    <td class="value" style="color: #16a34a;">${{ number_format($summary['amount_paid'], 2) }}</td>
+                    <td class="value" style="color: #16a34a;">؋{{ number_format($summary['amount_paid'], 2) }}</td>
                 </tr>
                 @endif
             </table>
@@ -436,7 +436,7 @@
         @if($summary['balance_due'] > 0)
         <div class="balance-due">
             <div class="balance-due-label">Balance Due</div>
-            <div class="balance-due-amount">${{ number_format($summary['balance_due'], 2) }}</div>
+            <div class="balance-due-amount">؋{{ number_format($summary['balance_due'], 2) }}</div>
         </div>
         @endif
         
@@ -448,10 +448,10 @@
                 <strong>Provider:</strong> {{ $insurance['provider'] }}<br>
                 <strong>Policy Number:</strong> {{ $insurance['policy_number'] }}<br>
                 @if($insurance['claim_amount'] > 0)
-                    <strong>Claim Amount:</strong> ${{ number_format($insurance['claim_amount'], 2) }}<br>
+                    <strong>Claim Amount:</strong> ؋{{ number_format($insurance['claim_amount'], 2) }}<br>
                 @endif
                 @if($insurance['approved_amount'] > 0)
-                    <strong>Approved Amount:</strong> ${{ number_format($insurance['approved_amount'], 2) }}
+                    <strong>Approved Amount:</strong> ؋{{ number_format($insurance['approved_amount'], 2) }}
                 @endif
             </div>
         </div>
@@ -476,7 +476,7 @@
                         <td>{{ $payment['date'] }}</td>
                         <td>{{ $payment['method'] }}</td>
                         <td>{{ $payment['transaction_id'] ?? 'N/A' }}</td>
-                        <td class="text-right">${{ number_format($payment['amount'], 2) }}</td>
+                        <td class="text-right">؋{{ number_format($payment['amount'], 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>

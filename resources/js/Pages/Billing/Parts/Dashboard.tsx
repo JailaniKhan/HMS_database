@@ -27,7 +27,7 @@ import {
     Legend
 } from 'recharts';
 import { 
-    DollarSign, 
+    Currency, 
     FileText, 
     TrendingUp, 
     TrendingDown,
@@ -89,7 +89,7 @@ function StatCard({ title, value, change, icon: Icon, format = 'number' }: StatC
     const displayValue = format === 'currency' && typeof value === 'number' 
         ? new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(value)
@@ -150,7 +150,7 @@ export default function BillPartsDashboard() {
     const formatCurrency = (value: number): string => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(value);
@@ -200,7 +200,7 @@ export default function BillPartsDashboard() {
                         title="Total Revenue"
                         value={stats.totalRevenue}
                         change={stats.revenueChange}
-                        icon={DollarSign}
+                        icon={Currency}
                         format="currency"
                     />
                     <StatCard
@@ -232,7 +232,7 @@ export default function BillPartsDashboard() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <DollarSign className="h-5 w-5" />
+                                <Currency className="h-5 w-5" />
                                 Daily Revenue
                             </CardTitle>
                         </CardHeader>
@@ -244,10 +244,10 @@ export default function BillPartsDashboard() {
                                         <XAxis dataKey="date" className="text-xs" />
                                         <YAxis 
                                             className="text-xs"
-                                            tickFormatter={(value) => `$${(Number(value) / 1000).toFixed(0)}k`}
+                                            tickFormatter={(value) => `AFN ${(Number(value) / 1000).toFixed(0)}k`}
                                         />
                                         <Tooltip 
-                                            formatter={(value: number | string) => [formatCurrency(Number(value)), 'Revenue']}
+                                            formatter={(value: number | string) => [formatCurrency(Number(value)), 'Revenue'] as [string, string]}
                                             contentStyle={{ 
                                                 backgroundColor: 'hsl(var(--card))',
                                                 border: '1px solid hsl(var(--border))',
@@ -319,7 +319,7 @@ export default function BillPartsDashboard() {
                                     <YAxis 
                                         className="text-xs"
                                         yAxisId="left"
-                                        tickFormatter={(value) => `$${(Number(value) / 1000).toFixed(0)}k`}
+                                        tickFormatter={(value) => `AFN ${(Number(value) / 1000).toFixed(0)}k`}
                                     />
                                     <YAxis 
                                         className="text-xs"
@@ -378,7 +378,7 @@ export default function BillPartsDashboard() {
                                 View All Bills
                             </Button>
                             <Button variant="outline">
-                                <DollarSign className="mr-2 h-4 w-4" />
+                                <Currency className="mr-2 h-4 w-4" />
                                 Payment Records
                             </Button>
                             <Button variant="outline">

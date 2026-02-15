@@ -83,7 +83,7 @@ interface AddItemFormState {
 // Constants
 // ============================================================================
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'AFN';
 const DEFAULT_MAX_DISCOUNT = 100;
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 999;

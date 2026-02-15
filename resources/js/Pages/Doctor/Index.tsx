@@ -211,10 +211,10 @@ export default function DoctorIndex({ doctors }: DoctorIndexProps) {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="font-semibold text-green-600">${doctor.fees || 0}</span>
+                                                    <span className="font-semibold text-green-600">؋{doctor.fees || 0}</span>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="font-semibold text-blue-600">${doctor.salary || 0}</span>
+                                                    <span className="font-semibold text-blue-600">؋{doctor.salary || 0}</span>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-2">

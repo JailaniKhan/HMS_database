@@ -22,7 +22,7 @@ import {
 import Heading from '@/components/heading';
 import {
     ArrowLeft,
-    DollarSign,
+    Currency,
     TrendingUp,
     TrendingDown,
     Calendar,
@@ -545,7 +545,7 @@ export default function PaymentMethodsPage({
                         title="Total Payments"
                         value={<CurrencyDisplay amount={totals.total_payments} />}
                         subtitle={`${totals.total_transactions} transactions`}
-                        icon={DollarSign}
+                        icon={Currency}
                         color="green"
                         trend={totals.growth_percent && totals.growth_percent >= 0 ? 'up' : 'down'}
                         trendValue={`${Math.abs(totals.growth_percent || 0).toFixed(1)}% vs previous`}

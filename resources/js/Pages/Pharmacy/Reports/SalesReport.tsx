@@ -9,7 +9,7 @@ import {
     TrendingUp,
     ArrowLeft,
     Download,
-    DollarSign,
+    Currency,
     ShoppingCart,
     Search,
     BarChart3,
@@ -137,7 +137,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                     <CardContent className="p-6">
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-lg bg-green-100 text-green-600">
-                                <DollarSign className="size-6" />
+                                <Currency className="size-6" />
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Total Revenue</p>

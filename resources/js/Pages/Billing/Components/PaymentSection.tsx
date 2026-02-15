@@ -47,7 +47,7 @@ import {
 } from '@/types/billing';
 import {
     Plus,
-    DollarSign,
+    Currency,
     CreditCard,
     Banknote,
     Landmark,
@@ -87,7 +87,7 @@ export function PaymentSection({
     onRefundPayment,
     canRecordPayment = true,
     canRefund = false,
-    currency = 'USD',
+    currency = 'AFN',
 }: PaymentSectionProps) {
     const [showPaymentDialog, setShowPaymentDialog] = React.useState(false);
     const [showRefundDialog, setShowRefundDialog] = React.useState(false);
@@ -364,7 +364,7 @@ export function PaymentSection({
                         <div className="space-y-2">
                             <Label htmlFor="amount">Payment Amount</Label>
                             <div className="relative">
-                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     id="amount"
                                     type="number"
@@ -387,7 +387,7 @@ export function PaymentSection({
                             <div className="space-y-2">
                                 <Label htmlFor="amount_tendered">Amount Tendered</Label>
                                 <div className="relative">
-                                    <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="amount_tendered"
                                         type="number"
@@ -538,7 +538,7 @@ export function PaymentSection({
                         <div className="space-y-2">
                             <Label htmlFor="refund_amount">Refund Amount *</Label>
                             <div className="relative">
-                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     id="refund_amount"
                                     type="number"

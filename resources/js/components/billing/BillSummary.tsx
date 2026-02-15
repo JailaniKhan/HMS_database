@@ -116,7 +116,7 @@ function SummaryRow({
 export function BillSummary({
   bill,
   calculations: externalCalculations,
-  currency = 'USD',
+  currency = 'AFN',
   variant = 'default',
   className,
   showHeader = true,

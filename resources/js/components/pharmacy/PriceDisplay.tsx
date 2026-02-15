@@ -1,11 +1,5 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import {
-    DollarSign,
-    Tag,
-    Receipt,
-    type LucideIcon,
-} from 'lucide-react';
 
 export type PriceSize = 'sm' | 'md' | 'lg' | 'xl';
 export type PriceVariant = 'default' | 'discounted' | 'total' | 'subtotal';
@@ -28,28 +22,28 @@ const sizeConfig: Record<PriceSize, { text: string; icon: string }> = {
     xl: { text: 'text-2xl', icon: 'size-6' },
 };
 
-const variantConfig: Record<PriceVariant, { icon: LucideIcon; className: string }> = {
+const variantConfig: Record<PriceVariant, { symbol: string; className: string }> = {
     default: {
-        icon: DollarSign,
+        symbol: '؋',
         className: 'text-foreground',
     },
     discounted: {
-        icon: Tag,
+        symbol: '؋',
         className: 'text-emerald-600 font-medium',
     },
     total: {
-        icon: Receipt,
+        symbol: '؋',
         className: 'text-foreground font-bold',
     },
     subtotal: {
-        icon: DollarSign,
+        symbol: '؋',
         className: 'text-muted-foreground',
     },
 };
 
 const formatAmount = (amount: number | null | undefined, currency: string, showDecimal: boolean): string => {
     if (amount === null || amount === undefined || isNaN(amount)) {
-        return '$0.00';
+        return '؋0.00';
     }
     const formatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -64,7 +58,7 @@ const PriceDisplay = React.forwardRef<HTMLSpanElement, PriceDisplayProps>(
     (
         {
             amount,
-            currency = 'USD',
+            currency = 'AFN',
             size = 'md',
             variant = 'default',
             showIcon = false,
@@ -77,7 +71,6 @@ const PriceDisplay = React.forwardRef<HTMLSpanElement, PriceDisplayProps>(
         ref
     ) => {
         const config = variantConfig[variant];
-        const Icon = config.icon;
         const sizeClasses = sizeConfig[size];
 
         return (
@@ -91,7 +84,7 @@ const PriceDisplay = React.forwardRef<HTMLSpanElement, PriceDisplayProps>(
                 )}
                 {...props}
             >
-                {showIcon && <Icon className={sizeClasses.icon} />}
+                {showIcon && <span className={cn(sizeClasses.icon)}>{config.symbol}</span>}
                 <span className={cn(strikethrough && 'line-through opacity-50')}>
                     {formatAmount(amount, currency, showDecimal)}
                 </span>

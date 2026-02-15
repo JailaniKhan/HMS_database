@@ -98,7 +98,7 @@ export interface RefundFormData {
 // Constants
 // ============================================================================
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'AFN';
 
 const REFUND_REASONS = [
   { value: 'overpayment', label: 'Overpayment' },
@@ -514,7 +514,7 @@ export function RefundDialog({
               <Label htmlFor="amount">Refund Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currency === 'USD' ? '$' : currency}
+                  {currency === 'AFN' ? '؋' : currency}
                 </span>
                 <Input
                   id="amount"

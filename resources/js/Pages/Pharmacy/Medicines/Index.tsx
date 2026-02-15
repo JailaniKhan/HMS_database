@@ -126,7 +126,7 @@ export default function MedicineIndex({
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'AFN',
     }).format(amount);
   };
 

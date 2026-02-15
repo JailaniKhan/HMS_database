@@ -15,7 +15,7 @@ import {
     FileDown,
     PieChart,
     BarChart3,
-    DollarSign,
+    Currency,
     Boxes,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -67,7 +67,7 @@ export default function Valuation({
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
         }).format(amount);
     };
 
@@ -144,7 +144,7 @@ export default function Valuation({
                                     <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
                                 </div>
                                 <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                    <DollarSign className="h-5 w-5 text-primary" />
+                                    <Currency className="h-5 w-5 text-primary" />
                                 </div>
                             </div>
                         </CardContent>

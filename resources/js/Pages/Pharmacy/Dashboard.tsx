@@ -14,7 +14,7 @@ import {
     ClipboardList,
     AlertTriangle,
     ArrowRight,
-    DollarSign,
+    Currency,
     AlertCircle,
     Activity,
 } from 'lucide-react';
@@ -86,7 +86,7 @@ const statCards = [
         id: 'today-revenue',
         label: "Today's Revenue",
         key: 'todayRevenue' as const,
-        icon: DollarSign,
+        icon: Currency,
         color: 'text-emerald-600 bg-emerald-500/10',
         isCurrency: true,
     },

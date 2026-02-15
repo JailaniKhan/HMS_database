@@ -80,7 +80,7 @@ interface PaymentValidationErrors {
 // Constants
 // ============================================================================
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'AFN';
 
 const PAYMENT_METHODS = [
   { value: PaymentMethod.CASH, label: 'Cash' },
@@ -441,7 +441,7 @@ export function PaymentDialog({
               <Label htmlFor="amount">Payment Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {currency === 'USD' ? '$' : currency}
+                  {currency === 'AFN' ? '؋' : currency}
                 </span>
                 <Input
                   id="amount"

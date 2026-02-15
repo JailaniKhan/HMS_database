@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
 import {
     FileText,
-    DollarSign,
+    Currency,
     TrendingUp,
     TrendingDown,
     PieChart,
@@ -117,7 +117,7 @@ export default function BillingReportsIndex({ summary, recentReports = [] }: Bil
                 {
                     title: 'Revenue Summary',
                     description: 'Daily, weekly, monthly revenue breakdown',
-                    icon: DollarSign,
+                    icon: Currency,
                     href: '/reports/billing/revenue',
                     color: 'bg-green-500',
                 },

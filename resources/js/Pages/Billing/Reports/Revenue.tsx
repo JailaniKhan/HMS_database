@@ -22,7 +22,7 @@ import {
 import Heading from '@/components/heading';
 import {
     ArrowLeft,
-    DollarSign,
+    Currency,
     TrendingUp,
     TrendingDown,
     Calendar,
@@ -512,7 +512,7 @@ export default function RevenuePage({
                         title="Total Revenue"
                         value={<CurrencyDisplay amount={totals.total_revenue} />}
                         subtitle="Gross revenue for period"
-                        icon={DollarSign}
+                        icon={Currency}
                         color="blue"
                         trend={totals.revenue_growth_percent && totals.revenue_growth_percent >= 0 ? 'up' : 'down'}
                         trendValue={`${Math.abs(totals.revenue_growth_percent || 0).toFixed(1)}% vs previous`}

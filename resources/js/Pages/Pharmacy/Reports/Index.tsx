@@ -6,7 +6,7 @@ import {
     TrendingUp,
     Package,
     AlertCircle,
-    DollarSign,
+    Currency,
     FileText,
     Download,
     BarChart3,
@@ -66,7 +66,7 @@ export default function ReportsIndex({ stats }: ReportsIndexProps) {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
-                                <DollarSign className="size-5" />
+                                <Currency className="size-5" />
                             </div>
                             <div>
                                 <p className="text-xs text-muted-foreground">Total Revenue</p>

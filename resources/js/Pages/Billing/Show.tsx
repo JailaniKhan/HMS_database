@@ -46,7 +46,7 @@ export default function BillShow({ bill }: BillShowProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
         }).format(amount);
     };
 

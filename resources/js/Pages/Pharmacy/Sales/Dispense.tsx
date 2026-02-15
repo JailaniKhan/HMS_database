@@ -32,7 +32,7 @@ import {
     Wallet,
     Landmark,
     Percent,
-    DollarSign,
+    Currency,
     Calculator,
     Printer,
     CheckCircle,
@@ -310,7 +310,7 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'AFN',
         }).format(amount);
     };
 
@@ -725,7 +725,7 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
                                     </TabsContent>
                                     <TabsContent value="fixed" className="mt-4">
                                         <div className="relative">
-                                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Currency className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
                                                 type="number"
                                                 min="0"

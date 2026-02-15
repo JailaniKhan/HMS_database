@@ -12,7 +12,7 @@ import {
   ArrowLeft,
   Save,
   Pill,
-  DollarSign,
+  Currency,
   Package,
   Beaker,
   Building,
@@ -458,7 +458,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <Currency className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
                   <CardTitle>Pricing & Stock</CardTitle>
@@ -474,16 +474,15 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                     Cost Price <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="cost_price"
                       name="cost_price"
                       type="number"
-                      step="0.01"
-                      min="0"
+                      step="1"
                       value={data.cost_price}
                       onChange={handleChange}
-                      placeholder="0.00"
+                      placeholder="0"
                       className={cn("pl-9", errors.cost_price && "border-destructive")}
                     />
                   </div>
@@ -501,16 +500,16 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                     Sale Price <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Currency className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="sale_price"
                       name="sale_price"
                       type="number"
-                      step="0.01"
+                      step="1"
                       min="0"
                       value={data.sale_price}
                       onChange={handleChange}
-                      placeholder="0.00"
+                      placeholder=""
                       className={cn("pl-9", errors.sale_price && "border-destructive")}
                     />
                   </div>
@@ -538,10 +537,9 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       id="stock_quantity"
                       name="stock_quantity"
                       type="number"
-                      min="0"
                       value={data.stock_quantity}
                       onChange={handleChange}
-                      placeholder="0"
+                      placeholder=""
                       className={cn("pl-9", errors.stock_quantity && "border-destructive")}
                     />
                   </div>

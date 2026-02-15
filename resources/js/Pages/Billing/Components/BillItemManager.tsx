@@ -154,7 +154,7 @@ export function BillItemManager({
     availableMedicines = [],
     availableServices = [],
     readOnly = false,
-    currency = 'USD',
+    currency = 'AFN',
 }: BillItemManagerProps) {
     const [showAddDialog, setShowAddDialog] = React.useState(false);
     const [selectedSource, setSelectedSource] = React.useState<ItemSourceOption['type'] | null>(null);

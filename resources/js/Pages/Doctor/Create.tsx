@@ -209,10 +209,10 @@ export default function DoctorCreate({ departments = [] }: DoctorCreateProps) {
                                         id="fees"
                                         name="fees"
                                         type="number"
-                                        step="0.01"
+                                        step="1"
                                         value={data.fees}
                                         onChange={handleChange}
-                                        placeholder="Enter consultation fees"
+                                        placeholder="Enter consultation fees (؋)"
                                     />
                                     {errors.fees && (
                                         <p className="text-sm text-red-600">{errors.fees}</p>
@@ -225,10 +225,10 @@ export default function DoctorCreate({ departments = [] }: DoctorCreateProps) {
                                         id="salary"
                                         name="salary"
                                         type="number"
-                                        step="0.01"
+                                        step="1"
                                         value={data.salary}
                                         onChange={handleChange}
-                                        placeholder="Enter salary"
+                                        placeholder="Enter salary (؋)"
                                     />
                                     {errors.salary && (
                                         <p className="text-sm text-red-600">{errors.salary}</p>
@@ -241,10 +241,10 @@ export default function DoctorCreate({ departments = [] }: DoctorCreateProps) {
                                         id="bonus"
                                         name="bonus"
                                         type="number"
-                                        step="0.01"
+                                        step="1"
                                         value={data.bonus}
                                         onChange={handleChange}
-                                        placeholder="Enter bonus"
+                                        placeholder="Enter bonus (؋)"
                                     />
                                     {errors.bonus && (
                                         <p className="text-sm text-red-600">{errors.bonus}</p>
