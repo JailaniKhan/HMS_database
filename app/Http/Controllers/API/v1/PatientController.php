@@ -76,6 +76,20 @@ class PatientController extends BaseApiController
         return $this->executeWithErrorHandling(function () use ($request) {
             $perPage = $this->validatePerPage($request->input('per_page', 10));
 
+            Log::info('DEBUG: Attempting to fetch patients list', [
+                'user_id' => auth()->id(),
+                'per_page' => $perPage
+            ]);
+
+            // Try a simple query first to isolate the issue
+            try {
+                $patientCount = Patient::count();
+                Log::info('DEBUG: Patient count query successful', ['count' => $patientCount]);
+            } catch (\Exception $e) {
+                Log::error('DEBUG: Patient count query failed', ['error' => $e->getMessage()]);
+                throw $e;
+            }
+
             $patients = Patient::with('user:id,name')
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);

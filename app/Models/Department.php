@@ -18,7 +18,6 @@ class Department extends Model
     ];
 
     protected $casts = [
-        'phone' => 'encrypted',
         'metadata' => 'array',
     ];
 

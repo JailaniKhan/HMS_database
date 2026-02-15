@@ -35,7 +35,7 @@ class HospitalDashboardService extends BaseService
         // Today's appointments
         $todayAppointments = Appointment::whereBetween('appointment_date', [$startOfDay, $endOfDay])->count();
         $completedAppointments = Appointment::whereBetween('appointment_date', [$startOfDay, $endOfDay])
-            ->where('status', 'completed')->count();
+            ->whereIn('status', ['completed', 'confirmed'])->count();
 
         // Revenue calculations
         $todayRevenue = Payment::whereDate('created_at', $today)
@@ -360,10 +360,11 @@ class HospitalDashboardService extends BaseService
 
         return [
             'scheduled' => $stats['scheduled'] ?? 0,
-            'completed' => $stats['completed'] ?? 0,
+            'completed' => ($stats['completed'] ?? 0) + ($stats['confirmed'] ?? 0),
             'cancelled' => $stats['cancelled'] ?? 0,
             'no_show' => $stats['no_show'] ?? 0,
             'in_progress' => $stats['in_progress'] ?? 0,
+            'rescheduled' => $stats['rescheduled'] ?? 0,
         ];
     }
 

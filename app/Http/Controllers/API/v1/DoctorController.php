@@ -53,6 +53,21 @@ class DoctorController extends BaseApiController
 
         return $this->executeWithErrorHandling(function () use ($request) {
             $perPage = $this->validatePerPage($request->input('per_page', 10));
+
+            Log::info('DEBUG: Attempting to fetch doctors list', [
+                'user_id' => auth()->id(),
+                'per_page' => $perPage
+            ]);
+
+            // Try a simple query first to isolate the issue
+            try {
+                $doctorCount = Doctor::count();
+                Log::info('DEBUG: Doctor count query successful', ['count' => $doctorCount]);
+            } catch (\Exception $e) {
+                Log::error('DEBUG: Doctor count query failed', ['error' => $e->getMessage()]);
+                throw $e;
+            }
+
             $doctors = Doctor::with('department')->paginate($perPage);
 
             Log::info('Doctors list retrieved via API', [

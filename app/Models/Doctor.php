@@ -43,7 +43,6 @@ class Doctor extends Model
         'bonus' => 'decimal:2',
         'age' => 'integer',
         'address' => 'array',
-        'phone_number' => 'encrypted',
         'metadata' => 'array',
     ];
 

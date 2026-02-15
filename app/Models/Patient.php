@@ -36,13 +36,12 @@ class Patient extends Model
 
     protected $casts = [
         'address' => 'array',
-        'phone' => 'encrypted',
         'metadata' => 'array',
         'age' => 'integer',
-        // Encrypt sensitive medical information
-        'allergies' => 'encrypted',
-        'medical_history' => 'encrypted',
-        'emergency_contact_phone' => 'encrypted',
+        // Store sensitive medical information as JSON
+        'allergies' => 'array',
+        'medical_history' => 'array',
+        'emergency_contact_phone' => 'string',
     ];
 
     /**

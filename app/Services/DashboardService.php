@@ -133,7 +133,8 @@ class DashboardService
             'total_departments' => $totalDepartments,
             'total_appointments' => Appointment::whereBetween('appointment_date', $dateRange)->count(),
             'completed_appointments' => Appointment::whereBetween('appointment_date', $dateRange)
-                ->where('status', 'completed')->count(),
+                ->whereIn('status', ['completed', 'confirmed'])
+                ->count(),
             'total_revenue' => $totalRevenue,
             'appointment_revenue' => $appointmentRevenue,
             'pharmacy_revenue' => $pharmacyRevenue,
@@ -201,6 +202,9 @@ class DashboardService
             ->pluck('count', 'status')
             ->toArray();
             
+        // Include 'confirmed' in completed count for backwards compatibility
+        $completedCount = ($statusBreakdown['completed'] ?? 0) + ($statusBreakdown['confirmed'] ?? 0);
+            
         // Department-wise appointments
         $deptAppointments = Appointment::whereBetween('appointment_date', $dateRange)
             ->join('departments', 'appointments.department_id', '=', 'departments.id')
@@ -234,8 +238,9 @@ class DashboardService
             'by_department' => $deptAppointments,
             'today_schedule' => $todayAppointments,
             'upcoming_count' => Appointment::where('appointment_date', '>', now())
-                ->where('status', 'scheduled')
+                ->whereIn('status', ['scheduled', 'rescheduled', 'confirmed'])
                 ->count(),
+            'completed_count' => $completedCount,
         ];
     }
 
