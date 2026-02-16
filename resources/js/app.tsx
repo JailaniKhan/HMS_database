@@ -6,6 +6,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { QueryProvider } from '@/lib/query-provider';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { ToastProvider } from '@/components/Toast';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -76,9 +77,11 @@ createInertiaApp({
 
         root.render(
             <ErrorBoundary>
-                <QueryProvider>
-                    <App {...props} />
-                </QueryProvider>
+                <ToastProvider>
+                    <QueryProvider>
+                        <App {...props} />
+                    </QueryProvider>
+                </ToastProvider>
             </ErrorBoundary>,
         );
     },

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Appointment;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Bill;
+use App\Models\DepartmentService;
 use App\Services\AppointmentService;
 use App\Services\Billing\BillItemService;
 use App\Services\AuditLogService;
@@ -81,6 +82,68 @@ class AppointmentController extends Controller
     }
 
     /**
+     * Display the appointment dashboard with consolidated information.
+     */
+    public function dashboard(): Response
+    {
+        $this->authorizeAppointmentAccess();
+        
+        // Get recent appointments (latest 10)
+        $appointments = $this->appointmentService->getAllAppointments(10);
+        
+        // Get department services - use same query as index but limited to 10
+        $servicesQuery = DepartmentService::with('department')
+            ->orderBy('created_at', 'desc');
+        
+        $totalServices = $servicesQuery->count();
+        $services = $servicesQuery->limit(10)->get();
+        
+        // Get appointment stats
+        $appointmentStats = \App\Models\Appointment::select('status')
+            ->get()
+            ->groupBy('status')
+            ->map(fn($group) => $group->count());
+        
+        // Get service stats
+        $serviceStats = DepartmentService::select('is_active')
+            ->get()
+            ->groupBy('is_active')
+            ->map(fn($group) => $group->count());
+        
+        // Get departments for filter dropdown (consistent with index)
+        $departments = \App\Models\Department::orderBy('name')->get();
+        
+        return Inertia::render('Appointment/Dashboard', [
+            'appointments' => $appointments,
+            'services' => [
+                'data' => $services,
+                'meta' => [
+                    'total' => $totalServices,
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 10,
+                    'from' => 1,
+                    'to' => min(10, $totalServices),
+                ],
+            ],
+            'departments' => $departments,
+            'stats' => [
+                'appointments' => [
+                    'total' => \App\Models\Appointment::count(),
+                    'scheduled' => $appointmentStats['scheduled'] ?? 0,
+                    'completed' => $appointmentStats['completed'] ?? 0,
+                    'cancelled' => $appointmentStats['cancelled'] ?? 0,
+                ],
+                'services' => [
+                    'total' => $totalServices,
+                    'active' => $serviceStats[true] ?? 0,
+                    'inactive' => $serviceStats[false] ?? 0,
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create(): Response
@@ -100,27 +163,39 @@ class AppointmentController extends Controller
         
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
-            'department_id' => 'required|exists:departments,id',
+            'doctor_id' => 'nullable|exists:doctors,id',
+            'department_id' => 'nullable|exists:departments,id',
             'appointment_date' => 'required|date',
             'reason' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:5000',
             'fee' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0|max:100',
-            'services' => 'nullable|array',
+            'services' => 'nullable',
             'services.*.department_service_id' => 'required_with:services|exists:department_services,id',
             'services.*.custom_cost' => 'required_with:services|numeric|min:0',
             'services.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
+        // Handle services - may come as JSON string from hidden input or as array
+        if (!empty($validated['services']) && is_string($validated['services'])) {
+            $validated['services'] = json_decode($validated['services'], true);
+        }
+
+        // Department is now optional - either doctor OR department can be selected, or neither
+        // (for simple appointments without specific department/doctor assignment)
+
         // Sanitize input data
         $sanitized = $this->sanitizeInput($validated);
 
         try {
+            // Convert empty strings to null for optional fields
+            $doctorId = !empty($sanitized['doctor_id']) ? $sanitized['doctor_id'] : null;
+            $departmentId = !empty($sanitized['department_id']) ? $sanitized['department_id'] : null;
+
             $appointmentData = [
                 'patient_id' => $sanitized['patient_id'],
-                'doctor_id' => $sanitized['doctor_id'],
-                'department_id' => $sanitized['department_id'],
+                'doctor_id' => $doctorId,
+                'department_id' => $departmentId,
                 'appointment_date' => $validated['appointment_date'],
                 'reason' => $sanitized['reason'],
                 'notes' => $sanitized['notes'],
@@ -135,8 +210,38 @@ class AppointmentController extends Controller
 
             $appointment = $this->appointmentService->createAppointment($appointmentData);
 
-            return redirect()->route('appointments.index')->with('success', 'Appointment created successfully.');
+            // Load relationships for print preview
+            $appointment->load(['patient', 'doctor', 'department']);
+
+            // Debug: Log the appointment data being sent for printing
+            $appointmentArray = $appointment->toArray();
+            Log::info('Appointment created for printing', [
+                'appointment_id' => $appointment->appointment_id,
+                'patient' => $appointmentArray['patient'] ?? null,
+                'doctor' => $appointmentArray['doctor'] ?? null,
+                'department' => $appointmentArray['department'] ?? null,
+                'fee' => $appointmentArray['fee'] ?? null,
+                'discount' => $appointmentArray['discount'] ?? null,
+                'grand_total' => $appointment->grand_total ?? null,
+            ]);
+
+            // Return to create page with appointment data to show print modal
+            $formData = $this->appointmentService->getAppointmentFormData();
+            
+            Log::info('Returning to create page with print appointment', [
+                'printAppointment' => $appointmentArray ? 'present' : 'missing',
+                'formData_keys' => array_keys($formData),
+            ]);
+            
+            return Inertia::render('Appointment/Create', [
+                ...$formData,
+                'printAppointment' => $appointmentArray,
+            ])->with('success', 'Appointment created successfully!');
         } catch (\Exception $e) {
+            Log::error('Failed to create appointment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return redirect()->back()->withInput()->withErrors(['error' => 'Failed to create appointment: ' . $e->getMessage()]);
         }
     }
@@ -178,7 +283,7 @@ class AppointmentController extends Controller
         
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
+            'doctor_id' => 'nullable|exists:doctors,id',
             'appointment_date' => 'required|date',
             'appointment_time' => 'required',
             'status' => 'required|in:scheduled,completed,cancelled,no_show,rescheduled',

@@ -28,6 +28,13 @@ class DepartmentService extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['final_cost'];
+
+    /**
      * Get the department that owns the service.
      */
     public function department(): BelongsTo

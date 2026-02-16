@@ -102,8 +102,25 @@ export default function HospitalLayout({ header, children }: HospitalLayoutProps
             },
             {
                 title: 'Reception',
-                href: '/appointments',
+                href: '/appointments/dashboard',
                 icon: Calendar,
+                items: [
+                    {
+                        title: 'Dashboard',
+                        href: '/appointments/dashboard',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'Reception',
+                        href: '/appointments',
+                        icon: Calendar,
+                    },
+                    {
+                        title: 'Department Services',
+                        href: '/departments/services',
+                        icon: Package,
+                    },
+                ],
             },
             {
                 title: 'Departments',

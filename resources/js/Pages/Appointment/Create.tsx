@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
 import Heading from '@/components/heading';
 import HospitalLayout from '@/layouts/HospitalLayout';
+import { AppointmentPrintModal } from '@/components/appointment/AppointmentPrintModal';
+import { DepartmentPrint } from '@/components/appointment/DepartmentPrint';
+import { useToast } from '@/components/Toast';
 import { 
     ArrowLeft, 
     Save, 
@@ -19,9 +22,9 @@ import {
     Plus,
     Trash2,
     Package,
-    Calculator
+    Calculator,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface Patient {
     id: number;
@@ -52,7 +55,7 @@ interface Department {
 }
 
 interface SelectedService {
-    id: string; // unique identifier for this selection
+    id: string;
     department_service_id: string;
     name: string;
     custom_cost: string;
@@ -66,10 +69,39 @@ interface SubmitService {
     discount_percentage: number;
 }
 
+interface PrintAppointment {
+    appointment_id: string;
+    patient?: {
+        first_name: string;
+        father_name?: string;
+        gender?: string;
+        age?: number;
+    };
+    doctor?: {
+        id?: number;
+        full_name: string;
+    };
+    department?: {
+        name: string;
+    };
+    appointment_date: string;
+    fee: number;
+    discount: number;
+    grand_total?: number;
+    created_at?: string;
+}
+
 interface AppointmentCreateProps {
     patients: Patient[];
     doctors: Doctor[];
     departments: Department[];
+    printAppointment?: PrintAppointment;
+}
+
+// Extended page props for Inertia
+interface PageProps {
+    flash?: { success?: string; error?: string };
+    printAppointment?: PrintAppointment;
 }
 
 interface FormData {
@@ -86,13 +118,41 @@ interface FormData {
     services: SubmitService[];
 }
 
-export default function AppointmentCreate({ patients, doctors, departments }: AppointmentCreateProps) {
-    // Get current date and time
+export default function AppointmentCreate({ patients, doctors, departments, printAppointment: initialPrintAppointment }: AppointmentCreateProps) {
     const now = new Date();
     const currentDate = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
     
+    // Get page props for flash messages and printAppointment from Inertia
+    const pageProps = usePage().props as PageProps;
+    const { showSuccess } = useToast();
+    
+    // Get printAppointment from page props (updated automatically by Inertia after form submission)
+    const printAppointment = pageProps.printAppointment || initialPrintAppointment;
+    
+    // Show toast when appointment is created successfully
+    useEffect(() => {
+        console.log('[DEBUG] Page props updated:', pageProps);
+        console.log('[DEBUG] Flash message:', pageProps.flash?.success);
+        console.log('[DEBUG] Print appointment:', printAppointment);
+        
+        if (pageProps.flash?.success) {
+            showSuccess('Appointment Created', pageProps.flash.success);
+        }
+    }, [pageProps.flash?.success, printAppointment, showSuccess]);
+    
+    // Show print modal when printAppointment is available
+    useEffect(() => {
+        if (printAppointment) {
+            console.log('[DEBUG] Showing print modal for:', printAppointment.appointment_id);
+            setShowPrintModal(true);
+        }
+    }, [printAppointment]);
+    
+    // Separate state for managing services in the UI
     const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+    // Initialize with printAppointment value - will show modal if appointment was created
+    const [showPrintModal, setShowPrintModal] = useState(false);
     
     const { data, setData, post, processing, errors } = useForm<FormData>({
         patient_id: '',
@@ -118,14 +178,39 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Include services in form data
-        setData('services', selectedServices.map(s => ({
-            department_service_id: s.department_service_id,
-            custom_cost: parseFloat(s.custom_cost) || 0,
-            discount_percentage: parseFloat(s.discount_percentage) || 0,
-        })));
+        console.log('[DEBUG] Form submission started');
+        console.log('[DEBUG] Form data:', JSON.stringify(data, null, 2));
+        console.log('[DEBUG] Selected services:', JSON.stringify(selectedServices, null, 2));
         
-        post('/appointments');
+        // Calculate totals to get final fee value
+        const totals = calculateTotals();
+        console.log('[DEBUG] Calculated totals:', totals);
+        
+        // If using services, set the fee from grand total
+        if (selectedServices.length > 0 && !data.fee) {
+            setData('fee', totals.grandTotal.toString());
+        }
+        
+        console.log('[DEBUG] Submitting to /appointments');
+        
+        // Submit the form - services data is sent via hidden input
+        post('/appointments', {
+            onStart: () => console.log('[DEBUG] Request started'),
+            onSuccess: (page) => {
+                console.log('[DEBUG] Request succeeded');
+                console.log('[DEBUG] Full page object keys:', Object.keys(page));
+                console.log('[DEBUG] Page props keys:', Object.keys(page.props || {}));
+                
+                // Check for printAppointment in different locations
+                const printData = page.props?.printAppointment || page.printAppointment;
+                const flashData = page.props?.flash || page.flash;
+                
+                console.log('[DEBUG] printAppointment data:', printData);
+                console.log('[DEBUG] Flash data:', flashData);
+            },
+            onError: (errors) => console.error('[DEBUG] Request errors:', errors),
+            onFinish: () => console.log('[DEBUG] Request finished'),
+        });
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -134,7 +219,9 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
     };
 
     const handleComboboxChange = (name: string, value: string) => {
-        setData(name as keyof typeof data, value);
+        // Convert "0" to empty string (when nothing is selected in combobox)
+        const finalValue = value === '0' ? '' : value;
+        setData(name as keyof typeof data, finalValue);
         
         // Auto-populate fee when doctor is selected
         if (name === 'doctor_id' && value) {
@@ -147,7 +234,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         // Clear services when department changes
         if (name === 'department_id') {
             setSelectedServices([]);
-            // Also clear doctor if they don't belong to new department
             if (data.doctor_id) {
                 const selectedDoctor = doctors.find(d => d.id.toString() === data.doctor_id);
                 if (selectedDoctor && selectedDoctor.department_id?.toString() !== value) {
@@ -181,7 +267,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
             
             const updated = { ...service, [field]: value };
             
-            // If selecting a service, auto-populate the cost
             if (field === 'department_service_id' && value) {
                 const deptService = availableServices.find(s => s.id.toString() === value);
                 if (deptService) {
@@ -190,7 +275,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                 }
             }
             
-            // Recalculate final cost
             const cost = parseFloat(updated.custom_cost) || 0;
             const discount = parseFloat(updated.discount_percentage) || 0;
             const discountAmount = cost * (discount / 100);
@@ -200,7 +284,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         }));
     };
 
-    // Calculate totals
     const calculateTotals = () => {
         if (selectedServices.length > 0) {
             const subtotal = selectedServices.reduce((sum, s) => sum + (parseFloat(s.custom_cost) || 0), 0);
@@ -210,7 +293,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                 return sum + (cost * discount / 100);
             }, 0);
             
-            // Calculate additional discount based on type
             let additionalDiscount = 0;
             if (data.discount_type === 'percentage') {
                 const discountPercent = parseFloat(data.discount) || 0;
@@ -229,7 +311,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                 isServiceBased: true,
             };
         } else {
-            // Use doctor fee calculation
             const fee = parseFloat(data.fee) || 0;
             let discountAmount = 0;
             
@@ -253,7 +334,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
 
     const totals = calculateTotals();
 
-    // Transform patients into combobox options
     const patientOptions: ComboboxOption[] = patients.map(patient => ({
         value: patient.id.toString(),
         label: patient.full_name,
@@ -261,7 +341,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         icon: <User className="h-4 w-4 text-blue-600" />
     }));
 
-    // Transform doctors into combobox options
     const doctorOptions: ComboboxOption[] = doctors.map(doctor => ({
         value: doctor.id.toString(),
         label: `Dr. ${doctor.full_name}`,
@@ -269,14 +348,12 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         icon: <Stethoscope className="h-4 w-4 text-green-600" />
     }));
 
-    // Transform departments into combobox options
     const departmentOptions: ComboboxOption[] = departments.map(dept => ({
         value: dept.id.toString(),
         label: dept.name,
         icon: <Building2 className="h-4 w-4 text-purple-600" />
     }));
 
-    // Get available service options (excluding already selected)
     const getAvailableServiceOptions = (currentServiceId: string) => {
         const selectedIds = selectedServices
             .filter(s => s.id !== currentServiceId)
@@ -298,7 +375,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
             
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
                 <div className="max-w-5xl mx-auto space-y-6">
-                    {/* Header Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <Heading title="Schedule New Appointment" />
@@ -314,7 +390,12 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Patient & Doctor Information */}
+                        {/* Hidden inputs for services data */}
+                        <input type="hidden" name="services" value={JSON.stringify(selectedServices.map(s => ({
+                            department_service_id: s.department_service_id,
+                            custom_cost: parseFloat(s.custom_cost) || 0,
+                            discount_percentage: parseFloat(s.discount_percentage) || 0,
+                        })))} />
                         <Card className="shadow-lg border-t-4 border-t-blue-500">
                             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -325,7 +406,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Patient Selection with Search */}
                                     <div className="space-y-2">
                                         <Label htmlFor="patient_id" className="text-base font-semibold flex items-center gap-2">
                                             <User className="h-4 w-4 text-blue-600" />
@@ -348,11 +428,10 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                         <p className="text-xs text-muted-foreground">Search by patient name or ID</p>
                                     </div>
                                     
-                                    {/* Department Selection */}
                                     <div className="space-y-2">
                                         <Label htmlFor="department_id" className="text-base font-semibold flex items-center gap-2">
                                             <Building2 className="h-4 w-4 text-purple-600" />
-                                            Department 
+                                            Department <span className="text-green-600 text-xs font-normal">(Optional)</span>
                                         </Label>
                                         <Combobox
                                             options={departmentOptions}
@@ -368,23 +447,23 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                 <span className="font-medium">⚠</span> {errors.department_id}
                                             </p>
                                         )}
+                                        <p className="text-xs text-muted-foreground">Select a department (optional - leave empty for general appointment)</p>
                                     </div>
 
-                                    {/* Doctor Selection with Search */}
                                     <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="doctor_id" className="text-base font-semibold flex items-center gap-2">
                                             <Stethoscope className="h-4 w-4 text-green-600" />
-                                            Doctor 
+                                            Doctor <span className="text-green-600 text-xs font-normal">(Optional)</span>
                                         </Label>
                                         <Combobox
                                             options={doctorOptions}
                                             value={data.doctor_id}
                                             onValueChange={(value) => handleComboboxChange('doctor_id', value)}
-                                            placeholder={data.department_id ? "Search for a doctor..." : "Select a department first..."}
+                                            placeholder="Search for a doctor..."
                                             searchPlaceholder="Type to search doctors..."
                                             emptyText="No doctors found"
                                             className="h-auto py-3"
-                                            disabled={!data.department_id}
+                                            disabled={false}
                                         />
                                         {errors.doctor_id && (
                                             <p className="text-sm text-red-600 flex items-center gap-1">
@@ -392,16 +471,15 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             </p>
                                         )}
                                         <p className="text-xs text-muted-foreground">
-                                            {data.department_id 
+                                            {data.doctor_id 
                                                 ? "Doctor's fee will be automatically populated" 
-                                                : "Please select a department first to see available doctors"}
+                                                : "Select a specific doctor (optional - leave empty for department-only appointment)"}
                                         </p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Appointment Details */}
                         <Card className="shadow-lg border-t-4 border-t-green-500">
                             <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -412,7 +490,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
                                 <div className="grid grid-cols-1 gap-6">
-                                    {/* Date and Time */}
                                     <div className="space-y-2">
                                         <Label htmlFor="appointment_date" className="text-base font-semibold flex items-center gap-2">
                                             <CalendarIcon className="h-4 w-4 text-green-600" />
@@ -436,7 +513,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                         )}
                                     </div>
                                     
-                                    {/* Reason */}
                                     <div className="space-y-2">
                                         <Label htmlFor="reason" className="text-base font-semibold">Reason for Appointment</Label>
                                         <Textarea
@@ -454,30 +530,10 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             </p>
                                         )}
                                     </div>
-
-                                    {/* Notes
-                                    <div className="space-y-2">
-                                        <Label htmlFor="notes" className="text-base font-semibold">Additional Notes</Label>
-                                        <Textarea
-                                            id="notes"
-                                            name="notes"
-                                            value={data.notes}
-                                            onChange={handleChange}
-                                            placeholder="Any additional notes, special requirements, or instructions"
-                                            rows={2}
-                                            className="resize-none text-base"
-                                        />
-                                        {errors.notes && (
-                                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                                <span className="font-medium">⚠</span> {errors.notes}
-                                            </p>
-                                        )}
-                                    </div> */}
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Department Services */}
                         <Card className="shadow-lg border-t-4 border-t-indigo-500">
                             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -501,7 +557,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                     </div>
                                 ) : (
                                     <>
-                                        {/* Add Service Button */}
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm text-muted-foreground">
                                                 {selectedServices.length} service(s) added
@@ -518,7 +573,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             </Button>
                                         </div>
 
-                                        {/* Selected Services */}
                                         {selectedServices.length > 0 && (
                                             <div className="space-y-4">
                                                 {selectedServices.map((service, index) => (
@@ -542,7 +596,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                         </div>
                                                         
                                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                            {/* Service Selection */}
                                                             <div className="md:col-span-2">
                                                                 <Label className="text-sm font-medium">Service</Label>
                                                                 <Combobox
@@ -555,7 +608,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                                 />
                                                             </div>
                                                             
-                                                            {/* Custom Cost */}
                                                             <div>
                                                                 <Label className="text-sm font-medium">Cost (؋)</Label>
                                                                 <Input
@@ -568,7 +620,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                                 />
                                                             </div>
                                                             
-                                                            {/* Discount */}
                                                             <div>
                                                                 <Label className="text-sm font-medium">Discount (%)</Label>
                                                                 <Input
@@ -583,7 +634,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                             </div>
                                                         </div>
                                                         
-                                                        {/* Final Cost Display */}
                                                         <div className="flex justify-end items-center gap-2 text-sm">
                                                             <span className="text-muted-foreground">Final Cost:</span>
                                                             <span className="font-bold text-indigo-700 text-lg">
@@ -605,7 +655,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                             </CardContent>
                         </Card>
 
-                        {/* Fee & Discount Summary */}
                         <Card className="shadow-lg border-t-4 border-t-amber-500">
                             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -620,11 +669,11 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
                                 {!totals.isServiceBased ? (
-                                    // Show doctor fee fields when no services selected
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {/* Fee */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="fee" className="text-base font-semibold">Consultation Fee *</Label>
+                                            <Label htmlFor="fee" className="text-base font-semibold">
+                                                Consultation Fee {data.doctor_id ? '' : '*'}
+                                            </Label>
                                             <div className="relative">
                                                 <span className="absolute left-3 top-3 text-lg font-bold text-muted-foreground">؋</span>
                                                 <Input
@@ -636,11 +685,15 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                     value={data.fee}
                                                     onChange={handleChange}
                                                     placeholder="0.00"
-                                                    className="pl-11 h-12 text-base bg-muted/50"
-                                                    readOnly
+                                                    className={`pl-11 h-12 text-base ${!data.doctor_id ? '' : 'bg-muted/50'}`}
+                                                    readOnly={!!data.doctor_id}
                                                 />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">📌 Auto-filled from selected doctor</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {data.doctor_id 
+                                                    ? "📌 Auto-filled from selected doctor" 
+                                                    : "Enter consultation fee manually"}
+                                            </p>
                                             {errors.fee && (
                                                 <p className="text-sm text-red-600 flex items-center gap-1">
                                                     <span className="font-medium">⚠</span> {errors.fee}
@@ -648,7 +701,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             )}
                                         </div>
 
-                                        {/* Discount Type Selection */}
                                         <div className="space-y-2">
                                             <Label className="text-base font-semibold">Discount Type</Label>
                                             <div className="flex gap-2">
@@ -673,7 +725,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             </div>
                                         </div>
 
-                                        {/* Discount Amount Input */}
                                         <div className="space-y-2">
                                             <Label htmlFor="discount_value" className="text-base font-semibold">
                                                 Discount {data.discount_type === 'percentage' ? '(%)' : '(؋)'}
@@ -704,7 +755,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             )}
                                         </div>
 
-                                        {/* Final Fee */}
                                         <div className="space-y-2 md:col-start-3">
                                             <Label className="text-base font-semibold">Final Amount *</Label>
                                             <div className="flex items-center h-12 px-4 py-3 border-2 border-amber-500 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
@@ -715,7 +765,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                         </div>
                                     </div>
                                 ) : (
-                                    // Show services summary when services are selected
                                     <div className="space-y-4">
                                         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                                             {selectedServices.map((service, index) => (
@@ -734,10 +783,8 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                             ))}
                                         </div>
                                         
-                                        {/* Additional Discount Section for Services */}
                                         <div className="border-t pt-4 space-y-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* Discount Type Selection */}
                                                 <div className="space-y-2">
                                                     <Label className="text-sm font-semibold">Additional Discount Type</Label>
                                                     <div className="flex gap-2">
@@ -762,7 +809,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                     </div>
                                                 </div>
 
-                                                {/* Discount Amount Input */}
                                                 <div className="space-y-2">
                                                     <Label htmlFor="discount_value_services" className="text-sm font-semibold">
                                                         Additional Discount {data.discount_type === 'percentage' ? '(%)' : '(؋)'}
@@ -810,7 +856,6 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                             </CardContent>
                         </Card>
                                 
-                        {/* Action Buttons */}
                         <div className="flex justify-end space-x-4 pb-8">
                             <Link href="/appointments">
                                 <Button type="button" variant="outline" size="lg" className="shadow-md">
@@ -830,6 +875,21 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                     </form>
                 </div>
             </div>
+
+            {/* Show appropriate print modal based on whether doctor was selected */}
+            {printAppointment?.doctor ? (
+                <AppointmentPrintModal
+                    isOpen={showPrintModal}
+                    onClose={() => setShowPrintModal(false)}
+                    appointment={printAppointment ?? null}
+                />
+            ) : (
+                <DepartmentPrint
+                    isOpen={showPrintModal}
+                    onClose={() => setShowPrintModal(false)}
+                    appointment={printAppointment ?? null}
+                />
+            )}
         </HospitalLayout>
     );
 }

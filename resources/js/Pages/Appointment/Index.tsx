@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -11,8 +11,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
+import { AppointmentPrintModal } from '@/components/appointment/AppointmentPrintModal';
 import { Calendar, User, Stethoscope, PlusCircle, Search, Clock, Eye, Edit } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 
 interface Patient {
@@ -59,6 +60,20 @@ interface AppointmentIndexProps {
 
 export default function AppointmentIndex({ appointments }: AppointmentIndexProps) {
     const [searchTerm, setSearchTerm] = useState('');
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const [printAppointment, setPrintAppointment] = useState<unknown>(null);
+    
+    const { props } = usePage();
+
+    // Check for flash message on mount
+    useEffect(() => {
+        const flashProps = props as { flash?: { printAppointment?: unknown } };
+        const flash = flashProps.flash;
+        if (flash?.printAppointment && !printAppointment) {
+            setPrintAppointment(flash.printAppointment);
+            setShowPrintModal(true);
+        }
+    }, [props, printAppointment]);
 
     const filteredAppointments = appointments.data.filter(appointment =>
         appointment.appointment_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -284,14 +299,14 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                         </div>
 
                         {/* Pagination */}
-                        {appointments.meta && (
+                        {appointments.meta && appointments.meta.last_page > 1 && (
                         <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t bg-muted/30 gap-4">
                             <div className="text-sm text-muted-foreground">
                                 Showing <strong className="text-foreground">{appointments.meta?.from || 0}</strong> to <strong className="text-foreground">{appointments.meta?.to || 0}</strong> of{' '}
                                 <strong className="text-foreground">{appointments.meta?.total || 0}</strong> appointments
                             </div>
                             
-                            <div className="flex space-x-2">
+                            <div className="flex items-center gap-1">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -299,8 +314,34 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                     onClick={() => window.location.href = `/appointments?page=${(appointments.meta?.current_page || 1) - 1}`}
                                     className="hover:bg-primary hover:text-white"
                                 >
-                                    Previous
+                                    ← Previous
                                 </Button>
+                                
+                                {/* Page Numbers */}
+                                {Array.from({ length: Math.min(5, appointments.meta.last_page) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (appointments.meta.last_page <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (appointments.meta.current_page <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (appointments.meta.current_page >= appointments.meta.last_page - 2) {
+                                        pageNum = appointments.meta.last_page - 4 + i;
+                                    } else {
+                                        pageNum = appointments.meta.current_page - 2 + i;
+                                    }
+                                    
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={appointments.meta.current_page === pageNum ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => window.location.href = `/appointments?page=${pageNum}`}
+                                            className={appointments.meta.current_page === pageNum ? "bg-primary" : "hover:bg-primary hover:text-white"}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
                                 
                                 <Button
                                     variant="outline"
@@ -309,7 +350,7 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                     onClick={() => window.location.href = `/appointments?page=${(appointments.meta?.current_page || 1) + 1}`}
                                     className="hover:bg-primary hover:text-white"
                                 >
-                                    Next
+                                    Next →
                                 </Button>
                             </div>
                         </div>
@@ -317,6 +358,13 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Print Modal */}
+            <AppointmentPrintModal
+                isOpen={showPrintModal}
+                onClose={() => setShowPrintModal(false)}
+                appointment={printAppointment as Parameters<typeof AppointmentPrintModal>[0]['appointment']}
+            />
         </HospitalLayout>
     );
 }

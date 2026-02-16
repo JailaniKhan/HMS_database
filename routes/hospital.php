@@ -69,6 +69,9 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     // Appointment Routes
     Route::middleware('check.permission:view-appointments')->prefix('appointments')->group(function () {
+        // Dashboard must come before /{appointment} to avoid route conflicts
+        Route::get('/dashboard', [AppointmentController::class, 'dashboard'])->name('appointments.dashboard');
+        
         Route::get('/', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/', [AppointmentController::class, 'store'])->name('appointments.store');
@@ -295,6 +298,9 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     // Department Routes
     Route::middleware('check.permission:view-departments')->prefix('departments')->group(function () {
+        // Department Services Standalone Routes
+        Route::get('/services', [DepartmentServiceController::class, 'index'])->name('department-services.index');
+
         Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
         Route::get('/create', [DepartmentController::class, 'create'])->name('departments.create');
         Route::post('/', [DepartmentController::class, 'store'])->name('departments.store');
