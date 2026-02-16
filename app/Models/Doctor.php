@@ -30,6 +30,7 @@ class Doctor extends Model
         'address',
         'bio',
         'fees',
+        'fee_percentage',
         'salary',
         'bonus',
         'status',

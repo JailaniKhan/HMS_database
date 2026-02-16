@@ -85,9 +85,9 @@ class PatientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $patients = Patient::with('user')->paginate(10);
+        $patients = Patient::with('user')->paginate(100);
         return Inertia::render('Patient/Index', [
             'patients' => $patients
         ]);

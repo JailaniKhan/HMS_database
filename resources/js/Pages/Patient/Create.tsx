@@ -7,12 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Heading from '@/components/heading';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { PatientFormData } from '@/types/patient';
 
-export default function PatientCreate() {
+interface PatientCreateProps {
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+}
+
+export default function PatientCreate({ flash }: PatientCreateProps) {
     const { data, setData, post, processing, errors } = useForm<PatientFormData>({
         first_name: '',
         father_name: '',
@@ -55,7 +62,27 @@ export default function PatientCreate() {
                     </Link>
                 </div>
 
+                {/* Success Alert */}
+                {flash?.success && (
+                    <Alert className="bg-green-50 border-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-800">
+                            {flash.success}
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 {/* Error Alert */}
+                {flash?.error && (
+                    <Alert className="bg-red-50 border-red-200">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                            {flash.error}
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Validation Errors */}
                 {Object.keys(errors).length > 0 && (
                     <Alert className="bg-red-50 border-red-200">
                         <AlertCircle className="h-4 w-4 text-red-600" />

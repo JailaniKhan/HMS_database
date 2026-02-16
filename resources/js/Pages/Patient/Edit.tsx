@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Heading from '@/components/heading';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 
 interface Patient {
@@ -24,9 +24,13 @@ interface Patient {
 
 interface PatientEditProps {
     patient: Patient;
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
-export default function PatientEdit({ patient }: PatientEditProps) {
+export default function PatientEdit({ patient, flash }: PatientEditProps) {
     const { data, setData, processing, errors } = useForm({
         first_name: patient.first_name || '',
         father_name: patient.father_name || '',
@@ -93,7 +97,27 @@ export default function PatientEdit({ patient }: PatientEditProps) {
                     </Link>
                 </div>
 
+                {/* Success Alert */}
+                {flash?.success && (
+                    <Alert className="bg-green-50 border-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-800">
+                            {flash.success}
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 {/* Error Alert */}
+                {flash?.error && (
+                    <Alert className="bg-red-50 border-red-200">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                            {flash.error}
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Validation Errors */}
                 {Object.keys(errors).length > 0 && (
                     <Alert className="bg-red-50 border-red-200">
                         <AlertCircle className="h-4 w-4 text-red-600" />

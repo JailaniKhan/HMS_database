@@ -32,6 +32,7 @@ interface Doctor {
     address: string;
     bio: string;
     fees: number;
+    fee_percentage: number;
     salary: number;
     bonus: number;
     department_id: number;
@@ -55,6 +56,7 @@ export default function DoctorEdit({ doctor, departments = [] }: DoctorEditProps
         address: doctor.address || '',
         bio: doctor.bio || '',
         fees: doctor.fees || '',
+        fee_percentage: doctor.fee_percentage || '',
         salary: doctor.salary || '',
         bonus: doctor.bonus || '',
         department_id: doctor.department_id?.toString() || '',
@@ -263,6 +265,24 @@ export default function DoctorEdit({ doctor, departments = [] }: DoctorEditProps
                                     />
                                     {errors.fees && (
                                         <p className="text-sm text-red-600">{errors.fees}</p>
+                                    )}
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="fee_percentage">Fee Percentage (%)</Label>
+                                    <Input
+                                        id="fee_percentage"
+                                        name="fee_percentage"
+                                        type="number"
+                                        step="1"
+                                        min="0"
+                                        max="100"
+                                        value={data.fee_percentage}
+                                        onChange={handleChange}
+                                        placeholder="Enter fee percentage (e.g., 20 for 20%)"
+                                    />
+                                    {errors.fee_percentage && (
+                                        <p className="text-sm text-red-600">{errors.fee_percentage}</p>
                                     )}
                                 </div>
                                 

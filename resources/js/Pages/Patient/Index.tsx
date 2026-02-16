@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -12,24 +12,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Heading from '@/components/heading';
-import { PlusCircle, Search, Phone, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Search, Phone, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 import { Patient } from '@/types/patient';
 
+interface PaginationMeta {
+    current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+}
+
 interface PatientIndexProps {
     patients: {
         data: Patient[];
-        links: Record<string, unknown>;
-        meta: {
-            current_page: number;
-            from: number;
-            last_page: number;
-            path: string;
-            per_page: number;
-            to: number;
-            total: number;
-        };
+        links?: Record<string, unknown>;
+        meta?: PaginationMeta;
+        // Laravel paginator also returns these at top level
+        current_page?: number;
+        from?: number;
+        last_page?: number;
+        path?: string;
+        per_page?: number;
+        to?: number;
+        total?: number;
     };
     flash?: {
         success?: string;
@@ -39,6 +49,17 @@ interface PatientIndexProps {
 
 export default function PatientIndex({ patients, flash }: PatientIndexProps) {
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Get meta from either nested meta object or top-level properties
+    const meta: PaginationMeta = {
+        current_page: patients.meta?.current_page ?? patients.current_page ?? 1,
+        from: patients.meta?.from ?? patients.from ?? 1,
+        last_page: patients.meta?.last_page ?? patients.last_page ?? 1,
+        path: patients.meta?.path ?? patients.path ?? '/patients',
+        per_page: patients.meta?.per_page ?? patients.per_page ?? 100,
+        to: patients.meta?.to ?? patients.to ?? patients.data.length,
+        total: patients.meta?.total ?? patients.total ?? patients.data.length,
+    };
 
     const filteredPatients = patients.data.filter(patient =>
         patient.patient_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,6 +76,10 @@ export default function PatientIndex({ patients, flash }: PatientIndexProps) {
             default:
                 return 'outline';
         }
+    };
+
+    const goToPage = (page: number) => {
+        router.get(`/patients?page=${page}`);
     };
 
     return (
@@ -123,8 +148,6 @@ export default function PatientIndex({ patients, flash }: PatientIndexProps) {
                                     <TableBody>
                                     {filteredPatients.length > 0 ? (
                                         filteredPatients.map((patient) => {
-
-                                            
                                             return (
                                             <TableRow key={patient.id}>
                                                 <TableCell className="font-medium">
@@ -189,34 +212,69 @@ export default function PatientIndex({ patients, flash }: PatientIndexProps) {
                         </div>
 
                         {/* Pagination */}
-                        {patients.meta && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t gap-4">
                             <div className="text-sm text-muted-foreground">
-                                Showing <strong>{patients.meta?.from || 0}</strong> to <strong>{patients.meta?.to || 0}</strong> of{' '}
-                                <strong>{patients.meta?.total || 0}</strong> patients
+                                Showing <strong>{meta.from}</strong> to <strong>{meta.to}</strong> of{' '}
+                                <strong>{meta.total}</strong> patients
+                                {meta.last_page > 1 && (
+                                    <span className="ml-2 text-xs">(Page {meta.current_page} of {meta.last_page})</span>
+                                )}
                             </div>
                             
-                            <div className="flex space-x-2">
+                            {meta.last_page > 1 && (
+                            <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={!(patients.meta?.current_page) || patients.meta?.current_page <= 1}
-                                    onClick={() => window.location.href = `/patients?page=${(patients.meta?.current_page || 1) - 1}`}
+                                    disabled={meta.current_page <= 1}
+                                    onClick={() => goToPage(meta.current_page - 1)}
+                                    className="flex items-center gap-1"
                                 >
+                                    <ChevronLeft className="h-4 w-4" />
                                     Previous
                                 </Button>
+                                
+                                {/* Page Numbers */}
+                                <div className="flex space-x-1">
+                                    {Array.from({ length: Math.min(5, meta.last_page) }, (_, i) => {
+                                        let pageNum;
+                                        if (meta.last_page <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (meta.current_page <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (meta.current_page >= meta.last_page - 2) {
+                                            pageNum = meta.last_page - 4 + i;
+                                        } else {
+                                            pageNum = meta.current_page - 2 + i;
+                                        }
+                                        
+                                        return (
+                                            <Button
+                                                key={pageNum}
+                                                variant={meta.current_page === pageNum ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => goToPage(pageNum)}
+                                                className="w-8 h-8 p-0"
+                                            >
+                                                {pageNum}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
                                 
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={!(patients.meta?.current_page) || patients.meta?.current_page >= (patients.meta?.last_page || 1)}
-                                    onClick={() => window.location.href = `/patients?page=${(patients.meta?.current_page || 1) + 1}`}
+                                    disabled={meta.current_page >= meta.last_page}
+                                    onClick={() => goToPage(meta.current_page + 1)}
+                                    className="flex items-center gap-1"
                                 >
                                     Next
+                                    <ChevronRight className="h-4 w-4" />
                                 </Button>
                             </div>
+                            )}
                         </div>
-                        )}
                     </CardContent>
                 </Card>
             </div>

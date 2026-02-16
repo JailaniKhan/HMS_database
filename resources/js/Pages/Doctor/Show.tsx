@@ -30,6 +30,7 @@ interface Doctor {
     address: string;
     bio: string;
     fees: number;
+    fee_percentage: number;
     salary: number;
     bonus: number;
     department_id: number;
@@ -246,6 +247,13 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                             {doctor.bonus || 0}
                                         </span>
                                     </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-muted-foreground">Fee Percentage</span>
+                                        <span className="font-medium">
+                                            {doctor.fee_percentage || 0}%
+                                        </span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -277,7 +285,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                 <CardTitle className="text-base">Quick Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                <Link href={`/appointments?doctor_id=${doctor.id}`} className="block">
+                                <Link href={`/doctors/${doctor.id}/appointments`} className="block">
                                     <Button variant="outline" size="sm" className="w-full justify-start">
                                         <Calendar className="mr-2 h-4 w-4" />
                                         View Appointments

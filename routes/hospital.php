@@ -61,6 +61,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::put('/{doctor}', [DoctorController::class, 'update'])->name('doctors.update');
         Route::post('/{doctor}/delete', [DoctorController::class, 'destroy'])->name('doctors.destroy.post');
         Route::delete('/{doctor}', [DoctorController::class, 'destroy'])->name('doctors.destroy');
+        Route::get('/{doctor}/appointments', [DoctorController::class, 'appointments'])->name('doctors.appointments');
         
         // General parameterized route MUST come last
         Route::get('/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');

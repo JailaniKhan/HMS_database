@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\HasPerformanceOptimization;
 use App\Models\Doctor;
 use App\Models\User;
 use App\Models\Department;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -50,6 +51,7 @@ class DoctorController extends Controller
             'phone_number' => preg_replace('/[^0-9+\-\s\(\)]/', '', $data['phone_number'] ?? ''),
             'age' => filter_var($data['age'] ?? null, FILTER_VALIDATE_INT),
             'fees' => filter_var($data['fees'] ?? 0, FILTER_VALIDATE_FLOAT),
+            'fee_percentage' => filter_var($data['fee_percentage'] ?? 0, FILTER_VALIDATE_FLOAT),
             'salary' => filter_var($data['salary'] ?? 0, FILTER_VALIDATE_FLOAT),
             'bonus' => filter_var($data['bonus'] ?? 0, FILTER_VALIDATE_FLOAT),
             'department_id' => filter_var($data['department_id'] ?? null, FILTER_VALIDATE_INT),
@@ -64,8 +66,29 @@ class DoctorController extends Controller
         $this->authorizeDoctorAccess();
         
         $doctors = Doctor::with('user', 'department')->paginate(10);
+        
+        // Ensure proper pagination structure with meta
+        $doctorsData = [
+            'data' => $doctors->items(),
+            'links' => [
+                'first' => $doctors->url(1),
+                'last' => $doctors->url($doctors->lastPage()),
+                'prev' => $doctors->previousPageUrl(),
+                'next' => $doctors->nextPageUrl(),
+            ],
+            'meta' => [
+                'current_page' => $doctors->currentPage(),
+                'from' => $doctors->firstItem(),
+                'last_page' => $doctors->lastPage(),
+                'path' => $doctors->path(),
+                'per_page' => $doctors->perPage(),
+                'to' => $doctors->lastItem(),
+                'total' => $doctors->total(),
+            ],
+        ];
+        
         return Inertia::render('Doctor/Index', [
-            'doctors' => $doctors
+            'doctors' => $doctorsData
         ]);
     }
 
@@ -99,6 +122,7 @@ class DoctorController extends Controller
             'address' => 'nullable|string',
             'bio' => 'nullable|string',
             'fees' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
+            'fee_percentage' => 'nullable|numeric|min:0|max:100|regex:/^\d+(\.\d{1,2})?$/',
             'salary' => 'nullable|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
             'bonus' => 'nullable|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
             'department_id' => 'required|exists:departments,id',
@@ -142,6 +166,7 @@ class DoctorController extends Controller
                 'address' => $sanitized['address'],
                 'bio' => $sanitized['bio'],
                 'fees' => $sanitized['fees'],
+                'fee_percentage' => $sanitized['fee_percentage'],
                 'salary' => $sanitized['salary'],
                 'bonus' => $sanitized['bonus'],
                 'user_id' => $user->id,
@@ -210,6 +235,7 @@ class DoctorController extends Controller
             'address' => 'nullable|string',
             'bio' => 'nullable|string',
             'fees' => 'required|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
+            'fee_percentage' => 'nullable|numeric|min:0|max:100|regex:/^\d+(\.\d{1,2})?$/',
             'salary' => 'nullable|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
             'bonus' => 'nullable|numeric|min:0|regex:/^\d+(\.\d{1,2})?$/',
             'department_id' => 'required|exists:departments,id',
@@ -235,6 +261,7 @@ class DoctorController extends Controller
             'address' => $sanitized['address'],
             'bio' => $sanitized['bio'],
             'fees' => $sanitized['fees'],
+            'fee_percentage' => $sanitized['fee_percentage'],
             'salary' => $sanitized['salary'],
             'bonus' => $sanitized['bonus'],
             'department_id' => $sanitized['department_id'],
@@ -268,5 +295,76 @@ class DoctorController extends Controller
             DB::rollback();
             return redirect()->back()->withErrors(['error' => 'Failed to delete doctor: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Display all appointments for a specific doctor.
+     */
+    public function appointments(Doctor $doctor): Response
+    {
+        $this->authorizeDoctorAccess();
+        
+        // Get today's appointments
+        $todayAppointments = Appointment::with('patient')
+            ->where('doctor_id', $doctor->id)
+            ->whereDate('appointment_date', today())
+            ->orderBy('appointment_date', 'asc')
+            ->get();
+
+        // Get this month's appointments
+        $monthlyAppointments = Appointment::with('patient')
+            ->where('doctor_id', $doctor->id)
+            ->whereMonth('appointment_date', now()->month)
+            ->whereYear('appointment_date', now()->year)
+            ->orderBy('appointment_date', 'desc')
+            ->get();
+
+        // Get this year's appointments
+        $yearlyAppointments = Appointment::with('patient')
+            ->where('doctor_id', $doctor->id)
+            ->whereYear('appointment_date', now()->year)
+            ->orderBy('appointment_date', 'desc')
+            ->get();
+        
+        // Calculate total fees and discounts from completed appointments
+        $completedAppointments = Appointment::where('doctor_id', $doctor->id)
+            ->where('status', 'completed')
+            ->get();
+
+        $totalFees = $completedAppointments->sum('fee') ?: ($completedAppointments->count() * $doctor->fees);
+        $totalDiscounts = $completedAppointments->sum('discount');
+        $netTotal = $totalFees - $totalDiscounts;
+
+        // Calculate doctor's earnings based on fee percentage (from net total after discounts)
+        $doctorEarnings = $netTotal * ($doctor->fee_percentage / 100);
+
+        // Calculate hospital earnings (from net total after discounts)
+        $hospitalEarnings = $netTotal - $doctorEarnings;
+        
+        return Inertia::render('Doctor/Appointments', [
+            'doctor' => $doctor,
+            'appointments' => [
+                'today' => $todayAppointments,
+                'monthly' => $monthlyAppointments,
+                'yearly' => $yearlyAppointments,
+            ],
+            'stats' => [
+                'todayCount' => $todayAppointments->count(),
+                'monthlyCount' => $monthlyAppointments->count(),
+                'yearlyCount' => $yearlyAppointments->count(),
+            ],
+            'financials' => [
+                'consultationFee' => $doctor->fees,
+                'feePercentage' => $doctor->fee_percentage ?? 0,
+                'salary' => $doctor->salary ?? 0,
+                'bonus' => $doctor->bonus ?? 0,
+                'totalFees' => $totalFees,
+                'totalDiscounts' => $totalDiscounts,
+                'netTotal' => $totalFees - $totalDiscounts,
+                'doctorEarnings' => $doctorEarnings,
+                'hospitalEarnings' => $hospitalEarnings,
+                'completedAppointments' => $completedAppointments->count(),
+            ],
+        ]);
     }
 }
