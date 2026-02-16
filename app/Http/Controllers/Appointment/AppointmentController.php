@@ -105,15 +105,19 @@ class AppointmentController extends Controller
             'appointment_date' => 'required|date',
             'reason' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:5000',
-            'fee' => 'required|numeric|min:0',
+            'fee' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0|max:100',
+            'services' => 'nullable|array',
+            'services.*.department_service_id' => 'required_with:services|exists:department_services,id',
+            'services.*.custom_cost' => 'required_with:services|numeric|min:0',
+            'services.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         // Sanitize input data
         $sanitized = $this->sanitizeInput($validated);
 
         try {
-            $appointment = $this->appointmentService->createAppointment([
+            $appointmentData = [
                 'patient_id' => $sanitized['patient_id'],
                 'doctor_id' => $sanitized['doctor_id'],
                 'department_id' => $sanitized['department_id'],
@@ -122,7 +126,14 @@ class AppointmentController extends Controller
                 'notes' => $sanitized['notes'],
                 'fee' => $sanitized['fee'],
                 'discount' => $sanitized['discount'],
-            ]);
+            ];
+
+            // Add services if provided
+            if (!empty($validated['services'])) {
+                $appointmentData['services'] = $validated['services'];
+            }
+
+            $appointment = $this->appointmentService->createAppointment($appointmentData);
 
             return redirect()->route('appointments.index')->with('success', 'Appointment created successfully.');
         } catch (\Exception $e) {

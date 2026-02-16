@@ -7,7 +7,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox';
 import Heading from '@/components/heading';
 import HospitalLayout from '@/layouts/HospitalLayout';
-import { ArrowLeft, Save, Calendar as CalendarIcon, User, Stethoscope, Percent, Users, Building2 } from 'lucide-react';
+import { 
+    ArrowLeft, 
+    Save, 
+    Calendar as CalendarIcon, 
+    User, 
+    Stethoscope, 
+    Percent, 
+    Users, 
+    Building2,
+    Plus,
+    Trash2,
+    Package,
+    Calculator
+} from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 interface Patient {
     id: number;
@@ -21,11 +35,35 @@ interface Doctor {
     full_name: string;
     specialization: string;
     fees: string;
+    department_id: number;
+}
+
+interface DepartmentService {
+    id: number;
+    department_id: number;
+    name: string;
+    base_cost: string;
 }
 
 interface Department {
     id: number;
     name: string;
+    services: DepartmentService[];
+}
+
+interface SelectedService {
+    id: string; // unique identifier for this selection
+    department_service_id: string;
+    name: string;
+    custom_cost: string;
+    discount_percentage: string;
+    final_cost: number;
+}
+
+interface SubmitService {
+    department_service_id: string;
+    custom_cost: number;
+    discount_percentage: number;
 }
 
 interface AppointmentCreateProps {
@@ -34,13 +72,29 @@ interface AppointmentCreateProps {
     departments: Department[];
 }
 
+interface FormData {
+    patient_id: string;
+    doctor_id: string;
+    department_id: string;
+    appointment_date: string;
+    reason: string;
+    notes: string;
+    fee: string;
+    discount: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_fixed: string;
+    services: SubmitService[];
+}
+
 export default function AppointmentCreate({ patients, doctors, departments }: AppointmentCreateProps) {
     // Get current date and time
     const now = new Date();
     const currentDate = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
     
-    const { data, setData, post, processing, errors } = useForm({
+    const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+    
+    const { data, setData, post, processing, errors } = useForm<FormData>({
         patient_id: '',
         doctor_id: '',
         department_id: '',
@@ -49,10 +103,28 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         notes: '',
         fee: '',
         discount: '0',
+        discount_type: 'percentage',
+        discount_fixed: '0',
+        services: [] as SubmitService[],
     });
+
+    // Get available services for selected department
+    const availableServices = useMemo(() => {
+        if (!data.department_id) return [];
+        const department = departments.find(d => d.id.toString() === data.department_id);
+        return department?.services || [];
+    }, [data.department_id, departments]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Include services in form data
+        setData('services', selectedServices.map(s => ({
+            department_service_id: s.department_service_id,
+            custom_cost: parseFloat(s.custom_cost) || 0,
+            discount_percentage: parseFloat(s.discount_percentage) || 0,
+        })));
+        
         post('/appointments');
     };
 
@@ -71,23 +143,115 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                 setData('fee', selectedDoctor.fees);
             }
         }
+        
+        // Clear services when department changes
+        if (name === 'department_id') {
+            setSelectedServices([]);
+            // Also clear doctor if they don't belong to new department
+            if (data.doctor_id) {
+                const selectedDoctor = doctors.find(d => d.id.toString() === data.doctor_id);
+                if (selectedDoctor && selectedDoctor.department_id?.toString() !== value) {
+                    setData('doctor_id', '');
+                    setData('fee', '');
+                }
+            }
+        }
     };
 
-    const calculateFinalFee = () => {
-        const fee = parseFloat(data.fee) || 0;
-        const discount = parseFloat(data.discount) || 0;
+    const addService = () => {
+        const newService: SelectedService = {
+            id: Date.now().toString(),
+            department_service_id: '',
+            name: '',
+            custom_cost: '',
+            discount_percentage: '0',
+            final_cost: 0,
+        };
         
-        // Validate discount is between 0-100
-        if (discount < 0 || discount > 100) {
-            return '0.00';
-        }
-        
-        const discountAmount = (fee * discount) / 100;
-        const finalFee = fee - discountAmount;
-        
-        // Ensure final fee is not negative
-        return finalFee >= 0 ? finalFee.toFixed(2) : '0.00';
+        setSelectedServices([...selectedServices, newService]);
     };
+
+    const removeService = (id: string) => {
+        setSelectedServices(selectedServices.filter(s => s.id !== id));
+    };
+
+    const updateService = (id: string, field: keyof SelectedService, value: string) => {
+        setSelectedServices(prev => prev.map(service => {
+            if (service.id !== id) return service;
+            
+            const updated = { ...service, [field]: value };
+            
+            // If selecting a service, auto-populate the cost
+            if (field === 'department_service_id' && value) {
+                const deptService = availableServices.find(s => s.id.toString() === value);
+                if (deptService) {
+                    updated.name = deptService.name;
+                    updated.custom_cost = deptService.base_cost;
+                }
+            }
+            
+            // Recalculate final cost
+            const cost = parseFloat(updated.custom_cost) || 0;
+            const discount = parseFloat(updated.discount_percentage) || 0;
+            const discountAmount = cost * (discount / 100);
+            updated.final_cost = Math.max(0, cost - discountAmount);
+            
+            return updated;
+        }));
+    };
+
+    // Calculate totals
+    const calculateTotals = () => {
+        if (selectedServices.length > 0) {
+            const subtotal = selectedServices.reduce((sum, s) => sum + (parseFloat(s.custom_cost) || 0), 0);
+            const servicesDiscount = selectedServices.reduce((sum, s) => {
+                const cost = parseFloat(s.custom_cost) || 0;
+                const discount = parseFloat(s.discount_percentage) || 0;
+                return sum + (cost * discount / 100);
+            }, 0);
+            
+            // Calculate additional discount based on type
+            let additionalDiscount = 0;
+            if (data.discount_type === 'percentage') {
+                const discountPercent = parseFloat(data.discount) || 0;
+                additionalDiscount = subtotal * (discountPercent / 100);
+            } else {
+                additionalDiscount = parseFloat(data.discount_fixed) || 0;
+            }
+            
+            const totalDiscount = servicesDiscount + additionalDiscount;
+            const grandTotal = Math.max(0, subtotal - totalDiscount);
+            
+            return {
+                subtotal,
+                totalDiscount,
+                grandTotal,
+                isServiceBased: true,
+            };
+        } else {
+            // Use doctor fee calculation
+            const fee = parseFloat(data.fee) || 0;
+            let discountAmount = 0;
+            
+            if (data.discount_type === 'percentage') {
+                const discountPercent = parseFloat(data.discount) || 0;
+                discountAmount = fee * (discountPercent / 100);
+            } else {
+                discountAmount = parseFloat(data.discount_fixed) || 0;
+            }
+            
+            const finalFee = Math.max(0, fee - discountAmount);
+            
+            return {
+                subtotal: fee,
+                totalDiscount: discountAmount,
+                grandTotal: finalFee,
+                isServiceBased: false,
+            };
+        }
+    };
+
+    const totals = calculateTotals();
 
     // Transform patients into combobox options
     const patientOptions: ComboboxOption[] = patients.map(patient => ({
@@ -111,6 +275,22 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
         label: dept.name,
         icon: <Building2 className="h-4 w-4 text-purple-600" />
     }));
+
+    // Get available service options (excluding already selected)
+    const getAvailableServiceOptions = (currentServiceId: string) => {
+        const selectedIds = selectedServices
+            .filter(s => s.id !== currentServiceId)
+            .map(s => s.department_service_id);
+        
+        return availableServices
+            .filter(s => !selectedIds.includes(s.id.toString()))
+            .map(s => ({
+                value: s.id.toString(),
+                label: s.name,
+                subtitle: `؋${s.base_cost}`,
+                icon: <Package className="h-4 w-4 text-amber-600" />
+            }));
+    };
 
     return (
         <HospitalLayout>
@@ -168,31 +348,8 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                         <p className="text-xs text-muted-foreground">Search by patient name or ID</p>
                                     </div>
                                     
-                                    {/* Doctor Selection with Search */}
+                                    {/* Department Selection */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="doctor_id" className="text-base font-semibold flex items-center gap-2">
-                                            <Stethoscope className="h-4 w-4 text-green-600" />
-                                            Doctor 
-                                        </Label>
-                                        <Combobox
-                                            options={doctorOptions}
-                                            value={data.doctor_id}
-                                            onValueChange={(value) => handleComboboxChange('doctor_id', value)}
-                                            placeholder="Search for a doctor..."
-                                            searchPlaceholder="Type to search doctors..."
-                                            emptyText="No doctors found"
-                                            className="h-auto py-3"
-                                        />
-                                        {errors.doctor_id && (
-                                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                                <span className="font-medium">⚠</span> {errors.doctor_id}
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-muted-foreground">Doctor's fee will be automatically populated</p>
-                                    </div>
-
-                                    {/* Department Selection with Search */}
-                                    <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="department_id" className="text-base font-semibold flex items-center gap-2">
                                             <Building2 className="h-4 w-4 text-purple-600" />
                                             Department 
@@ -211,6 +368,34 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                 <span className="font-medium">⚠</span> {errors.department_id}
                                             </p>
                                         )}
+                                    </div>
+
+                                    {/* Doctor Selection with Search */}
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="doctor_id" className="text-base font-semibold flex items-center gap-2">
+                                            <Stethoscope className="h-4 w-4 text-green-600" />
+                                            Doctor 
+                                        </Label>
+                                        <Combobox
+                                            options={doctorOptions}
+                                            value={data.doctor_id}
+                                            onValueChange={(value) => handleComboboxChange('doctor_id', value)}
+                                            placeholder={data.department_id ? "Search for a doctor..." : "Select a department first..."}
+                                            searchPlaceholder="Type to search doctors..."
+                                            emptyText="No doctors found"
+                                            className="h-auto py-3"
+                                            disabled={!data.department_id}
+                                        />
+                                        {errors.doctor_id && (
+                                            <p className="text-sm text-red-600 flex items-center gap-1">
+                                                <span className="font-medium">⚠</span> {errors.doctor_id}
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground">
+                                            {data.department_id 
+                                                ? "Doctor's fee will be automatically populated" 
+                                                : "Please select a department first to see available doctors"}
+                                        </p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -270,7 +455,7 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                         )}
                                     </div>
 
-                                    {/* Notes */}
+                                    {/* Notes
                                     <div className="space-y-2">
                                         <Label htmlFor="notes" className="text-base font-semibold">Additional Notes</Label>
                                         <Textarea
@@ -287,83 +472,341 @@ export default function AppointmentCreate({ patients, doctors, departments }: Ap
                                                 <span className="font-medium">⚠</span> {errors.notes}
                                             </p>
                                         )}
-                                    </div>
+                                    </div> */}
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Fee & Discount */}
+                        {/* Department Services */}
+                        <Card className="shadow-lg border-t-4 border-t-indigo-500">
+                            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                                <CardTitle className="flex items-center gap-2 text-xl">
+                                    <Package className="h-6 w-6 text-indigo-600" />
+                                    Department Services
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                    Add department services to the appointment (optional)
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6 pt-6">
+                                {!data.department_id ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                        <p>Please select a department first to view available services</p>
+                                    </div>
+                                ) : availableServices.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                        <p>No services available for this department</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Add Service Button */}
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-muted-foreground">
+                                                {selectedServices.length} service(s) added
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                onClick={addService}
+                                                disabled={availableServices.length === 0}
+                                                variant="outline"
+                                                className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100"
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Add Service
+                                            </Button>
+                                        </div>
+
+                                        {/* Selected Services */}
+                                        {selectedServices.length > 0 && (
+                                            <div className="space-y-4">
+                                                {selectedServices.map((service, index) => (
+                                                    <div 
+                                                        key={service.id} 
+                                                        className="border rounded-lg p-4 bg-gray-50/50 space-y-4"
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-indigo-700">
+                                                                Service #{index + 1}
+                                                            </span>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => removeService(service.id)}
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                        
+                                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                            {/* Service Selection */}
+                                                            <div className="md:col-span-2">
+                                                                <Label className="text-sm font-medium">Service</Label>
+                                                                <Combobox
+                                                                    options={getAvailableServiceOptions(service.id)}
+                                                                    value={service.department_service_id}
+                                                                    onValueChange={(value) => updateService(service.id, 'department_service_id', value)}
+                                                                    placeholder="Select a service..."
+                                                                    searchPlaceholder="Search services..."
+                                                                    emptyText="No services available"
+                                                                />
+                                                            </div>
+                                                            
+                                                            {/* Custom Cost */}
+                                                            <div>
+                                                                <Label className="text-sm font-medium">Cost (؋)</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    value={service.custom_cost}
+                                                                    onChange={(e) => updateService(service.id, 'custom_cost', e.target.value)}
+                                                                    placeholder="0.00"
+                                                                />
+                                                            </div>
+                                                            
+                                                            {/* Discount */}
+                                                            <div>
+                                                                <Label className="text-sm font-medium">Discount (%)</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={service.discount_percentage}
+                                                                    onChange={(e) => updateService(service.id, 'discount_percentage', e.target.value)}
+                                                                    placeholder="0"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Final Cost Display */}
+                                                        <div className="flex justify-end items-center gap-2 text-sm">
+                                                            <span className="text-muted-foreground">Final Cost:</span>
+                                                            <span className="font-bold text-indigo-700 text-lg">
+                                                                ؋{service.final_cost.toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {errors.services && (
+                                            <p className="text-sm text-red-600 flex items-center gap-1">
+                                                <span className="font-medium">⚠</span> {errors.services}
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Fee & Discount Summary */}
                         <Card className="shadow-lg border-t-4 border-t-amber-500">
                             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
-                                    <span className="text-2xl font-bold text-amber-600">؋</span>
-                                    Fee & Discount
+                                    <Calculator className="h-6 w-6 text-amber-600" />
+                                    Cost Summary
                                 </CardTitle>
-                                <CardDescription className="text-base">Consultation fee and applicable discount</CardDescription>
+                                <CardDescription className="text-base">
+                                    {totals.isServiceBased 
+                                        ? "Total calculated from selected services" 
+                                        : "Consultation fee and discount"}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* Fee */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fee" className="text-base font-semibold">Consultation Fee *</Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-3 text-lg font-bold text-muted-foreground">؋</span>
-                                            <Input
-                                                id="fee"
-                                                name="fee"
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                value={data.fee}
-                                                onChange={handleChange}
-                                                placeholder="0.00"
-                                                className="pl-11 h-12 text-base bg-muted/50"
-                                                readOnly
-                                            />
+                                {!totals.isServiceBased ? (
+                                    // Show doctor fee fields when no services selected
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* Fee */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fee" className="text-base font-semibold">Consultation Fee *</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-3 text-lg font-bold text-muted-foreground">؋</span>
+                                                <Input
+                                                    id="fee"
+                                                    name="fee"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={data.fee}
+                                                    onChange={handleChange}
+                                                    placeholder="0.00"
+                                                    className="pl-11 h-12 text-base bg-muted/50"
+                                                    readOnly
+                                                />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">📌 Auto-filled from selected doctor</p>
+                                            {errors.fee && (
+                                                <p className="text-sm text-red-600 flex items-center gap-1">
+                                                    <span className="font-medium">⚠</span> {errors.fee}
+                                                </p>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-muted-foreground">📌 Auto-filled from selected doctor</p>
-                                        {errors.fee && (
-                                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                                <span className="font-medium">⚠</span> {errors.fee}
-                                            </p>
-                                        )}
-                                    </div>
 
-                                    {/* Discount */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="discount" className="text-base font-semibold">Discount (%)</Label>
-                                        <div className="relative">
-                                            <Percent className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                id="discount"
-                                                name="discount"
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                max="100"
-                                                value={data.discount}
-                                                onChange={handleChange}
-                                                placeholder="0"
-                                                className="pl-11 h-12 text-base"
-                                            />
+                                        {/* Discount Type Selection */}
+                                        <div className="space-y-2">
+                                            <Label className="text-base font-semibold">Discount Type</Label>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant={data.discount_type === 'percentage' ? 'default' : 'outline'}
+                                                    onClick={() => setData('discount_type', 'percentage')}
+                                                    className="flex-1 h-12 text-sm"
+                                                >
+                                                    <Percent className="h-4 w-4 mr-1" />
+                                                    Percentage
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant={data.discount_type === 'fixed' ? 'default' : 'outline'}
+                                                    onClick={() => setData('discount_type', 'fixed')}
+                                                    className="flex-1 h-12 text-sm"
+                                                >
+                                                    <span className="mr-1">؋</span>
+                                                    Fixed
+                                                </Button>
+                                            </div>
                                         </div>
-                                        {errors.discount && (
-                                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                                <span className="font-medium">⚠</span> {errors.discount}
-                                            </p>
-                                        )}
-                                    </div>
 
-                                    {/* Final Fee */}
-                                    <div className="space-y-2">
-                                        <Label className="text-base font-semibold">Final Amount *</Label>
-                                        <div className="flex items-center h-12 px-4 py-3 border-2 border-amber-500 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
-                                            <span className="text-2xl font-bold mr-2 text-amber-600">؋</span>
-                                            <span className="font-bold text-2xl text-amber-700">{calculateFinalFee()}</span>
+                                        {/* Discount Amount Input */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="discount_value" className="text-base font-semibold">
+                                                Discount {data.discount_type === 'percentage' ? '(%)' : '(؋)'}
+                                            </Label>
+                                            <div className="relative">
+                                                {data.discount_type === 'percentage' ? (
+                                                    <Percent className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                                                ) : (
+                                                    <span className="absolute left-3 top-3 text-lg font-bold text-muted-foreground">؋</span>
+                                                )}
+                                                <Input
+                                                    id="discount_value"
+                                                    name={data.discount_type === 'percentage' ? 'discount' : 'discount_fixed'}
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max={data.discount_type === 'percentage' ? 100 : undefined}
+                                                    value={data.discount_type === 'percentage' ? data.discount : data.discount_fixed}
+                                                    onChange={handleChange}
+                                                    placeholder="0"
+                                                    className="pl-11 h-12 text-base"
+                                                />
+                                            </div>
+                                            {errors.discount && (
+                                                <p className="text-sm text-red-600 flex items-center gap-1">
+                                                    <span className="font-medium">⚠</span> {errors.discount}
+                                                </p>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-muted-foreground">💰 Amount after discount</p>
+
+                                        {/* Final Fee */}
+                                        <div className="space-y-2 md:col-start-3">
+                                            <Label className="text-base font-semibold">Final Amount *</Label>
+                                            <div className="flex items-center h-12 px-4 py-3 border-2 border-amber-500 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
+                                                <span className="text-2xl font-bold mr-2 text-amber-600">؋</span>
+                                                <span className="font-bold text-2xl text-amber-700">{totals.grandTotal.toFixed(2)}</span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">💰 Amount after discount</p>
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    // Show services summary when services are selected
+                                    <div className="space-y-4">
+                                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                            {selectedServices.map((service, index) => (
+                                                <div key={service.id} className="flex justify-between items-center py-2 border-b last:border-0">
+                                                    <div>
+                                                        <span className="font-medium">{service.name || `Service #${index + 1}`}</span>
+                                                        <span className="text-sm text-muted-foreground ml-2">
+                                                            (؋{parseFloat(service.custom_cost || '0').toFixed(2)} 
+                                                            {parseFloat(service.discount_percentage || '0') > 0 && (
+                                                                <span className="text-green-600"> - {service.discount_percentage}%</span>
+                                                            )})
+                                                        </span>
+                                                    </div>
+                                                    <span className="font-semibold">؋{service.final_cost.toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* Additional Discount Section for Services */}
+                                        <div className="border-t pt-4 space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Discount Type Selection */}
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-semibold">Additional Discount Type</Label>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant={data.discount_type === 'percentage' ? 'default' : 'outline'}
+                                                            onClick={() => setData('discount_type', 'percentage')}
+                                                            className="flex-1 h-10 text-xs"
+                                                        >
+                                                            <Percent className="h-3 w-3 mr-1" />
+                                                            Percentage
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant={data.discount_type === 'fixed' ? 'default' : 'outline'}
+                                                            onClick={() => setData('discount_type', 'fixed')}
+                                                            className="flex-1 h-10 text-xs"
+                                                        >
+                                                            <span className="mr-1">؋</span>
+                                                            Fixed
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Discount Amount Input */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="discount_value_services" className="text-sm font-semibold">
+                                                        Additional Discount {data.discount_type === 'percentage' ? '(%)' : '(؋)'}
+                                                    </Label>
+                                                    <div className="relative">
+                                                        {data.discount_type === 'percentage' ? (
+                                                            <Percent className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                        ) : (
+                                                            <span className="absolute left-3 top-2 text-base font-bold text-muted-foreground">؋</span>
+                                                        )}
+                                                        <Input
+                                                            id="discount_value_services"
+                                                            name={data.discount_type === 'percentage' ? 'discount' : 'discount_fixed'}
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            max={data.discount_type === 'percentage' ? 100 : undefined}
+                                                            value={data.discount_type === 'percentage' ? data.discount : data.discount_fixed}
+                                                            onChange={handleChange}
+                                                            placeholder="0"
+                                                            className="pl-10 h-10 text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Subtotal:</span>
+                                                <span className="font-medium">؋{totals.subtotal.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-green-600">
+                                                <span>Total Discount:</span>
+                                                <span className="font-medium">-؋{totals.totalDiscount.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2 border-t">
+                                                <span className="text-lg font-bold">Grand Total:</span>
+                                                <div className="flex items-center h-12 px-6 py-3 border-2 border-amber-500 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm">
+                                                    <span className="text-2xl font-bold mr-2 text-amber-600">؋</span>
+                                                    <span className="font-bold text-2xl text-amber-700">{totals.grandTotal.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                                 

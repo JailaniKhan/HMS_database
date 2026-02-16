@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Department;
+use App\Models\DepartmentService;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentService
@@ -15,7 +16,7 @@ class AppointmentService
      */
     public function getAllAppointments($perPage = 10)
     {
-        return Appointment::with(['patient', 'doctor', 'department'])
+        return Appointment::with(['patient', 'doctor', 'department', 'services'])
             ->latest()
             ->paginate($perPage)
             ->through(function ($appointment) {
@@ -28,7 +29,7 @@ class AppointmentService
      */
     public function getAppointmentById($id)
     {
-        $appointment = Appointment::with(['patient', 'doctor', 'department'])->findOrFail($id);
+        $appointment = Appointment::with(['patient', 'doctor', 'department', 'services'])->findOrFail($id);
         return $this->transformAppointment($appointment);
     }
 
@@ -49,7 +50,7 @@ class AppointmentService
                         'full_name' => trim($patient->first_name),
                     ];
                 }),
-            'doctors' => Doctor::select('id', 'doctor_id', 'full_name', 'specialization', 'fees')
+            'doctors' => Doctor::select('id', 'doctor_id', 'full_name', 'specialization', 'fees', 'department_id')
                 ->where('status', 'active')
                 ->orderBy('full_name')
                 ->get()
@@ -60,16 +61,21 @@ class AppointmentService
                         'full_name' => $doctor->full_name,
                         'specialization' => $doctor->specialization,
                         'fees' => $doctor->fees,
+                        'department_id' => $doctor->department_id,
                     ];
                 }),
             'departments' => Department::select('id', 'name')
+                ->with(['services' => function($query) {
+                    $query->select('id', 'department_id', 'name', 'base_cost', 'is_active')
+                        ->where('is_active', true);
+                }])
                 ->orderBy('name')
                 ->get(),
         ];
     }
 
     /**
-     * Create a new appointment
+     * Create a new appointment with services
      */
     public function createAppointment(array $data)
     {
@@ -84,6 +90,20 @@ class AppointmentService
                 AND TABLE_NAME = 'appointments'
             ")->next_id ?? 1;
 
+            // Calculate fee based on services or use doctor's fee
+            $fee = $data['fee'] ?? 0;
+            $discount = $data['discount'] ?? 0;
+            
+            // If services are provided, calculate total from services
+            if (!empty($data['services'])) {
+                $fee = 0;
+                $discount = 0;
+                foreach ($data['services'] as $service) {
+                    $fee += $service['custom_cost'];
+                    $discount += ($service['custom_cost'] * $service['discount_percentage'] / 100);
+                }
+            }
+
             $appointment = Appointment::create([
                 'appointment_id' => 'APPT' . date('Y') . str_pad($nextId, 5, '0', STR_PAD_LEFT),
                 'patient_id' => $data['patient_id'],
@@ -92,17 +112,45 @@ class AppointmentService
                 'appointment_date' => $data['appointment_date'],
                 'reason' => $data['reason'] ?? null,
                 'notes' => $data['notes'] ?? null,
-                'fee' => $data['fee'],
-                'discount' => $data['discount'] ?? 0,
+                'fee' => $fee,
+                'discount' => $discount,
             ]);
+
+            // Attach services if provided
+            if (!empty($data['services'])) {
+                $this->attachServices($appointment, $data['services']);
+            }
 
             DB::commit();
             
-            return $appointment;
+            return $appointment->load('services');
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Attach services to appointment
+     */
+    private function attachServices(Appointment $appointment, array $services): void
+    {
+        $attachData = [];
+        
+        foreach ($services as $service) {
+            $customCost = $service['custom_cost'];
+            $discountPercentage = $service['discount_percentage'] ?? 0;
+            $discountAmount = $customCost * ($discountPercentage / 100);
+            $finalCost = round($customCost - $discountAmount, 2);
+            
+            $attachData[$service['department_service_id']] = [
+                'custom_cost' => $customCost,
+                'discount_percentage' => $discountPercentage,
+                'final_cost' => $finalCost,
+            ];
+        }
+        
+        $appointment->services()->attach($attachData);
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\Department;
+use App\Models\DepartmentService;
 
 class Appointment extends Model
 {
@@ -43,6 +44,35 @@ class Appointment extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get the services associated with this appointment.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(DepartmentService::class, 'appointment_services')
+            ->withPivot(['custom_cost', 'discount_percentage', 'final_cost'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Calculate the grand total from all services.
+     */
+    public function getGrandTotalAttribute(): float
+    {
+        return $this->services->sum('pivot.final_cost');
+    }
+
+    /**
+     * Calculate total discount from all services.
+     */
+    public function getTotalDiscountAttribute(): float
+    {
+        return $this->services->sum(function ($service) {
+            $discountAmount = $service->pivot->custom_cost * ($service->pivot->discount_percentage / 100);
+            return round($discountAmount, 2);
+        });
     }
 
     // Scopes for optimized queries
