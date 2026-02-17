@@ -81,6 +81,19 @@ class HandleInertiaRequests extends Middleware
             $userData = null;
         }
         
+        // Get flash data with diagnostic logging
+        $flashSuccess = $request->session()->get('success');
+        $flashError = $request->session()->get('error');
+        $flashMessage = $request->session()->get('message');
+        
+        Log::debug('[HandleInertiaRequests] Flash data retrieved', [
+            'success' => $flashSuccess ? 'present: ' . substr($flashSuccess, 0, 50) . '...' : 'null',
+            'error' => $flashError ? 'present' : 'null',
+            'message' => $flashMessage ? 'present' : 'null',
+            'request_path' => $request->path(),
+            'is_inertia' => $request->header('X-Inertia'),
+        ]);
+        
         return array_merge(parent::share($request), [
             'csrf' => [
                 'token' => $request->session()->token(),
@@ -89,9 +102,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $userData,
             ],
             'flash' => [
-                'message' => fn () => $request->session()->get('message'),
-                'error' => fn () => $request->session()->get('error'),
-                'success' => fn () => $request->session()->get('success'),
+                'message' => fn () => $flashMessage,
+                'error' => fn () => $flashError,
+                'success' => fn () => $flashSuccess,
                 'printAppointment' => fn () => $request->session()->get('printAppointment'),
             ],
         ]);

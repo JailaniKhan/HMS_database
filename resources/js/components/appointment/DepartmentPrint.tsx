@@ -78,17 +78,6 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                 }
                 .token-label { font-size: 10px; color: #666; margin-bottom: 3px; }
                 .token-number { font-size: 28px; font-weight: bold; color: #000; letter-spacing: 2px; }
-                .department-badge {
-                    background: #e8e5fd;
-                    color: #5b21b6;
-                    padding: 8px 12px;
-                    border-radius: 20px;
-                    font-weight: 600;
-                    font-size: 12px;
-                    text-align: center;
-                    margin: 10px 0;
-                    border: 1px solid #c4b5fd;
-                }
                 .info-section { margin: 12px 0; }
                 .section-title {
                     font-size: 11px;
@@ -117,15 +106,6 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                 .discount-row { color: #16a34a; }
                 .footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 10px; color: #666; }
                 .footer p { margin: 2px 0; }
-                .note { 
-                    background: #fef3c7; 
-                    border: 1px solid #fcd34d; 
-                    padding: 10px; 
-                    border-radius: 6px; 
-                    margin: 10px 0; 
-                    font-size: 10px;
-                    color: #92400e;
-                }
                 @media print {
                     body { padding: 0; }
                     .print-container { border: none; }
@@ -171,16 +151,14 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
             <body>
                 <div class="print-container">
                     <div class="header">
-                        <img src="/logo.svg" alt="Hospital Logo" class="logo" />
-                        <div class="hospital-name">Hospital Management System</div>
-                        <div class="receipt-title">Department Appointment</div>
+                        <img src="/logo.png" alt="Hospital Logo" class="logo" />
+                        <div class="hospital-name">کامران معالیجوي روغتون</div>
+                        <div class="hospital-name">Kamran Curative Hospital</div>
+                        <div class="receipt-title">Appointment Receipt</div>
                     </div>
                     <div class="token-section">
                         <div class="token-label">TOKEN NUMBER</div>
                         <div class="token-number">${appointmentId}</div>
-                    </div>
-                    <div class="department-badge">
-                        📋 ${deptName} Department
                     </div>
                     <div class="info-section">
                         <div class="section-title">Patient Information</div>
@@ -202,7 +180,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                         </div>
                     </div>
                     <div class="info-section">
-                        <div class="section-title">Department Details</div>
+                        <div class="section-title">Appointment Details</div>
                         <div class="info-row">
                             <span class="info-label">Department:</span>
                             <span class="info-value">${deptName}</span>
@@ -210,6 +188,10 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                         <div class="info-row">
                             <span class="info-label">Created Date:</span>
                             <span class="info-value">${formatDate(createdDate)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Token Number:</span>
+                            <span class="info-value">${appointment?.daily_sequence || '#' + appointmentId}</span>
                         </div>
                     </div>
                     <div class="financial-section">
@@ -240,12 +222,9 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                             <span>${formatCurrency(grandTotal)}</span>
                         </div>
                     </div>
-                    <div class="note">
-                        <strong>Note:</strong> Please proceed to the ${deptName} department reception. A doctor will be assigned to you upon arrival.
-                    </div>
                     <div class="footer">
                         <p>Thank you for choosing our hospital</p>
-                        <p>Please arrive 15 minutes before your appointment</p>
+                        <p class="mt-1">Please arrive 15 minutes before your appointment</p>
                     </div>
                 </div>
             </body>
@@ -300,7 +279,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Printer className="h-5 w-5" />
-                        Department Appointment Receipt
+                        Appointment Receipt Preview
                     </DialogTitle>
                 </DialogHeader>
 
@@ -315,7 +294,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                             }}
                         />
                         <h2 className="text-xl font-bold">Hospital Management System</h2>
-                        <p className="text-sm text-gray-600">Department Appointment</p>
+                        <p className="text-sm text-gray-600">Appointment Receipt</p>
                     </div>
 
                     <div className="bg-gray-100 p-4 text-center rounded-lg mb-4">
@@ -323,11 +302,6 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                         <p className="text-2xl font-bold text-gray-800">{appointment.appointment_id}</p>
                     </div>
 
-                    <div className="bg-purple-100 border border-purple-300 rounded-lg p-3 text-center mb-4">
-                        <span className="text-purple-700 font-semibold">
-                            📋 {deptName} Department
-                        </span>
-                    </div>
 
                     <div className="space-y-2 mb-4">
                         <h3 className="font-semibold text-gray-800 border-b pb-1">Patient Information</h3>
@@ -350,7 +324,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                     </div>
 
                     <div className="space-y-2 mb-4">
-                        <h3 className="font-semibold text-gray-800 border-b pb-1">Department Details</h3>
+                        <h3 className="font-semibold text-gray-800 border-b pb-1">Appointment Details</h3>
                         <div className="flex justify-between py-1">
                             <span className="text-gray-600">Department:</span>
                             <span className="font-medium">{deptName}</span>
@@ -358,6 +332,10 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                         <div className="flex justify-between py-1">
                             <span className="text-gray-600">Created Date:</span>
                             <span className="font-medium">{formatDate(appointment.created_at || new Date().toISOString())}</span>
+                        </div>
+                        <div className="flex justify-between py-1">
+                            <span className="text-gray-600">Token Number:</span>
+                            <span className="font-medium">{appointment.daily_sequence || '#' + appointment.appointment_id}</span>
                         </div>
                     </div>
 
@@ -394,11 +372,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
                         </div>
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
-                        <p className="text-sm text-yellow-800">
-                            <strong>Note:</strong> Please proceed to the {deptName} department reception. A doctor will be assigned to you upon arrival.
-                        </p>
-                    </div>
+
 
                     <div className="text-center mt-6 pt-4 border-t text-sm text-gray-500">
                         <p>Thank you for choosing our hospital</p>

@@ -24,7 +24,7 @@ import {
     Package,
     Calculator,
 } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 interface Patient {
     id: number;
@@ -111,6 +111,8 @@ interface AppointmentCreateProps {
 interface PageProps {
     flash?: { success?: string; error?: string };
     printAppointment?: PrintAppointment;
+    flashId?: string;
+    successMessage?: string;
 }
 
 interface FormData {
@@ -148,16 +150,32 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
     // Track if form was successfully submitted - only show print modal after submission
     const [hasSubmitted, setHasSubmitted] = useState(false);
     
+    // Track previous flashId to detect new submissions
+    const prevFlashIdRef = useRef<string | undefined>(undefined);
+    
     // Show toast when appointment is created successfully
+    // Use flashId as the primary dependency to detect new appointments
     useEffect(() => {
-        console.log('[DEBUG] Page props updated:', pageProps);
-        console.log('[DEBUG] Flash message:', pageProps.flash?.success);
-        console.log('[DEBUG] Print appointment:', printAppointment);
+        const flashId = pageProps.flashId;
+        const successMessage = pageProps.successMessage;
         
-        if (pageProps.flash?.success) {
-            showSuccess('Appointment Created', pageProps.flash.success);
+        console.log('[DEBUG] Page props updated:', pageProps);
+        console.log('[DEBUG] Flash ID:', flashId);
+        console.log('[DEBUG] Previous Flash ID:', prevFlashIdRef.current);
+        console.log('[DEBUG] Success message:', successMessage);
+        console.log('[DEBUG] Print appointment:', printAppointment);
+        console.log('[DEBUG] Current timestamp:', new Date().toISOString());
+        console.log('[DEBUG] Is new flash?', flashId !== prevFlashIdRef.current);
+        
+        // Only show toast if this is a new flash (different flashId)
+        if (flashId && flashId !== prevFlashIdRef.current && successMessage) {
+            console.log('[DEBUG] Showing success toast with message:', successMessage);
+            showSuccess('Appointment Created', successMessage);
         }
-    }, [pageProps.flash?.success, printAppointment, showSuccess]);
+        
+        // Update ref for next comparison
+        prevFlashIdRef.current = flashId;
+    }, [pageProps.flashId, pageProps.successMessage, printAppointment, showSuccess]);
     
     // Show print modal only after form submission succeeds
     useEffect(() => {

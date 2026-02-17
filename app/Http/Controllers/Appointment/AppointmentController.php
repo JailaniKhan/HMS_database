@@ -252,15 +252,24 @@ class AppointmentController extends Controller
             // Return to create page with appointment data to show print modal
             $formData = $this->appointmentService->getAppointmentFormData();
             
+            // Generate a unique flash ID to track this specific flash message
+            $flashId = uniqid('flash_', true);
+            $successMessage = 'Appointment created successfully!';
+            
             Log::info('Returning to create page with print appointment', [
                 'printAppointment' => $appointmentArray ? 'present' : 'missing',
                 'formData_keys' => array_keys($formData),
+                'flash_id' => $flashId,
+                'appointment_id' => $appointment->appointment_id,
             ]);
             
+            // Pass success message directly as prop (more reliable than flash for Inertia)
             return Inertia::render('Appointment/Create', [
                 ...$formData,
                 'printAppointment' => $appointmentArray,
-            ])->with('success', 'Appointment created successfully!');
+                'flashId' => $flashId,
+                'successMessage' => $successMessage, // Direct prop instead of flash
+            ])->with('success', $successMessage);
         } catch (\Exception $e) {
             Log::error('Failed to create appointment', [
                 'error' => $e->getMessage(),
