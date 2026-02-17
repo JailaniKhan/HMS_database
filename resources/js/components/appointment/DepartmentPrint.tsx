@@ -22,7 +22,8 @@ interface DepartmentPrintProps {
         discount: number;
         grand_total?: number;
         created_at?: string;
-        authorized_by?: string;  // Add this field
+        authorized_by?: string;  
+        daily_sequence?: string | number;
         services?: Array<{
             id: number;
             name: string;

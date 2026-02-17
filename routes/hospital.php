@@ -298,8 +298,11 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     // Department Routes
     Route::middleware('check.permission:view-departments')->prefix('departments')->group(function () {
-        // Department Services Standalone Routes
-        Route::get('/services', [DepartmentServiceController::class, 'index'])->name('department-services.index');
+        // Services Dashboard - Appointment Services Management (must come before /services route)
+        Route::get('/services', [DepartmentController::class, 'servicesDashboard'])->name('departments.services.dashboard');
+
+        // Department Services Standalone Routes (Master Data)
+        Route::get('/services/list', [DepartmentServiceController::class, 'index'])->name('department-services.index');
 
         Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
         Route::get('/create', [DepartmentController::class, 'create'])->name('departments.create');
