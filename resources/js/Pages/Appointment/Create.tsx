@@ -126,6 +126,7 @@ interface FormData {
     discount: string;
     discount_type: 'percentage' | 'fixed';
     discount_fixed: string;
+    status: string;
     services: SubmitService[];
 }
 
@@ -233,6 +234,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         discount: '0',
         discount_type: 'percentage',
         discount_fixed: '0',
+        status: 'completed',
         services: [] as SubmitService[],
     });
 
@@ -428,6 +430,13 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         icon: <Building2 className="h-4 w-4 text-purple-600" />
     }));
 
+    const statusOptions: ComboboxOption[] = [
+        { value: 'scheduled', label: 'Scheduled', icon: <CalendarIcon className="h-4 w-4 text-blue-600" /> },
+        { value: 'completed', label: 'Completed', icon: <User className="h-4 w-4 text-green-600" /> },
+        { value: 'no_show', label: 'No Show', icon: <User className="h-4 w-4 text-gray-600" /> },
+        { value: 'rescheduled', label: 'Rescheduled', icon: <CalendarIcon className="h-4 w-4 text-purple-600" /> },
+    ];
+
     const getAvailableServiceOptions = (currentServiceId: string) => {
         const selectedIds = selectedServices
             .filter(s => s.id !== currentServiceId)
@@ -578,6 +587,27 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                         {errors.appointment_date && (
                                             <p className="text-sm text-red-600 flex items-center gap-1">
                                                 <span className="font-medium">⚠</span> {errors.appointment_date}
+                                            </p>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <Label htmlFor="status" className="text-base font-semibold flex items-center gap-2">
+                                            <CalendarIcon className="h-4 w-4 text-blue-600" />
+                                            Status *
+                                        </Label>
+                                        <Combobox
+                                            options={statusOptions}
+                                            value={data.status}
+                                            onValueChange={(value) => setData('status', value)}
+                                            placeholder="Select status..."
+                                            searchPlaceholder="Type to search status..."
+                                            emptyText="No statuses found"
+                                            className="h-auto py-3"
+                                        />
+                                        {errors.status && (
+                                            <p className="text-sm text-red-600 flex items-center gap-1">
+                                                <span className="font-medium">⚠</span> {errors.status}
                                             </p>
                                         )}
                                     </div>

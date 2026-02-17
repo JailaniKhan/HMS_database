@@ -111,6 +111,7 @@ class AppointmentService
                 'doctor_id' => $data['doctor_id'],
                 'department_id' => $data['department_id'],
                 'appointment_date' => $data['appointment_date'],
+                'status' => $data['status'] ?? 'completed',
                 'reason' => $data['reason'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'fee' => $fee,
