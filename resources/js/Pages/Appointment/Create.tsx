@@ -236,14 +236,27 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         const totals = calculateTotals();
         console.log('[DEBUG] Calculated totals:', totals);
         
+        // Prepare services data for submission
+        const servicesData: SubmitService[] = selectedServices.map(s => ({
+            department_service_id: s.department_service_id,
+            custom_cost: parseFloat(s.custom_cost) || 0,
+            discount_percentage: parseFloat(s.discount_percentage) || 0,
+        })).filter(s => s.department_service_id !== ''); // Only include services with valid IDs
+        
+        console.log('[DEBUG] Prepared services data for submission:', servicesData);
+        
         // If using services, set the fee from grand total
-        if (selectedServices.length > 0 && !data.fee) {
+        if (servicesData.length > 0 && !data.fee) {
             setData('fee', totals.grandTotal.toString());
         }
         
-        console.log('[DEBUG] Submitting to /appointments');
+        // Update form data with services
+        setData('services', servicesData);
         
-        // Submit the form - services data is sent via hidden input
+        console.log('[DEBUG] Submitting to /appointments with updated data');
+        console.log('[DEBUG] Data after update:', JSON.stringify({...data, services: servicesData}, null, 2));
+        
+        // Submit the form with updated data
         post('/appointments', {
             onStart: () => console.log('[DEBUG] Request started'),
             onSuccess: () => {
@@ -433,12 +446,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Hidden inputs for services data */}
-                        <input type="hidden" name="services" value={JSON.stringify(selectedServices.map(s => ({
-                            department_service_id: s.department_service_id,
-                            custom_cost: parseFloat(s.custom_cost) || 0,
-                            discount_percentage: parseFloat(s.discount_percentage) || 0,
-                        })))} />
+
                         <Card className="shadow-lg border-t-4 border-t-blue-500">
                             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">

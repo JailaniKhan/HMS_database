@@ -142,9 +142,10 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
         const appointmentId = appointment.appointment_id || 'N/A';
         const createdDate = appointment.created_at || new Date().toISOString();
         
-        const consultationFee = parseFloat(appointment.fee?.toString() || '0');
-        const discount = parseFloat(appointment.discount?.toString() || '0');
-        const grandTotal = appointment.grand_total || Math.max(0, consultationFee - discount);
+        const consultationFee = parseFloat(appointment.fee?.toString() || '0') || 0;
+        const discount = parseFloat(appointment.discount?.toString() || '0') || 0;
+        const calculatedGrandTotal = Math.max(0, consultationFee - discount);
+        const grandTotal = typeof appointment.grand_total === 'number' ? appointment.grand_total : calculatedGrandTotal;
         
         const formatDate = (dateString: string) => {
             if (!dateString) return 'N/A';
@@ -158,7 +159,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
             });
         };
         
-        const formatCurrency = (amount: number) => `؋${(amount || 0).toFixed(2)}`;
+        const formatCurrency = (amount: number | undefined | null) => `؋${(typeof amount === 'number' ? amount : 0).toFixed(2)}`;
 
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -274,10 +275,10 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
         });
     };
 
-    const formatCurrency = (amount: number) => `؋${(amount || 0).toFixed(2)}`;
+    const formatCurrency = (amount: number | undefined | null) => `؋${(typeof amount === 'number' ? amount : 0).toFixed(2)}`;
 
-    const consultationFee = parseFloat(appointment.fee?.toString() || '0');
-    const discount = parseFloat(appointment.discount?.toString() || '0');
+    const consultationFee = parseFloat(appointment.fee?.toString() || '0') || 0;
+    const discount = parseFloat(appointment.discount?.toString() || '0') || 0;
     
     // Calculate grand total based on services if available, otherwise use fee
     let calculatedGrandTotal = 0;
@@ -290,7 +291,7 @@ export function DepartmentPrint({ isOpen, onClose, appointment }: DepartmentPrin
         calculatedGrandTotal = Math.max(0, consultationFee - discount);
     }
     
-    const grandTotal = appointment.grand_total || calculatedGrandTotal;
+    const grandTotal = typeof appointment.grand_total === 'number' ? appointment.grand_total : calculatedGrandTotal;
     const deptName = appointment.department?.name || 'N/A';
 
     return (
