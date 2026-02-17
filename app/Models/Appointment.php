@@ -14,6 +14,7 @@ class Appointment extends Model
     use HasFactory;
     protected $fillable = [
         'appointment_id',
+        'daily_sequence',
         'patient_id',
         'doctor_id',
         'department_id',
@@ -30,6 +31,9 @@ class Appointment extends Model
         'fee' => 'decimal:2',
         'discount' => 'decimal:2',
     ];
+
+    // Include accessors in toArray() by default
+    protected $appends = ['grand_total'];
 
     public function patient()
     {
@@ -57,11 +61,17 @@ class Appointment extends Model
     }
 
     /**
-     * Calculate the grand total from all services.
+     * Calculate the grand total from all services OR from fee - discount.
      */
     public function getGrandTotalAttribute(): float
     {
-        return $this->services->sum('pivot.final_cost');
+        // If services exist, sum their final costs
+        if ($this->services->isNotEmpty()) {
+            return (float) $this->services->sum('pivot.final_cost');
+        }
+        
+        // Otherwise, calculate from fee - discount
+        return max(0, ($this->fee ?? 0) - ($this->discount ?? 0));
     }
 
     /**

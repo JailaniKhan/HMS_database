@@ -211,18 +211,42 @@ class AppointmentController extends Controller
             $appointment = $this->appointmentService->createAppointment($appointmentData);
 
             // Load relationships for print preview
-            $appointment->load(['patient', 'doctor', 'department']);
+            $appointment->load(['patient', 'doctor', 'department', 'services']);
 
             // Debug: Log the appointment data being sent for printing
             $appointmentArray = $appointment->toArray();
+            
+            // Include department name explicitly for print modal
+            if ($appointment->department) {
+                $appointmentArray['department'] = [
+                    'name' => $appointment->department->name,
+                ];
+            }
+            
+            // Include services data explicitly for print modal
+            if ($appointment->services->isNotEmpty()) {
+                $appointmentArray['services'] = $appointment->services->map(function($service) {
+                    return [
+                        'id' => $service->id,
+                        'name' => $service->name,
+                        'pivot' => [
+                            'custom_cost' => $service->pivot->custom_cost,
+                            'discount_percentage' => $service->pivot->discount_percentage,
+                            'final_cost' => $service->pivot->final_cost,
+                        ],
+                    ];
+                })->toArray();
+            }
+            
             Log::info('Appointment created for printing', [
                 'appointment_id' => $appointment->appointment_id,
                 'patient' => $appointmentArray['patient'] ?? null,
                 'doctor' => $appointmentArray['doctor'] ?? null,
                 'department' => $appointmentArray['department'] ?? null,
+                'services' => $appointmentArray['services'] ?? null,
                 'fee' => $appointmentArray['fee'] ?? null,
                 'discount' => $appointmentArray['discount'] ?? null,
-                'grand_total' => $appointment->grand_total ?? null,
+                'grand_total' => $appointmentArray['grand_total'] ?? null,
             ]);
 
             // Return to create page with appointment data to show print modal

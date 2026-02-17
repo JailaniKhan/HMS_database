@@ -8,6 +8,7 @@ interface AppointmentPrintModalProps {
     onClose: () => void;
     appointment: {
         appointment_id: string;
+        daily_sequence?: number;
         patient?: {
             first_name: string;
             father_name?: string;
@@ -140,20 +141,17 @@ export function AppointmentPrintModal({ isOpen, onClose, appointment }: Appointm
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Appointment Receipt - ${appointmentId}</title>
                 ${printStyles}
             </head>
             <body>
                 <div class="print-container">
                     <div class="header">
-                        <img src="/logo.svg" alt="Hospital Logo" class="logo" />
-                        <div class="hospital-name">Hospital Management System</div>
+                        <img src="/logo.png" alt="Hospital Logo" class="logo" />
+                        <div class="hospital-name">کامران معالیجوي روغتون</div>
+                        <div class="hospital-name">Kamran Curative Hospital</div>
                         <div class="receipt-title">Appointment Receipt</div>
                     </div>
-                    <div class="token-section">
-                        <div class="token-label">TOKEN NUMBER</div>
-                        <div class="token-number">${appointmentId}</div>
-                    </div>
+                    
                     <div class="info-section">
                         <div class="section-title">Patient Information</div>
                         <div class="info-row">
@@ -170,13 +168,13 @@ export function AppointmentPrintModal({ isOpen, onClose, appointment }: Appointm
                         </div>
                         <div class="info-row">
                             <span class="info-label">Age:</span>
-                            <span class="info-value">${age}</span>
+                            <span class="info-value">${age} Years</span>
                         </div>
                     </div>
                     <div class="info-section">
                         <div class="section-title">Appointment Details</div>
                         <div class="info-row">
-                            <span class="info-label">Doctor:</span>
+                            <span class="info-label">Refer To: </span>
                             <span class="info-value">Dr. ${doctorName}</span>
                         </div>
                         <div class="info-row">
@@ -186,6 +184,10 @@ export function AppointmentPrintModal({ isOpen, onClose, appointment }: Appointm
                         <div class="info-row">
                             <span class="info-label">Created Date:</span>
                             <span class="info-value">${formatDate(createdDate)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Doctor Token:</span>
+                            <span class="info-value">${appointment?.daily_sequence || '#' + appointmentId}</span>
                         </div>
                     </div>
                     <div class="financial-section">
@@ -203,10 +205,7 @@ export function AppointmentPrintModal({ isOpen, onClose, appointment }: Appointm
                             <span>${formatCurrency(grandTotal)}</span>
                         </div>
                     </div>
-                    <div class="footer">
-                        <p>Thank you for choosing our hospital</p>
-                        <p>Please arrive 15 minutes before your appointment</p>
-                    </div>
+                    
                 </div>
             </body>
             </html>

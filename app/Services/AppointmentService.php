@@ -106,6 +106,7 @@ class AppointmentService
 
             $appointment = Appointment::create([
                 'appointment_id' => 'APPT' . date('Y') . str_pad($nextId, 5, '0', STR_PAD_LEFT),
+                'daily_sequence' => $this->getNextDailySequence($data['doctor_id'], $data['appointment_date']),
                 'patient_id' => $data['patient_id'],
                 'doctor_id' => $data['doctor_id'],
                 'department_id' => $data['department_id'],
@@ -151,6 +152,27 @@ class AppointmentService
         }
         
         $appointment->services()->attach($attachData);
+    }
+
+    /**
+     * Get the next daily sequence number for a doctor on a specific date
+     */
+    private function getNextDailySequence(?int $doctorId, string $appointmentDate): int
+    {
+        // If no doctor is selected, return 0 (for department-only appointments)
+        if ($doctorId === null) {
+            return 0;
+        }
+        
+        // Extract just the date part if datetime is provided
+        $date = substr($appointmentDate, 0, 10);
+        
+        // Count existing appointments for this doctor on this date
+        $count = Appointment::where('doctor_id', $doctorId)
+            ->whereDate('appointment_date', $date)
+            ->count();
+        
+        return $count + 1;
     }
 
     /**
@@ -201,6 +223,12 @@ class AppointmentService
         $date = $appointment->appointment_date;
         $appointmentArray['appointment_date'] = $date->format('Y-m-d');
         $appointmentArray['appointment_time'] = $date->format('H:i');
+        
+        // Include daily sequence if available
+        $appointmentArray['daily_sequence'] = $appointment->daily_sequence;
+        
+        // Include grand_total if services exist (for print modal determination)
+        $appointmentArray['grand_total'] = $appointment->grand_total;
         
         // Transform patient data
         if ($appointment->patient) {

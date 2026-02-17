@@ -84,6 +84,15 @@ interface PrintAppointment {
     department?: {
         name: string;
     };
+    services?: Array<{
+        id: number;
+        name: string;
+        pivot: {
+            custom_cost: number;
+            discount_percentage: number;
+            final_cost: number;
+        };
+    }>;
     appointment_date: string;
     fee: number;
     discount: number;
@@ -130,6 +139,15 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
     // Get printAppointment from page props (updated automatically by Inertia after form submission)
     const printAppointment = pageProps.printAppointment || initialPrintAppointment;
     
+    // Separate state for managing services in the UI
+    const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+    // Initialize with printAppointment value - will show modal if appointment was created
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    // Track which print modal to show based on whether services were added
+    const [printType, setPrintType] = useState<'doctor' | 'department' | null>(null);
+    // Track if form was successfully submitted - only show print modal after submission
+    const [hasSubmitted, setHasSubmitted] = useState(false);
+    
     // Show toast when appointment is created successfully
     useEffect(() => {
         console.log('[DEBUG] Page props updated:', pageProps);
@@ -141,18 +159,50 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         }
     }, [pageProps.flash?.success, printAppointment, showSuccess]);
     
-    // Show print modal when printAppointment is available
+    // Show print modal only after form submission succeeds
     useEffect(() => {
-        if (printAppointment) {
+        if (printAppointment && hasSubmitted) {
             console.log('[DEBUG] Showing print modal for:', printAppointment.appointment_id);
-            setShowPrintModal(true);
+            console.log('[DEBUG] Print appointment services:', printAppointment.services);
+            
+            // Logic to determine which print modal to show:
+            // 1. If there are services (selectedServices.length > 0) → Department Print
+            // 2. If there's a doctor selected (data.doctor_id is set) AND no services → Doctor Print
+            // 3. If there's no doctor but there are services → Department Print
+            
+            // Check services from backend response
+            const hasServices = (printAppointment.services && printAppointment.services.length > 0);
+            
+            console.log('[DEBUG] Has services (from backend):', hasServices);
+            console.log('[DEBUG] Print appointment doctor info:', printAppointment.doctor);
+            
+            // Determine print type based on requirements
+            // 1. If services are selected → Department Print (regardless of doctor selection)
+            // 2. If no services but doctor is selected → Doctor Print
+            // 3. If no doctor but services are selected → Department Print (covered by #1)
+            
+            let determinedPrintType: 'doctor' | 'department' = 'doctor';
+            
+            if (hasServices) {
+                // Priority 1: If there are services, always use Department Print regardless of doctor
+                determinedPrintType = 'department';
+            } else if (printAppointment.doctor) {
+                // Priority 2: If no services but doctor is selected, use Doctor Print
+                determinedPrintType = 'doctor';
+            } else {
+                // Fallback: If no services and no doctor, default to department if available
+                determinedPrintType = printAppointment.department ? 'department' : 'doctor';
+            }
+            
+            console.log('[DEBUG] Determined print type:', determinedPrintType);
+            
+            setTimeout(() => {
+                setPrintType(determinedPrintType);
+                setShowPrintModal(true);
+                setHasSubmitted(false); // Reset after showing
+            }, 0);
         }
-    }, [printAppointment]);
-    
-    // Separate state for managing services in the UI
-    const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
-    // Initialize with printAppointment value - will show modal if appointment was created
-    const [showPrintModal, setShowPrintModal] = useState(false);
+    }, [printAppointment, hasSubmitted]);
     
     const { data, setData, post, processing, errors } = useForm<FormData>({
         patient_id: '',
@@ -196,17 +246,10 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         // Submit the form - services data is sent via hidden input
         post('/appointments', {
             onStart: () => console.log('[DEBUG] Request started'),
-            onSuccess: (page) => {
+            onSuccess: () => {
                 console.log('[DEBUG] Request succeeded');
-                console.log('[DEBUG] Full page object keys:', Object.keys(page));
-                console.log('[DEBUG] Page props keys:', Object.keys(page.props || {}));
-                
-                // Check for printAppointment in different locations
-                const printData = page.props?.printAppointment || page.printAppointment;
-                const flashData = page.props?.flash || page.flash;
-                
-                console.log('[DEBUG] printAppointment data:', printData);
-                console.log('[DEBUG] Flash data:', flashData);
+                // Mark form as submitted successfully - this triggers the print modal
+                setHasSubmitted(true);
             },
             onError: (errors) => console.error('[DEBUG] Request errors:', errors),
             onFinish: () => console.log('[DEBUG] Request finished'),
@@ -876,17 +919,19 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                 </div>
             </div>
 
-            {/* Show appropriate print modal based on whether doctor was selected */}
-            {printAppointment?.doctor ? (
-                <AppointmentPrintModal
-                    isOpen={showPrintModal}
-                    onClose={() => setShowPrintModal(false)}
-                    appointment={printAppointment ?? null}
-                />
-            ) : (
+            {/* Show appropriate print modal based on whether services were selected */}
+            {printType === 'department' && (
                 <DepartmentPrint
                     isOpen={showPrintModal}
-                    onClose={() => setShowPrintModal(false)}
+                    onClose={() => { setShowPrintModal(false); setPrintType(null); }}
+                    appointment={printAppointment ?? null}
+                />
+            )}
+
+            {printType === 'doctor' && (
+                <AppointmentPrintModal
+                    isOpen={showPrintModal}
+                    onClose={() => { setShowPrintModal(false); setPrintType(null); }}
                     appointment={printAppointment ?? null}
                 />
             )}

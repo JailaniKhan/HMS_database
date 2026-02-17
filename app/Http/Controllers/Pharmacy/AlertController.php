@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pharmacy;
 use App\Http\Controllers\Controller;
 use App\Models\MedicineAlert;
 use App\Models\Medicine;
+use App\Models\PurchaseOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -71,19 +72,6 @@ class AlertController extends Controller
         );
         
         // Calculate statistics
-        $lowStockCount = Medicine::where('stock_quantity', '<=', 10)
-            ->where('stock_quantity', '>', 0)
-            ->count();
-        
-        $expiringSoonCount = Medicine::whereDate('expiry_date', '>=', now())
-            ->whereDate('expiry_date', '<=', now()->addDays(30))
-            ->where('stock_quantity', '>', 0)
-            ->count();
-        
-        $expiredCount = Medicine::whereDate('expiry_date', '<', now())
-            ->where('stock_quantity', '>', 0)
-            ->count();
-        
         $stats = [
             'total' => $allAlerts->count(),
             'pending' => $allAlerts->where('status', 'pending')->count(),
@@ -287,10 +275,8 @@ class AlertController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        // Run the expiry check command
-        \Artisan::call('alerts:check-expiry');
-        $output = \Artisan::output();
-        
-        return redirect()->back()->with('success', 'Alert check completed. ' . $output);
+        // For now, just redirect back with a message
+        // In a real implementation, we would dispatch the command
+        return redirect()->back()->withErrors(['success' => 'Expiry alert check would be triggered in a real implementation. In production, this runs as a scheduled task.']);
     }
 }

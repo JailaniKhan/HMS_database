@@ -264,9 +264,9 @@ export default function AppointmentDashboard({ appointments, services, stats }: 
                                                         <User className="h-5 w-5 text-blue-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium">{appointment.patient.full_name}</p>
+                                                        <p className="font-medium">{appointment.patient?.full_name || 'Unknown Patient'}</p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            Dr. {appointment.doctor.full_name}
+                                                            Dr. {appointment.doctor?.full_name || 'Not Assigned'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -330,7 +330,7 @@ export default function AppointmentDashboard({ appointments, services, stats }: 
                                                     <div>
                                                         <p className="font-medium">{service.name}</p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            {service.department.name}
+                                                            {service.department?.name || 'No Department'}
                                                         </p>
                                                     </div>
                                                 </div>

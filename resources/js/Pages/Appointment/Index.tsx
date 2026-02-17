@@ -77,11 +77,11 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
 
     const filteredAppointments = appointments.data.filter(appointment =>
         appointment.appointment_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.patient.patient_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.doctor.doctor_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.doctor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.reason.toLowerCase().includes(searchTerm.toLowerCase())
+        (appointment.patient?.patient_id?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+        (appointment.doctor?.doctor_id?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+        (appointment.patient?.full_name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+        (appointment.doctor?.full_name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+        (appointment.reason?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false)
     );
 
     const formatDateTime = (dateString: string, timeString: string) => {
@@ -234,7 +234,7 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                                             <User className="h-4 w-4 text-blue-600" />
                                                         </div>
                                                         <span className="font-medium">
-                                                            {appointment.patient.full_name}
+                                                            {appointment.patient?.full_name || 'Unknown Patient'}
                                                         </span>
                                                     </div>
                                                 </TableCell>
@@ -244,7 +244,7 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                                             <Stethoscope className="h-4 w-4 text-green-600" />
                                                         </div>
                                                         <span className="font-medium">
-                                                            Dr. {appointment.doctor.full_name}
+                                                            Dr. {appointment.doctor?.full_name || 'Not Assigned'}
                                                         </span>
                                                     </div>
                                                 </TableCell>

@@ -288,7 +288,7 @@ export default function DoctorShow({ doctor }: DoctorShowProps) {
                                 <Link href={`/doctors/${doctor.id}/appointments`} className="block">
                                     <Button variant="outline" size="sm" className="w-full justify-start">
                                         <Calendar className="mr-2 h-4 w-4" />
-                                        View Appointments
+                                        View Reception
                                     </Button>
                                 </Link>
                                 
