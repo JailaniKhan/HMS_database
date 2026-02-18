@@ -200,7 +200,7 @@ export default function PatientIndex({ patients }: PatientIndexProps) {
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                                <TableHeader className="bg-muted/50">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="font-semibold w-[110px]">Patient ID</TableHead>
                                         <TableHead className="font-semibold">Name</TableHead>
@@ -212,10 +212,6 @@ export default function PatientIndex({ patients }: PatientIndexProps) {
                                         <TableHead className="text-right font-semibold">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
-                            </Table>
-                        </div>
-                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                            <Table>
                                 <TableBody>
                                     {filteredPatients.length > 0 ? (
                                         filteredPatients.map((patient) => (
@@ -301,40 +297,47 @@ export default function PatientIndex({ patients }: PatientIndexProps) {
                         </div>
 
                         {/* Pagination */}
-                        {patients.meta && patients.meta.total > 0 && (
-                            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 px-6 pb-6">
+                        {patients.meta && (
+                            <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t bg-muted/30 gap-4">
                                 <div className="text-sm text-muted-foreground">
-                                    Showing <strong className="text-foreground">{patients.meta?.from || 0}</strong> to{' '}
-                                    <strong className="text-foreground">{patients.meta?.to || 0}</strong> of{' '}
-                                    <strong className="text-foreground">{patients.meta?.total || 0}</strong> patients
+                                    Showing <strong className="text-foreground">{patients.meta.from || 0}</strong> to{' '}
+                                    <strong className="text-foreground">{patients.meta.to || 0}</strong> of{' '}
+                                    <strong className="text-foreground">{patients.meta.total || 0}</strong> patients
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={!patients.meta?.current_page || patients.meta?.current_page <= 1}
-                                        onClick={() => window.location.href = `/patients?page=${(patients.meta?.current_page || 1) - 1}`}
-                                        className="hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    >
-                                        Previous
-                                    </Button>
+                                <div className="flex items-center gap-2">
+                                    {/* Previous */}
+                                    {patients.meta.current_page <= 1 ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Previous
+                                        </Button>
+                                    ) : (
+                                        <Link href={`/patients?page=${patients.meta.current_page - 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Previous
+                                            </Button>
+                                        </Link>
+                                    )}
 
-                                    <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-muted text-sm">
-                                        <span className="font-medium">{patients.meta?.current_page}</span>
+                                    {/* Current / Total pages */}
+                                    <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-muted text-sm font-medium">
+                                        <span>{patients.meta.current_page}</span>
                                         <span className="text-muted-foreground">/</span>
-                                        <span className="text-muted-foreground">{patients.meta?.last_page}</span>
+                                        <span className="text-muted-foreground">{patients.meta.last_page}</span>
                                     </div>
 
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={!patients.meta?.current_page || patients.meta?.current_page >= (patients.meta?.last_page || 1)}
-                                        onClick={() => window.location.href = `/patients?page=${(patients.meta?.current_page || 1) + 1}`}
-                                        className="hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    >
-                                        Next
-                                    </Button>
+                                    {/* Next */}
+                                    {patients.meta.current_page >= patients.meta.last_page ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Next
+                                        </Button>
+                                    ) : (
+                                        <Link href={`/patients?page=${patients.meta.current_page + 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Next
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         )}

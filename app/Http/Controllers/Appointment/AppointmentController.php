@@ -74,10 +74,55 @@ class AppointmentController extends Controller
     public function index(): Response
     {
         $this->authorizeAppointmentAccess();
-        
-        $appointments = $this->appointmentService->getAllAppointments(50);
+
+        $user = auth()->user();
+        $isSuperAdmin = $user?->isSuperAdmin() ?? false;
+
+        // Always show only today's appointments in the table
+        $appointments = $this->appointmentService->getAllAppointments(50, true);
+
+        // Today's total appointments (both regular and service-based)
+        $todayAppointmentsCount = Appointment::whereDate('appointment_date', today())->count();
+
+        // Today's total revenue:
+        // - Regular appointments: fee - discount (no services)
+        $todayRegularRevenue = Appointment::whereDate('appointment_date', today())
+            ->doesntHave('services')
+            ->get()
+            ->sum(fn($a) => max(0, ($a->fee ?? 0) - ($a->discount ?? 0)));
+
+        // - Service-based appointments: sum of final_cost from pivot
+        $todayServiceRevenue = \Illuminate\Support\Facades\DB::table('appointment_services')
+            ->join('appointments', 'appointments.id', '=', 'appointment_services.appointment_id')
+            ->whereDate('appointments.appointment_date', today())
+            ->sum('appointment_services.final_cost');
+
+        $todayRevenue = $todayRegularRevenue + $todayServiceRevenue;
+
+        // For sub-admins: show today's counts; for super admin: show all-time counts
+        if ($isSuperAdmin) {
+            $scheduledCount = Appointment::where('status', 'scheduled')->count();
+            $completedCount = Appointment::where('status', 'completed')->count();
+            $cancelledCount = Appointment::where('status', 'cancelled')->count();
+            $totalCount = Appointment::count();
+        } else {
+            $scheduledCount = Appointment::whereDate('appointment_date', today())->where('status', 'scheduled')->count();
+            $completedCount = Appointment::whereDate('appointment_date', today())->where('status', 'completed')->count();
+            $cancelledCount = Appointment::whereDate('appointment_date', today())->where('status', 'cancelled')->count();
+            $totalCount = $todayAppointmentsCount;
+        }
+
         return Inertia::render('Appointment/Index', [
-            'appointments' => $appointments
+            'appointments' => $appointments,
+            'is_super_admin' => $isSuperAdmin,
+            'stats' => [
+                'today_appointments' => $todayAppointmentsCount,
+                'today_revenue' => round($todayRevenue, 2),
+                'scheduled_count' => $scheduledCount,
+                'completed_count' => $completedCount,
+                'cancelled_count' => $cancelledCount,
+                'total_count' => $totalCount,
+            ],
         ]);
     }
 

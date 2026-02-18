@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/heading';
 import { AppointmentPrintModal } from '@/components/appointment/AppointmentPrintModal';
-import { Calendar, User, Stethoscope, PlusCircle, Search, Clock, Eye, Edit } from 'lucide-react';
+import { Calendar, User, Stethoscope, PlusCircle, Search, Clock, Eye, Edit, CalendarDays, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 
@@ -28,6 +28,21 @@ interface Doctor {
     full_name: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+}
+
+interface Service {
+    id: number;
+    name: string;
+    pivot: {
+        custom_cost: number;
+        discount_percentage: number;
+        final_cost: number;
+    };
+}
+
 interface Appointment {
     id: number;
     appointment_id: string;
@@ -39,7 +54,9 @@ interface Appointment {
     reason: string;
     created_at: string;
     patient: Patient;
-    doctor: Doctor;
+    doctor: Doctor | null;
+    department: Department | null;
+    services: Service[];
 }
 
 interface AppointmentIndexProps {
@@ -56,9 +73,18 @@ interface AppointmentIndexProps {
             total: number;
         };
     };
+    is_super_admin?: boolean;
+    stats?: {
+        today_appointments: number;
+        today_revenue: number;
+        scheduled_count: number;
+        completed_count: number;
+        cancelled_count: number;
+        total_count: number;
+    };
 }
 
-export default function AppointmentIndex({ appointments }: AppointmentIndexProps) {
+export default function AppointmentIndex({ appointments, stats }: AppointmentIndexProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [printAppointment, setPrintAppointment] = useState<unknown>(null);
@@ -119,13 +145,11 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
         }
     };
 
-    // Calculate statistics
-    const totalAppointments = appointments.meta?.total || 0;
-    const scheduledCount = appointments.data.filter(a => a.status.toLowerCase() === 'scheduled').length;
-    const completedCount = appointments.data.filter(a => a.status.toLowerCase() === 'completed').length;
-
-    // Debug: print pagination meta to console to help verify server-side pagination
-    console.log('[DEBUG] appointments.meta:', appointments.meta);
+    // Calculate statistics - use server-side counts from stats prop
+    // total_count is scoped: today-only for sub-admins, all-time for super admin
+    const totalAppointments = stats?.total_count ?? appointments.meta?.total ?? 0;
+    const scheduledCount = stats?.scheduled_count ?? 0;
+    const completedCount = stats?.completed_count ?? 0;
 
     return (
         <HospitalLayout>
@@ -149,8 +173,8 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                     </Link>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* Stats Cards - Row 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
@@ -196,11 +220,50 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                     </Card>
                 </div>
 
+                {/* Stats Cards - Row 2: Today's Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Today's Appointments</p>
+                                    <p className="text-2xl font-bold text-orange-600">{stats?.today_appointments ?? 0}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Regular + Service-based</p>
+                                </div>
+                                <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                                    <CalendarDays className="h-6 w-6 text-orange-600" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Today's Revenue</p>
+                                    <p className="text-2xl font-bold text-emerald-600">؋{(stats?.today_revenue ?? 0).toLocaleString()}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">All appointment types</p>
+                                </div>
+                                <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <DollarSign className="h-6 w-6 text-emerald-600" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 {/* Main Table Card */}
                 <Card className="shadow-lg border-border/50 animate-slide-in-up">
                     <CardHeader className="border-b bg-muted/30">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <CardTitle className="text-lg font-semibold">Appointments Directory</CardTitle>
+                            <div className="flex items-center gap-3">
+                                <CardTitle className="text-lg font-semibold">Appointments Directory</CardTitle>
+                                <Badge className="bg-orange-100 text-orange-700 border border-orange-300 text-xs font-medium">
+                                    <CalendarDays className="h-3 w-3 mr-1" />
+                                    Today Only
+                                </Badge>
+                            </div>
                             <div className="relative w-full sm:w-80">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <input
@@ -216,7 +279,7 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                                <TableHeader className="bg-muted/50">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="font-semibold w-[100px]">Appointment ID</TableHead>
                                         <TableHead className="font-semibold">Patient</TableHead>
@@ -227,10 +290,6 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                         <TableHead className="text-right font-semibold">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
-                            </Table>
-                        </div>
-                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                            <Table>
                                 <TableBody>
                                     {filteredAppointments.length > 0 ? (
                                         filteredAppointments.map((appointment) => (
@@ -251,14 +310,42 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                                                            <Stethoscope className="h-4 w-4 text-green-600" />
+                                                    {appointment.doctor ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                                                                <Stethoscope className="h-4 w-4 text-green-600" />
+                                                            </div>
+                                                            <span className="font-medium">
+                                                                Dr. {appointment.doctor.full_name}
+                                                            </span>
                                                         </div>
-                                                        <span className="font-medium">
-                                                            Dr. {appointment.doctor?.full_name || 'Not Assigned'}
-                                                        </span>
-                                                    </div>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-1">
+                                                            {appointment.department ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-8 w-8 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                                                                        <svg className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="font-medium text-purple-700">{appointment.department.name}</span>
+                                                                        {appointment.services && appointment.services.length > 0 && (
+                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                {appointment.services.map(service => (
+                                                                                    <Badge key={service.id} variant="outline" className="text-xs bg-purple-50 border-purple-200 text-purple-700 font-normal">
+                                                                                        {service.name}
+                                                                                    </Badge>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted-foreground italic text-sm">Not Assigned</span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -310,98 +397,50 @@ export default function AppointmentIndex({ appointments }: AppointmentIndexProps
                             </Table>
                         </div>
 
-                        {/* Pagination */}
+                        {/* Pagination - always show when meta is available */}
                         {appointments.meta && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t bg-muted/30 gap-4">
-                            <div className="text-sm text-muted-foreground">
-                                Showing <strong className="text-foreground">{appointments.meta?.from || 0}</strong> to <strong className="text-foreground">{appointments.meta?.to || 0}</strong> of{' '}
-                                <strong className="text-foreground">{appointments.meta?.total || 0}</strong> appointments
-                            </div>
-                            
-                            <div className="flex items-center gap-1">
-                                {/* Previous button - use Inertia Link for SPA navigation when available */}
-                                {!(appointments.meta?.current_page) || appointments.meta?.current_page <= 1 ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled
-                                        className="hover:bg-primary hover:text-white"
-                                    >
-                                        ← Previous
-                                    </Button>
-                                ) : (
-                                    <Link href={`/appointments?page=${(appointments.meta?.current_page || 1) - 1}`}>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="hover:bg-primary hover:text-white"
-                                        >
-                                            ← Previous
+                            <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t bg-muted/30 gap-4">
+                                <div className="text-sm text-muted-foreground">
+                                    Showing <strong className="text-foreground">{appointments.meta.from || 0}</strong> to{' '}
+                                    <strong className="text-foreground">{appointments.meta.to || 0}</strong> of{' '}
+                                    <strong className="text-foreground">{appointments.meta.total || 0}</strong> appointments
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {/* Previous */}
+                                    {appointments.meta.current_page <= 1 ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Previous
                                         </Button>
-                                    </Link>
-                                )}
-                                
-                                {/* Page Numbers */}
-                                {Array.from({ length: Math.min(5, appointments.meta.last_page) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (appointments.meta.last_page <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (appointments.meta.current_page <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (appointments.meta.current_page >= appointments.meta.last_page - 2) {
-                                        pageNum = appointments.meta.last_page - 4 + i;
-                                    } else {
-                                        pageNum = appointments.meta.current_page - 2 + i;
-                                    }
-                                    
-                                    return (
-                                        <span key={pageNum}>
-                                            {appointments.meta.current_page === pageNum ? (
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    className="bg-primary"
-                                                >
-                                                    {pageNum}
-                                                </Button>
-                                            ) : (
-                                                <Link href={`/appointments?page=${pageNum}`}>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="hover:bg-primary hover:text-white"
-                                                    >
-                                                        {pageNum}
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                        </span>
-                                    );
-                                })}
-                                
-                                {/* Next button - use Inertia Link when not on last page */}
-                                {!(appointments.meta?.current_page) || appointments.meta?.current_page >= (appointments.meta?.last_page || 1) ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled
-                                        className="hover:bg-primary hover:text-white"
-                                    >
-                                        Next →
-                                    </Button>
-                                ) : (
-                                    <Link href={`/appointments?page=${(appointments.meta?.current_page || 1) + 1}`}>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="hover:bg-primary hover:text-white"
-                                        >
-                                            Next →
+                                    ) : (
+                                        <Link href={`/appointments?page=${appointments.meta.current_page - 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Previous
+                                            </Button>
+                                        </Link>
+                                    )}
+
+                                    {/* Current / Total pages
+                                    <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-muted text-sm font-medium">
+                                        <span>{appointments.meta.current_page}</span>
+                                        <span className="text-muted-foreground">/</span>
+                                        <span className="text-muted-foreground">{appointments.meta.last_page}</span>
+                                    </div>
+
+                                    {/* Next */}
+                                    {/* {appointments.meta.current_page >= appointments.meta.last_page ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Next
                                         </Button>
-                                    </Link>
-                                )}
+                                    ) : (
+                                        <Link href={`/appointments?page=${appointments.meta.current_page + 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Next
+                                            </Button>
+                                        </Link>
+                                    )}  */}
+                                </div>
                             </div>
-                        </div>
                         )}
                     </CardContent>
                 </Card>

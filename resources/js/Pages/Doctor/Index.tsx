@@ -153,7 +153,7 @@ export default function DoctorIndex({ doctors }: DoctorIndexProps) {
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                                <TableHeader className="bg-muted/50">
                                     <TableRow className="hover:bg-transparent">
                                         <TableHead className="font-semibold w-[100px]">Doctor ID</TableHead>
                                         <TableHead className="font-semibold">Name</TableHead>
@@ -166,10 +166,6 @@ export default function DoctorIndex({ doctors }: DoctorIndexProps) {
                                         <TableHead className="text-right font-semibold">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
-                            </Table>
-                        </div>
-                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                            <Table>
                                 <TableBody>
                                     {filteredDoctors.length > 0 ? (
                                         filteredDoctors.map((doctor) => (
@@ -248,41 +244,49 @@ export default function DoctorIndex({ doctors }: DoctorIndexProps) {
                         </div>
 
                         {/* Pagination */}
-                        {doctors.meta && doctors.meta.total > 0 && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 px-6 pb-6">
-                            <div className="text-sm text-muted-foreground">
-                                Showing <strong className="text-foreground">{doctors.meta?.from || 0}</strong> to <strong className="text-foreground">{doctors.meta?.to || 0}</strong> of{' '}
-                                <strong className="text-foreground">{doctors.meta?.total || 0}</strong> doctors
-                            </div>
-                            
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={!(doctors.meta?.current_page) || doctors.meta?.current_page <= 1}
-                                    onClick={() => window.location.href = `/doctors?page=${(doctors.meta?.current_page || 1) - 1}`}
-                                    className="hover:bg-primary hover:text-primary-foreground transition-colors"
-                                >
-                                    Previous
-                                </Button>
-                                
-                                <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-muted text-sm">
-                                    <span className="font-medium">{doctors.meta?.current_page}</span>
-                                    <span className="text-muted-foreground">/</span>
-                                    <span className="text-muted-foreground">{doctors.meta?.last_page}</span>
+                        {doctors.meta && (
+                            <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-t bg-muted/30 gap-4">
+                                <div className="text-sm text-muted-foreground">
+                                    Showing <strong className="text-foreground">{doctors.meta.from || 0}</strong> to{' '}
+                                    <strong className="text-foreground">{doctors.meta.to || 0}</strong> of{' '}
+                                    <strong className="text-foreground">{doctors.meta.total || 0}</strong> doctors
                                 </div>
-                                
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={!(doctors.meta?.current_page) || doctors.meta?.current_page >= (doctors.meta?.last_page || 1)}
-                                    onClick={() => window.location.href = `/doctors?page=${(doctors.meta?.current_page || 1) + 1}`}
-                                    className="hover:bg-primary hover:text-primary-foreground transition-colors"
-                                >
-                                    Next
-                                </Button>
+
+                                <div className="flex items-center gap-2">
+                                    {/* Previous */}
+                                    {doctors.meta.current_page <= 1 ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Previous
+                                        </Button>
+                                    ) : (
+                                        <Link href={`/doctors?page=${doctors.meta.current_page - 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Previous
+                                            </Button>
+                                        </Link>
+                                    )}
+
+                                    {/* Current / Total pages */}
+                                    <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-muted text-sm font-medium">
+                                        <span>{doctors.meta.current_page}</span>
+                                        <span className="text-muted-foreground">/</span>
+                                        <span className="text-muted-foreground">{doctors.meta.last_page}</span>
+                                    </div>
+
+                                    {/* Next */}
+                                    {doctors.meta.current_page >= doctors.meta.last_page ? (
+                                        <Button variant="outline" size="sm" disabled>
+                                            Next
+                                        </Button>
+                                    ) : (
+                                        <Link href={`/doctors?page=${doctors.meta.current_page + 1}`}>
+                                            <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground transition-colors">
+                                                Next
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
-                        </div>
                         )}
                     </CardContent>
                 </Card>

@@ -19,11 +19,16 @@ interface Doctor {
     specialization: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+}
+
 interface Appointment {
     id: number;
     appointment_id: string;
     patient_id: number;
-    doctor_id: number;
+    doctor_id: number | null;
     appointment_date: string;
     appointment_time: string;
     status: string;
@@ -31,7 +36,8 @@ interface Appointment {
     created_at: string;
     updated_at: string;
     patient: Patient;
-    doctor: Doctor;
+    doctor: Doctor | null;
+    department: Department | null;
 }
 
 interface AppointmentShowProps {
@@ -183,36 +189,48 @@ export default function AppointmentShow({ appointment }: AppointmentShowProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Doctor Information */}
-                            <Card className="shadow-lg border-l-4 border-l-green-500">
-                                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+                            {/* Doctor / Department Information */}
+                            <Card className={`shadow-lg border-l-4 ${appointment.doctor ? 'border-l-green-500' : 'border-l-purple-500'}`}>
+                                <CardHeader className={`bg-gradient-to-r ${appointment.doctor ? 'from-green-50 to-emerald-50' : 'from-purple-50 to-violet-50'}`}>
                                     <CardTitle className="flex items-center gap-2">
-                                        <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                                            <Stethoscope className="h-5 w-5 text-green-600" />
+                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${appointment.doctor ? 'bg-green-500/10' : 'bg-purple-500/10'}`}>
+                                            <Stethoscope className={`h-5 w-5 ${appointment.doctor ? 'text-green-600' : 'text-purple-600'}`} />
                                         </div>
                                         <div>
-                                            <div className="text-lg">Doctor Information</div>
-                                            <div className="text-xs font-normal text-muted-foreground">Attending physician</div>
+                                            <div className="text-lg">{appointment.doctor ? 'Doctor Information' : 'Department Information'}</div>
+                                            <div className="text-xs font-normal text-muted-foreground">
+                                                {appointment.doctor ? 'Attending physician' : 'Service department'}
+                                            </div>
                                         </div>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4 pt-6">
-                                    <div className="space-y-2">
-                                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Doctor ID</h3>
-                                        <Badge variant="outline" className="font-mono">{appointment.doctor.doctor_id}</Badge>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</h3>
-                                        <p className="font-semibold text-lg">Dr. {appointment.doctor.full_name}</p>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Specialization</h3>
-                                        <Badge variant="secondary" className="capitalize">
-                                            {appointment.doctor.specialization?.replace(/-/g, ' ') || 'N/A'}
-                                        </Badge>
-                                    </div>
+                                    {appointment.doctor ? (
+                                        <>
+                                            <div className="space-y-2">
+                                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Doctor ID</h3>
+                                                <Badge variant="outline" className="font-mono">{appointment.doctor.doctor_id}</Badge>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</h3>
+                                                <p className="font-semibold text-lg">Dr. {appointment.doctor.full_name}</p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Specialization</h3>
+                                                <Badge variant="secondary" className="capitalize">
+                                                    {appointment.doctor.specialization?.replace(/-/g, ' ') || 'N/A'}
+                                                </Badge>
+                                            </div>
+                                        </>
+                                    ) : appointment.department ? (
+                                        <div className="space-y-2">
+                                            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</h3>
+                                            <p className="font-semibold text-lg text-purple-700">{appointment.department.name}</p>
+                                            <p className="text-sm text-muted-foreground italic">No doctor assigned</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted-foreground italic">Not Assigned</p>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>
@@ -248,8 +266,13 @@ export default function AppointmentShow({ appointment }: AppointmentShowProps) {
                                     Appointment Notes
                                 </h4>
                                 <p className="text-sm text-blue-800 leading-relaxed">
-                                    This appointment is scheduled between {appointment.patient.full_name} 
-                                    and Dr. {appointment.doctor.full_name}. 
+                                    This appointment is scheduled for {appointment.patient.full_name}
+                                    {appointment.doctor
+                                        ? ` with Dr. ${appointment.doctor.full_name}`
+                                        : appointment.department
+                                            ? ` at the ${appointment.department.name} department`
+                                            : ''
+                                    }.
                                     Please ensure all necessary preparations are completed before the appointment time.
                                 </p>
                             </div>

@@ -27,7 +27,7 @@ interface Appointment {
     id: number;
     appointment_id: string;
     patient_id: number;
-    doctor_id: number;
+    doctor_id: number | null;
     appointment_date: string;
     appointment_time: string;
     status: string;
@@ -36,7 +36,7 @@ interface Appointment {
     discount?: number;
     created_at: string;
     patient: Patient;
-    doctor: Doctor;
+    doctor: Doctor | null;
 }
 
 interface AppointmentEditProps {
@@ -47,12 +47,12 @@ interface AppointmentEditProps {
 
 export default function AppointmentEdit({ appointment, patients, doctors }: AppointmentEditProps) {
     const { data, setData, processing, errors } = useForm({
-        patient_id: appointment.patient_id.toString(),
-        doctor_id: appointment.doctor_id.toString(),
+        patient_id: appointment.patient_id?.toString() ?? '',
+        doctor_id: appointment.doctor_id?.toString() ?? '',
         appointment_date: appointment.appointment_date,
         appointment_time: appointment.appointment_time,
         status: appointment.status,
-        reason: appointment.reason,
+        reason: appointment.reason ?? '',
         fee: appointment.fee?.toString() || '0',
         discount: appointment.discount?.toString() || '0',
     });

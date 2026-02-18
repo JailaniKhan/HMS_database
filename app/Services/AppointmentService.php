@@ -15,11 +15,16 @@ class AppointmentService
     /**
      * Get all appointments with related data
      */
-    public function getAllAppointments($perPage = 10)
+    public function getAllAppointments($perPage = 10, bool $todayOnly = false)
     {
-        return Appointment::with(['patient', 'doctor', 'department', 'services'])
-            ->latest()
-            ->paginate($perPage)
+        $query = Appointment::with(['patient', 'doctor', 'department', 'services'])
+            ->latest();
+
+        if ($todayOnly) {
+            $query->whereDate('appointment_date', today());
+        }
+
+        return $query->paginate($perPage)
             ->through(function ($appointment) {
                 return $this->transformAppointment($appointment);
             });
@@ -286,6 +291,16 @@ class AppointmentService
                 'full_name' => $appointment->doctor->full_name,
                 'specialization' => $appointment->doctor->specialization,
             ];
+        }
+
+        // Transform department data (shown when no doctor is assigned)
+        if ($appointment->department) {
+            $appointmentArray['department'] = [
+                'id' => $appointment->department->id,
+                'name' => $appointment->department->name,
+            ];
+        } else {
+            $appointmentArray['department'] = null;
         }
         
         return $appointmentArray;
