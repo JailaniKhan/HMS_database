@@ -17,6 +17,8 @@ import {
     Stethoscope, 
     ChevronLeft, 
     ChevronRight,
+    ChevronUp,
+    ChevronDown,
     DollarSign,
     CheckCircle,
     XCircle,
@@ -25,7 +27,7 @@ import {
     AlertCircle,
     Activity
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
 
 // Types
@@ -60,7 +62,8 @@ interface ServiceData {
     patient: Patient | null;
     doctor: Doctor | null;
     department: ServiceDepartment | null;
-    service: Service;
+    services: Service[];
+    services_count: number;
     grand_total: number;
     fee: number;
     discount: number;
@@ -114,7 +117,21 @@ export default function ServicesDashboard({
 }: ServicesDashboardProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const currentView = filters.view;
+
+    // Toggle expanded row
+    const toggleExpanded = (id: string) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
 
     // Helper function to build URL with params
     const buildUrl = (params: Record<string, string | number>) => {
@@ -133,7 +150,7 @@ export default function ServicesDashboard({
             service.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             service.doctor?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             service.department?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            service.service?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+            service.services?.some(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()))
         )
     );
 
@@ -388,7 +405,7 @@ export default function ServicesDashboard({
                     <Card className="hover:shadow-md transition-shadow">
                         <CardContent className="p-3 flex items-center justify-between">
                             <div>
-                                <p className="text-xs text-muted-foreground">Avg. per Service</p>
+                                <p className="text-xs text-muted-foreground">Avg. per Appointment</p>
                                 <p className="text-xl font-bold text-indigo-500">
                                     {services.length > 0 
                                         ? formatCurrency(summary.total_revenue / services.length) 
@@ -408,7 +425,7 @@ export default function ServicesDashboard({
                                 <Activity className="h-5 w-5" />
                                 Appointment Services
                                 <Badge variant="outline" className="ml-2">
-                                    {filteredServices.length} services
+                                    {filteredServices.length} appointments
                                 </Badge>
                             </CardTitle>
                             <div className="flex flex-col sm:flex-row gap-2 w-full">
@@ -447,102 +464,146 @@ export default function ServicesDashboard({
                                         <TableHead className="font-semibold">Patient</TableHead>
                                         <TableHead className="font-semibold">Doctor</TableHead>
                                         <TableHead className="font-semibold">Department</TableHead>
-                                        <TableHead className="font-semibold">Service</TableHead>
-                                        <TableHead className="font-semibold text-right">Cost</TableHead>
-                                        <TableHead className="font-semibold text-right">Discount</TableHead>
-                                        <TableHead className="font-semibold text-right">Final Cost</TableHead>
+                                        <TableHead className="font-semibold">Services</TableHead>
+                                        <TableHead className="font-semibold text-right">Total</TableHead>
                                         <TableHead className="font-semibold">Status</TableHead>
+                                        <TableHead className="w-10"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredServices.length > 0 ? (
-                                        filteredServices.map((service) => (
-                                            <TableRow key={service.id} className="hover:bg-muted/50 transition-colors">
-                                                <TableCell className="font-medium">
-                                                    <Badge variant="outline" className="font-mono text-xs">
-                                                        {service.appointment_id}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                        <span className="text-sm">
-                                                            {formatDate(service.appointment_date)}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                                                            <User className="h-4 w-4 text-blue-600" />
-                                                        </div>
-                                                        <span className="font-medium">
-                                                            {service.patient?.name || 'Unknown Patient'}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                                                            <Stethoscope className="h-4 w-4 text-green-600" />
-                                                        </div>
-                                                        <span className="font-medium">
-                                                            {service.doctor?.name || 'Not Assigned'}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="text-sm">
-                                                        {service.department?.name || '-'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="font-medium">
-                                                        {service.service?.name || 'Consultation'}
-                                                    </span>
-                                                    {service.service?.discount_percentage > 0 && (
-                                                        <Badge variant="outline" className="ml-2 text-xs">
-                                                            {service.service.discount_percentage}% off
-                                                        </Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <span className="text-muted-foreground">
-                                                        {formatCurrency(service.service?.custom_cost || 0)}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    {service.service?.discount_percentage > 0 ? (
-                                                        <span className="text-green-600">
-                                                            -{formatCurrency(
-                                                                (service.service.custom_cost * service.service.discount_percentage) / 100
+                                        filteredServices.map((service) => {
+                                            const isExpanded = expandedRows.has(service.id.toString());
+                                            return (
+                                                <Fragment key={service.id}>
+                                                    <TableRow className="hover:bg-muted/50 transition-colors">
+                                                        <TableCell className="font-medium">
+                                                            <Badge variant="outline" className="font-mono text-xs">
+                                                                {service.appointment_id}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                                <span className="text-sm">
+                                                                    {formatDate(service.appointment_date)}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                                                    <User className="h-4 w-4 text-blue-600" />
+                                                                </div>
+                                                                <span className="font-medium">
+                                                                    {service.patient?.name || 'Unknown Patient'}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                                                                    <Stethoscope className="h-4 w-4 text-green-600" />
+                                                                </div>
+                                                                <span className="font-medium">
+                                                                    {service.doctor?.name || 'Not Assigned'}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="text-sm">
+                                                                {service.department?.name || '-'}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col gap-1">
+                                                                {service.services?.slice(0, 2).map((s, idx) => (
+                                                                    <span key={idx} className="font-medium text-sm">
+                                                                        {s.name}
+                                                                        {s.discount_percentage > 0 && (
+                                                                            <Badge variant="outline" className="ml-1 text-xs">
+                                                                                {s.discount_percentage}% off
+                                                                            </Badge>
+                                                                        )}
+                                                                    </span>
+                                                                ))}
+                                                                {service.services_count > 2 && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        +{service.services_count - 2} more
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <span className="font-semibold text-emerald-600">
+                                                                {formatCurrency(service.grand_total)}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                {getStatusIcon(service.status)}
+                                                                <Badge 
+                                                                    variant={getStatusBadgeVariant(service.status)} 
+                                                                    className="capitalize"
+                                                                >
+                                                                    {service.status}
+                                                                </Badge>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {service.services_count > 1 && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => toggleExpanded(service.id.toString())}
+                                                                    className="p-1 h-8 w-8"
+                                                                >
+                                                                    {isExpanded ? (
+                                                                        <ChevronUp className="h-4 w-4" />
+                                                                    ) : (
+                                                                        <ChevronDown className="h-4 w-4" />
+                                                                    )}
+                                                                </Button>
                                                             )}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-muted-foreground">-</span>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {isExpanded && service.services && service.services.length > 1 && (
+                                                        <TableRow key={`${service.id}-expanded`} className="bg-muted/30">
+                                                            <TableCell colSpan={9} className="py-2">
+                                                                <div className="pl-4 border-l-2 border-primary/30">
+                                                                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                                                                        Services Breakdown:
+                                                                    </p>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                                        {service.services.map((s, idx) => (
+                                                                            <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded border">
+                                                                                <span className="font-medium">{s.name}</span>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="text-muted-foreground line-through text-xs">
+                                                                                        {formatCurrency(s.custom_cost)}
+                                                                                    </span>
+                                                                                    <span className="font-semibold text-emerald-600">
+                                                                                        {formatCurrency(s.final_cost)}
+                                                                                    </span>
+                                                                                    {s.discount_percentage > 0 && (
+                                                                                        <Badge variant="destructive" className="text-xs">
+                                                                                            -{s.discount_percentage}%
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
                                                     )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <span className="font-semibold text-emerald-600">
-                                                        {formatCurrency(service.service?.final_cost || 0)}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        {getStatusIcon(service.status)}
-                                                        <Badge 
-                                                            variant={getStatusBadgeVariant(service.status)} 
-                                                            className="capitalize"
-                                                        >
-                                                            {service.status}
-                                                        </Badge>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
+                                                </Fragment>
+                                            );
+                                        })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                                                 <div className="flex flex-col items-center justify-center gap-2">
                                                     <Activity className="h-8 w-8 text-muted-foreground/50" />
                                                     <p>No services found for this period</p>
@@ -559,7 +620,7 @@ export default function ServicesDashboard({
                 {/* Footer Info */}
                 <div className="mt-6 text-center text-sm text-muted-foreground">
                     <p>
-                        Showing {filteredServices.length} of {services.length} services
+                        Showing {filteredServices.length} of {services.length} appointments
                         {is_super_admin 
                             ? ` for ${period_label}` 
                             : ' for today (sub-admin access limited)'}

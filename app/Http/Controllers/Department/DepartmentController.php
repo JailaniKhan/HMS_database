@@ -127,79 +127,63 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Transform appointments with services for display.
+     * Transform appointments with services for display - grouped by appointment with expandable services.
      */
     private function transformAppointmentsWithServices($appointments): array
     {
         $result = [];
 
         foreach ($appointments as $appointment) {
-            // If appointment has services, expand them
+            // Collect all services for this appointment
+            $services = [];
+            
             if ($appointment->services->isNotEmpty()) {
                 foreach ($appointment->services as $service) {
-                    $result[] = [
-                        'id' => $appointment->id . '_' . $service->id,
-                        'appointment_id' => $appointment->appointment_id,
-                        'appointment_date' => $appointment->appointment_date->format('Y-m-d H:i:s'),
-                        'status' => $appointment->status,
-                        'patient' => $appointment->patient ? [
-                            'id' => $appointment->patient->id,
-                            'name' => $appointment->patient->name,
-                        ] : null,
-                        'doctor' => $appointment->doctor ? [
-                            'id' => $appointment->doctor->id,
-                            'name' => 'Dr. ' . $appointment->doctor->full_name,
-                        ] : null,
-                        'department' => $appointment->department ? [
-                            'id' => $appointment->department->id,
-                            'name' => $appointment->department->name,
-                        ] : ($service->department ? [
-                            'id' => $service->department->id,
-                            'name' => $service->department->name,
-                        ] : null),
-                        'service' => [
-                            'id' => $service->id,
-                            'name' => $service->name,
-                            'custom_cost' => $service->pivot->custom_cost,
-                            'discount_percentage' => $service->pivot->discount_percentage,
-                            'final_cost' => $service->pivot->final_cost,
-                        ],
-                        'grand_total' => $service->pivot->final_cost,
-                        'fee' => $appointment->fee,
-                        'discount' => $appointment->discount,
+                    $services[] = [
+                        'id' => $service->id,
+                        'name' => $service->name,
+                        'custom_cost' => (float) $service->pivot->custom_cost,
+                        'discount_percentage' => (float) $service->pivot->discount_percentage,
+                        'final_cost' => (float) $service->pivot->final_cost,
                     ];
                 }
-            } else {
-                // No services, show the appointment itself as a service
-                $result[] = [
-                    'id' => $appointment->id . '_main',
-                    'appointment_id' => $appointment->appointment_id,
-                    'appointment_date' => $appointment->appointment_date->format('Y-m-d H:i:s'),
-                    'status' => $appointment->status,
-                    'patient' => $appointment->patient ? [
-                        'id' => $appointment->patient->id,
-                        'name' => $appointment->patient->name,
-                    ] : null,
-                    'doctor' => $appointment->doctor ? [
-                        'id' => $appointment->doctor->id,
-                        'name' => 'Dr. ' . $appointment->doctor->full_name,
-                    ] : null,
-                    'department' => $appointment->department ? [
-                        'id' => $appointment->department->id,
-                        'name' => $appointment->department->name,
-                    ] : null,
-                    'service' => [
-                        'id' => null,
-                        'name' => 'Consultation Fee',
-                        'custom_cost' => $appointment->fee,
-                        'discount_percentage' => 0,
-                        'final_cost' => $appointment->grand_total,
-                    ],
-                    'grand_total' => $appointment->grand_total,
-                    'fee' => $appointment->fee,
-                    'discount' => $appointment->discount,
+            }
+            
+            // If no services, add a default consultation fee
+            if (empty($services)) {
+                $services[] = [
+                    'id' => null,
+                    'name' => 'Consultation Fee',
+                    'custom_cost' => (float) $appointment->fee,
+                    'discount_percentage' => 0,
+                    'final_cost' => (float) $appointment->grand_total,
                 ];
             }
+            
+            // Build the appointment row with all services
+            $result[] = [
+                'id' => $appointment->id,
+                'appointment_id' => $appointment->appointment_id,
+                'appointment_date' => $appointment->appointment_date->format('Y-m-d H:i:s'),
+                'status' => $appointment->status,
+                'patient' => $appointment->patient ? [
+                    'id' => $appointment->patient->id,
+                    'name' => $appointment->patient->name,
+                ] : null,
+                'doctor' => $appointment->doctor ? [
+                    'id' => $appointment->doctor->id,
+                    'name' => 'Dr. ' . $appointment->doctor->full_name,
+                ] : null,
+                'department' => $appointment->department ? [
+                    'id' => $appointment->department->id,
+                    'name' => $appointment->department->name,
+                ] : null,
+                'services' => $services,
+                'services_count' => count($services),
+                'grand_total' => (float) $appointment->grand_total,
+                'fee' => (float) $appointment->fee,
+                'discount' => (float) $appointment->discount,
+            ];
         }
 
         return $result;

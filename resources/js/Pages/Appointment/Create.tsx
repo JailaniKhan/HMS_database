@@ -1,4 +1,4 @@
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -163,16 +163,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         const successMessage = pageProps.successMessage;
         const flashDepartment = pageProps.flashDepartment;
         const flashDoctor = pageProps.flashDoctor;
-        
-        console.log('[DEBUG] Page props updated:', pageProps);
-        console.log('[DEBUG] Flash ID:', flashId);
-        console.log('[DEBUG] Previous Flash ID:', prevFlashIdRef.current);
-        console.log('[DEBUG] Success message:', successMessage);
-        console.log('[DEBUG] Flash Department:', flashDepartment);
-        console.log('[DEBUG] Flash Doctor:', flashDoctor);
-        console.log('[DEBUG] Print appointment:', printAppointment);
-        console.log('[DEBUG] Current timestamp:', new Date().toISOString());
-        console.log('[DEBUG] Is new flash?', flashId !== prevFlashIdRef.current);
+    
         
         // Only show toast if this is a new flash (different flashId)
         if (flashId && flashId !== prevFlashIdRef.current && successMessage) {
@@ -231,35 +222,12 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
     
     useEffect(() => {
         if (printAppointment && hasSubmitted) {
-            console.log('[DEBUG] Showing print modal for:', printAppointment.appointment_id);
-            console.log('[DEBUG] Print appointment services:', printAppointment.services);
-            console.log('[DEBUG] Submitted services (from ref):', submittedServicesRef.current);
-            console.log('[DEBUG] Current selectedServices state:', selectedServices);
-            
-            // Logic to determine which print modal to show:
-            // 1. If there are services (selectedServices.length > 0) → Department Print
-            // 2. If there's a doctor selected (data.doctor_id is set) AND no services → Doctor Print
-            // 3. If there's no doctor but there are services → Department Print
-            
-            // Check services from multiple sources to handle timing issues:
-            // 1. Backend response (most reliable if available)
-            // 2. Submitted services ref (captured at submission time)
-            // 3. Current selectedServices state (most current)
+           
             const hasServicesFromBackend = (printAppointment.services && printAppointment.services.length > 0);
             const hasServicesFromSubmission = submittedServicesRef.current.length > 0;
             const hasServicesFromState = selectedServices.length > 0 && selectedServices.some(s => s.department_service_id !== '');
             const hasServices = hasServicesFromBackend || hasServicesFromSubmission || hasServicesFromState;
-            
-            console.log('[DEBUG] Has services (from backend):', hasServicesFromBackend);
-            console.log('[DEBUG] Has services (from submission):', hasServicesFromSubmission);
-            console.log('[DEBUG] Has services (from state):', hasServicesFromState);
-            console.log('[DEBUG] Has services (combined):', hasServices);
-            console.log('[DEBUG] Print appointment doctor info:', printAppointment.doctor);
-            
-            // Determine print type based on requirements
-            // 1. If services are selected → Department Print (regardless of doctor selection)
-            // 2. If no services but doctor is selected → Doctor Print
-            // 3. If no doctor but services are selected → Department Print (covered by #1)
+        
             
             let determinedPrintType: 'doctor' | 'department' = 'doctor';
             
@@ -274,10 +242,6 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                 determinedPrintType = printAppointment.department ? 'department' : 'doctor';
             }
             
-            console.log('[DEBUG] Determined print type:', determinedPrintType);
-            console.log('[DEBUG] About to set printType to:', determinedPrintType);
-            console.log('[DEBUG] Current showPrintModal state:', showPrintModal);
-            console.log('[DEBUG] Current printType state before change:', printType);
             
             setTimeout(() => {
                 console.log('[DEBUG] Inside timeout - setting printType to:', determinedPrintType);
@@ -316,10 +280,6 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        console.log('[DEBUG] Form submission started');
-        console.log('[DEBUG] Form data:', JSON.stringify(data, null, 2));
-        console.log('[DEBUG] Selected services:', JSON.stringify(selectedServices, null, 2));
-        
         // Calculate totals to get final fee value
         const totals = calculateTotals();
         console.log('[DEBUG] Calculated totals:', totals);
@@ -343,16 +303,12 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         if (servicesData.length > 0 && !data.fee) {
             setData('fee', totals.grandTotal.toString());
         }
-        
-        // Update form data with services
-        setData('services', servicesData);
-        
-        console.log('[DEBUG] Submitting to /appointments with updated data');
-        console.log('[DEBUG] Data after update:', JSON.stringify({...data, services: servicesData}, null, 2));
-        
-        // Submit the form with updated data
-        post('/appointments', {
-            onStart: () => console.log('[DEBUG] Request started'),
+ 
+        // Use router.post to submit with the services data directly - this bypasses React state timing issues
+        router.post('/appointments', {
+            ...data,
+            services: JSON.stringify(servicesData),
+        }, {
             onSuccess: () => {
                 console.log('[DEBUG] Request succeeded');
                 // Mark form as submitted successfully - this triggers the print modal
@@ -573,6 +529,12 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Hidden input for services - backup for form submission */}
+                        <input type="hidden" name="services" value={JSON.stringify(selectedServices.map(s => ({
+                            department_service_id: s.department_service_id,
+                            custom_cost: parseFloat(s.custom_cost) || 0,
+                            discount_percentage: parseFloat(s.discount_percentage) || 0,
+                        })).filter((s: any) => s.department_service_id !== ''))} />
 
                         <Card className="shadow-lg border-t-4 border-t-blue-500">
                             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
@@ -583,7 +545,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                 <CardDescription className="text-base">Search and select the patient and attending doctor</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="patient_id" className="text-base font-semibold flex items-center gap-2">
                                             <User className="h-4 w-4 text-blue-600" />
@@ -628,7 +590,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                         <p className="text-xs text-muted-foreground">Select a department (optional - leave empty for general appointment)</p>
                                     </div>
 
-                                    <div className="space-y-2 md:col-span-2">
+                                    <div className="space-y-2">
                                         <Label htmlFor="doctor_id" className="text-base font-semibold flex items-center gap-2">
                                             <Stethoscope className="h-4 w-4 text-green-600" />
                                             Doctor <span className="text-green-600 text-xs font-normal">(Optional)</span>
@@ -658,7 +620,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-lg border-t-4 border-t-green-500">
+                        {/* <Card className="shadow-lg border-t-4 border-t-green-500">
                             <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
                                     <CalendarIcon className="h-6 w-6 text-green-600" />
@@ -731,7 +693,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                     </div>
                                 </div>
                             </CardContent>
-                        </Card>
+                        </Card> */}
 
                         <Card className="shadow-lg border-t-4 border-t-indigo-500">
                             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
