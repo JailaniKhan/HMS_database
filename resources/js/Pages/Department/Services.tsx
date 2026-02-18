@@ -15,17 +15,18 @@ import {
     Calendar, 
     User, 
     Stethoscope, 
+    Building2,
     ChevronLeft, 
     ChevronRight,
     ChevronUp,
     ChevronDown,
-    DollarSign,
     CheckCircle,
     XCircle,
     Clock,
     RefreshCw,
     AlertCircle,
-    Activity
+    Activity,
+    TrendingUp
 } from 'lucide-react';
 import { useState, Fragment } from 'react';
 import HospitalLayout from '@/layouts/HospitalLayout';
@@ -76,6 +77,7 @@ interface FilterDepartment {
 
 interface Summary {
     total_revenue: number;
+    yearly_revenue: number;
     total_appointments: number;
     completed_count: number;
     cancelled_count: number;
@@ -154,12 +156,9 @@ export default function ServicesDashboard({
         )
     );
 
-    // Format currency
+    // Format currency in Afghani
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount);
+        return `؋${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
     // Format date
@@ -321,7 +320,7 @@ export default function ServicesDashboard({
                                     </p>
                                 </div>
                                 <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                    <DollarSign className="h-6 w-6 text-emerald-600" />
+                                    <TrendingUp className="h-6 w-6 text-emerald-600" />
                                 </div>
                             </div>
                         </CardContent>
@@ -405,14 +404,12 @@ export default function ServicesDashboard({
                     <Card className="hover:shadow-md transition-shadow">
                         <CardContent className="p-3 flex items-center justify-between">
                             <div>
-                                <p className="text-xs text-muted-foreground">Avg. per Appointment</p>
+                                <p className="text-xs text-muted-foreground">Yearly Revenue ({new Date().getFullYear()})</p>
                                 <p className="text-xl font-bold text-indigo-500">
-                                    {services.length > 0 
-                                        ? formatCurrency(summary.total_revenue / services.length) 
-                                        : formatCurrency(0)}
+                                    {formatCurrency(summary.yearly_revenue)}
                                 </p>
                             </div>
-                            <DollarSign className="h-5 w-5 text-indigo-400" />
+                            <TrendingUp className="h-5 w-5 text-indigo-400" />
                         </CardContent>
                     </Card>
                 </div>
@@ -501,14 +498,25 @@ export default function ServicesDashboard({
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                                                                    <Stethoscope className="h-4 w-4 text-green-600" />
+                                                            {service.doctor ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                                                                        <Stethoscope className="h-4 w-4 text-green-600" />
+                                                                    </div>
+                                                                    <span className="font-medium">
+                                                                        {service.doctor.name}
+                                                                    </span>
                                                                 </div>
-                                                                <span className="font-medium">
-                                                                    {service.doctor?.name || 'Not Assigned'}
-                                                                </span>
-                                                            </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                                                        <Building2 className="h-4 w-4 text-blue-600" />
+                                                                    </div>
+                                                                    <span className="font-medium text-blue-700">
+                                                                        {service.department?.name || '—'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell>
                                                             <span className="text-sm">

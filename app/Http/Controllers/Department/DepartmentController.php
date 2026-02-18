@@ -71,6 +71,20 @@ class DepartmentController extends Controller
             return (float) $appointment->grand_total;
         });
 
+        // Calculate yearly revenue (always from all appointments in the current year)
+        // grand_total is a PHP accessor, not a DB column, so we compute it via raw SQL:
+        // For appointments WITH services: sum of appointment_services.final_cost
+        // For appointments WITHOUT services: fee - discount
+        $yearlyAppointments = Appointment::with('services')
+            ->whereYear('appointment_date', now()->year)
+            ->get();
+        $yearlyRevenue = $yearlyAppointments->sum(function ($appt) {
+            if ($appt->services->isNotEmpty()) {
+                return (float) $appt->services->sum('pivot.final_cost');
+            }
+            return max(0, (float) ($appt->fee ?? 0) - (float) ($appt->discount ?? 0));
+        });
+
         // Get departments for filter
         $departments = Department::orderBy('name')->get();
 
@@ -87,6 +101,7 @@ class DepartmentController extends Controller
             ],
             'summary' => [
                 'total_revenue' => $totalRevenue,
+                'yearly_revenue' => (float) $yearlyRevenue,
                 'total_appointments' => $appointments->count(),
                 'completed_count' => $statusTotals['completed'] ?? 0,
                 'cancelled_count' => $statusTotals['cancelled'] ?? 0,
@@ -107,17 +122,17 @@ class DepartmentController extends Controller
     private function getDateRange(string $view, int $year, int $month, int $day): array
     {
         $start = match ($view) {
-            'today' => now()->startOfDay(),
-            'monthly' => now()->year($year)->month($month)->startOfMonth(),
-            'yearly' => now()->year($year)->startOfYear(),
-            default => now()->startOfDay(),
+            'today' => \Carbon\Carbon::createFromDate($year, $month, $day)->startOfDay(),
+            'monthly' => \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth(),
+            'yearly' => \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear(),
+            default => \Carbon\Carbon::createFromDate($year, $month, $day)->startOfDay(),
         };
 
         $end = match ($view) {
-            'today' => now()->endOfDay(),
-            'monthly' => now()->year($year)->month($month)->endOfMonth(),
-            'yearly' => now()->year($year)->endOfYear(),
-            default => now()->endOfDay(),
+            'today' => \Carbon\Carbon::createFromDate($year, $month, $day)->endOfDay(),
+            'monthly' => \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth(),
+            'yearly' => \Carbon\Carbon::createFromDate($year, 1, 1)->endOfYear(),
+            default => \Carbon\Carbon::createFromDate($year, $month, $day)->endOfDay(),
         };
 
         return [
@@ -168,7 +183,7 @@ class DepartmentController extends Controller
                 'status' => $appointment->status,
                 'patient' => $appointment->patient ? [
                     'id' => $appointment->patient->id,
-                    'name' => $appointment->patient->name,
+                    'name' => $appointment->patient->full_name,
                 ] : null,
                 'doctor' => $appointment->doctor ? [
                     'id' => $appointment->doctor->id,
@@ -203,11 +218,12 @@ class DepartmentController extends Controller
 
     /**
      * Get navigation bounds for time period navigation.
+     * Uses Carbon date arithmetic to properly handle month/year rollovers.
      */
     private function getNavigationBounds(string $view, int $year, int $month, int $day, bool $isSuperAdmin): array
     {
         $current = now();
-        $canGoNext = true;
+        $canGoNext = false;
         $canGoPrev = true;
 
         $nextParams = [];
@@ -215,22 +231,30 @@ class DepartmentController extends Controller
 
         switch ($view) {
             case 'today':
-                $nextParams = ['view' => 'today', 'year' => $year, 'month' => $month, 'day' => $day + 1];
-                $prevParams = ['view' => 'today', 'year' => $year, 'month' => $month, 'day' => $day - 1];
-                $checkDate = now()->year($year)->month($month)->day($day);
-                $canGoNext = $checkDate->isBefore($current->startOfDay());
-                $canGoPrev = true; // Can always go back
-                break;
-            case 'monthly':
-                $nextParams = ['view' => 'monthly', 'year' => $year, 'month' => $month + 1];
-                $prevParams = ['view' => 'monthly', 'year' => $year, 'month' => $month - 1];
-                $checkDate = now()->year($year)->month($month);
-                $canGoNext = $checkDate->isBefore($current->startOfMonth());
+                $date = \Carbon\Carbon::createFromDate($year, $month, $day);
+                $nextDate = $date->copy()->addDay();
+                $prevDate = $date->copy()->subDay();
+                $nextParams = ['year' => $nextDate->year, 'month' => $nextDate->month, 'day' => $nextDate->day];
+                $prevParams = ['year' => $prevDate->year, 'month' => $prevDate->month, 'day' => $prevDate->day];
+                // Can go next only if the current date is before today
+                $canGoNext = $date->startOfDay()->lt($current->copy()->startOfDay());
                 $canGoPrev = true;
                 break;
+
+            case 'monthly':
+                $date = \Carbon\Carbon::createFromDate($year, $month, 1);
+                $nextDate = $date->copy()->addMonth();
+                $prevDate = $date->copy()->subMonth();
+                $nextParams = ['year' => $nextDate->year, 'month' => $nextDate->month];
+                $prevParams = ['year' => $prevDate->year, 'month' => $prevDate->month];
+                // Can go next only if the current month is before this month
+                $canGoNext = $date->startOfMonth()->lt($current->copy()->startOfMonth());
+                $canGoPrev = true;
+                break;
+
             case 'yearly':
-                $nextParams = ['view' => 'yearly', 'year' => $year + 1];
-                $prevParams = ['view' => 'yearly', 'year' => $year - 1];
+                $nextParams = ['year' => $year + 1];
+                $prevParams = ['year' => $year - 1];
                 $canGoNext = $year < $current->year;
                 $canGoPrev = true;
                 break;
