@@ -192,7 +192,9 @@ export interface PharmacyDashboardStats {
     expiredCount: number;
     todaySales: number;
     todayRevenue: number;
+    todayProfit: number;
     totalRevenue: number;
+    totalProfit: number;
     pendingOrders: number;
     criticalAlerts: number;
 }

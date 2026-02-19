@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
@@ -23,7 +22,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -63,8 +61,8 @@ interface Supplier {
 interface PurchaseItem {
     medicine_id: number;
     name: string;
-    quantity: number;
-    cost_price: number;
+    quantity: number | string;
+    cost_price: number | string;
     batch_number: string;
     expiry_date: string;
     current_stock: number;
@@ -82,12 +80,12 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
     const [purchaseDate, setPurchaseDate] = useState<string>(
         new Date().toISOString().split('T')[0]
     );
-    const [tax, setTax] = useState<string>('0');
     const [discount, setDiscount] = useState<string>('0');
-    const [notes, setNotes] = useState<string>('');
     const [showMedicineDialog, setShowMedicineDialog] = useState(false);
     const [showSupplierDialog, setShowSupplierDialog] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [medicineSearch, setMedicineSearch] = useState<string>('');
+    const [items, setItems] = useState<PurchaseItem[]>([]);
 
     // New supplier form
     const [newSupplier, setNewSupplier] = useState({
@@ -133,17 +131,17 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
 
     const updateItem = (index: number, field: keyof PurchaseItem, value: string | number) => {
         const updated = [...items];
-        (updated[index] as any)[field] = value;
+        updated[index] = { ...updated[index], [field]: value };
         setItems(updated);
     };
 
     const calculateSubtotal = () => {
-        return items.reduce((sum, item) => sum + item.quantity * item.cost_price, 0);
+        return items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.cost_price) || 0), 0);
     };
 
     const calculateTotal = () => {
         const subtotal = calculateSubtotal();
-        return subtotal + parseFloat(tax || '0') - parseFloat(discount || '0');
+        return subtotal - parseFloat(discount || '0');
     };
 
     const handleSubmit = () => {
@@ -154,10 +152,10 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
         }
 
         items.forEach((item, index) => {
-            if (item.quantity <= 0) {
+            if (Number(item.quantity) <= 0) {
                 newErrors[`items.${index}.quantity`] = 'Quantity must be greater than 0.';
             }
-            if (item.cost_price <= 0) {
+            if (Number(item.cost_price) <= 0) {
                 newErrors[`items.${index}.cost_price`] = 'Cost price must be greater than 0.';
             }
         });
@@ -173,9 +171,9 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                 supplier_id: supplierId || null,
                 invoice_number: invoiceNumber || null,
                 purchase_date: purchaseDate,
-                tax: parseFloat(tax) || 0,
+                tax: 0,
                 discount: parseFloat(discount) || 0,
-                notes: notes || null,
+                notes: null,
                 items: items.map((item) => ({
                     medicine_id: item.medicine_id,
                     quantity: item.quantity,
@@ -198,10 +196,10 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
 
         router.post('/pharmacy/purchases/suppliers/quick-store', newSupplier, {
             onSuccess: (page) => {
-                const response = page.props as any;
+                const response = page.props as Record<string, unknown>;
                 if (response.supplier) {
-                    setSupplierId(response.supplier.id.toString());
-                    suppliers.push(response.supplier);
+                    setSupplierId((response.supplier as Supplier).id.toString());
+                    suppliers.push(response.supplier as Supplier);
                 }
                 setShowSupplierDialog(false);
                 setNewSupplier({
@@ -219,264 +217,234 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
         <PharmacyLayout header={<h1 className="text-xl font-semibold">New Purchase</h1>}>
             <Head title="New Purchase" />
 
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Main Form */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Purchase Info */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Purchase Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <Label>Purchase Number</Label>
-                                <Input value={purchaseNumber} disabled />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Purchase Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {/* Purchase Info Row */}
+                    <div className="grid gap-4 md:grid-cols-4">
+                        <div>
+                            <Label>Purchase Number</Label>
+                            <Input value={purchaseNumber} disabled />
+                        </div>
+                        <div>
+                            <Label>Invoice Number</Label>
+                            <Input
+                                placeholder="Supplier invoice number"
+                                value={invoiceNumber}
+                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <Label>Supplier</Label>
+                            <div className="flex gap-2">
+                                <Select value={supplierId} onValueChange={setSupplierId}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="Select supplier" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {suppliers.map((supplier) => (
+                                            <SelectItem
+                                                key={supplier.id}
+                                                value={supplier.id.toString()}
+                                            >
+                                                {supplier.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowSupplierDialog(true)}
+                                >
+                                    <Plus className="size-4" />
+                                </Button>
                             </div>
-                            <div>
-                                <Label>Invoice Number</Label>
-                                <Input
-                                    placeholder="Supplier invoice number"
-                                    value={invoiceNumber}
-                                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <Label>Supplier</Label>
-                                <div className="flex gap-2">
-                                    <Select value={supplierId} onValueChange={setSupplierId}>
-                                        <SelectTrigger className="flex-1">
-                                            <SelectValue placeholder="Select supplier" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {suppliers.map((supplier) => (
-                                                <SelectItem
-                                                    key={supplier.id}
-                                                    value={supplier.id.toString()}
-                                                >
-                                                    {supplier.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setShowSupplierDialog(true)}
-                                    >
-                                        <Plus className="size-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                            <div>
-                                <Label>Purchase Date</Label>
-                                <Input
-                                    type="date"
-                                    value={purchaseDate}
-                                    onChange={(e) => setPurchaseDate(e.target.value)}
-                                />
-                                {errors.purchase_date && (
-                                    <p className="text-sm text-red-500 mt-1">
-                                        {errors.purchase_date}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="md:col-span-2">
-                                <Label>Notes</Label>
-                                <Textarea
-                                    placeholder="Additional notes..."
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    rows={2}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div>
+                            <Label>Purchase Date</Label>
+                            <Input
+                                type="date"
+                                value={purchaseDate}
+                                onChange={(e) => setPurchaseDate(e.target.value)}
+                            />
+                            {errors.purchase_date && (
+                                <p className="text-sm text-red-500 mt-1">
+                                    {errors.purchase_date}
+                                </p>
+                            )}
+                        </div>
+                    </div>
 
-                    {/* Items */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Purchase Items</CardTitle>
+                    {/* Items Section */}
+                    <div className="border-t pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-medium">Purchase Items</h3>
                             <Button onClick={() => setShowMedicineDialog(true)}>
                                 <Plus className="size-4 mr-2" />
                                 Add Item
                             </Button>
-                        </CardHeader>
-                        <CardContent>
-                            {errors.items && (
-                                <p className="text-sm text-red-500 mb-4">{errors.items}</p>
-                            )}
+                        </div>
 
-                            {items.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <Package className="size-12 mx-auto mb-3 opacity-50" />
-                                    <p>No items added yet</p>
-                                    <p className="text-sm">Click "Add Item" to add medicines</p>
-                                </div>
-                            ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Medicine</TableHead>
-                                            <TableHead className="w-24">Qty</TableHead>
-                                            <TableHead className="w-32">Cost Price</TableHead>
-                                            <TableHead className="w-32">Batch #</TableHead>
-                                            <TableHead className="w-36">Expiry</TableHead>
-                                            <TableHead className="w-24">Total</TableHead>
-                                            <TableHead className="w-16"></TableHead>
+                        {errors.items && (
+                            <p className="text-sm text-red-500 mb-4">{errors.items}</p>
+                        )}
+
+                        {items.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                                <Package className="size-12 mx-auto mb-3 opacity-50" />
+                                <p>No items added yet</p>
+                                <p className="text-sm">Click "Add Item" to add medicines</p>
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Medicine</TableHead>
+                                        <TableHead className="w-24">Qty</TableHead>
+                                        <TableHead className="w-32">Cost Price</TableHead>
+                                        <TableHead className="w-32">Batch #</TableHead>
+                                        <TableHead className="w-36">Expiry</TableHead>
+                                        <TableHead className="w-24">Total</TableHead>
+                                        <TableHead className="w-16"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {items.map((item, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>
+                                                <div>
+                                                    <p className="font-medium">{item.name}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Stock: {item.current_stock}
+                                                    </p>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity || ''}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'quantity',
+                                                            e.target.value === '' ? '' : parseInt(e.target.value) || 0
+                                                        )
+                                                    }
+                                                    className="w-20"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={item.cost_price || ''}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'cost_price',
+                                                            e.target.value === '' ? '' : parseFloat(e.target.value) || 0
+                                                        )
+                                                    }
+                                                    className="w-28"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    placeholder="Batch"
+                                                    value={item.batch_number}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'batch_number',
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="date"
+                                                    value={item.expiry_date}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'expiry_date',
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium">
+                                                <PriceDisplay
+                                                    amount={Number(item.quantity) * Number(item.cost_price)}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-600"
+                                                    onClick={() => removeItem(index)}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {items.map((item, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{item.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Stock: {item.current_stock}
-                                                        </p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        value={item.quantity}
-                                                        onChange={(e) =>
-                                                            updateItem(
-                                                                index,
-                                                                'quantity',
-                                                                parseInt(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        className="w-20"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={item.cost_price}
-                                                        onChange={(e) =>
-                                                            updateItem(
-                                                                index,
-                                                                'cost_price',
-                                                                parseFloat(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        className="w-28"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        placeholder="Batch"
-                                                        value={item.batch_number}
-                                                        onChange={(e) =>
-                                                            updateItem(
-                                                                index,
-                                                                'batch_number',
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                        type="date"
-                                                        value={item.expiry_date}
-                                                        onChange={(e) =>
-                                                            updateItem(
-                                                                index,
-                                                                'expiry_date',
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    <PriceDisplay
-                                                        amount={item.quantity * item.cost_price}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-600"
-                                                        onClick={() => removeItem(index)}
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </div>
 
-                {/* Summary */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Subtotal</span>
-                                <span className="font-medium">
-                                    <PriceDisplay amount={calculateSubtotal()} />
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground flex-1">Tax</span>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={tax}
-                                    onChange={(e) => setTax(e.target.value)}
-                                    className="w-24"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground flex-1">Discount</span>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={discount}
-                                    onChange={(e) => setDiscount(e.target.value)}
-                                    className="w-24"
-                                />
-                            </div>
-                            <div className="border-t pt-4">
-                                <div className="flex justify-between text-lg font-bold">
-                                    <span>Total</span>
-                                    <span>
+                    {/* Summary Section */}
+                    <div className="border-t pt-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-8">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Subtotal:</span>
+                                    <span className="font-medium">
+                                        <PriceDisplay amount={calculateSubtotal()} />
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Discount:</span>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={discount}
+                                        onChange={(e) => setDiscount(e.target.value)}
+                                        className="w-24"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground font-semibold">Total:</span>
+                                    <span className="text-lg font-bold">
                                         <PriceDisplay amount={calculateTotal()} />
                                     </span>
                                 </div>
                             </div>
-
-                            <div className="flex gap-2 pt-4">
-                                <Link href="/pharmacy/purchases" className="flex-1">
-                                    <Button variant="outline" className="w-full">
+                            <div className="flex gap-2">
+                                <Link href="/pharmacy/purchases">
+                                    <Button variant="outline">
                                         <X className="size-4 mr-2" />
                                         Cancel
                                     </Button>
                                 </Link>
-                                <Button onClick={handleSubmit} className="flex-1">
+                                <Button onClick={handleSubmit}>
                                     <Save className="size-4 mr-2" />
-                                    Save
+                                    Save Purchase
                                 </Button>
                             </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Add Medicine Dialog */}
             <Dialog open={showMedicineDialog} onOpenChange={setShowMedicineDialog}>
@@ -621,17 +589,16 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                         </div>
                         <div>
                             <Label>Address</Label>
-                            <Textarea
+                            <Input
                                 value={newSupplier.address}
                                 onChange={(e) =>
                                     setNewSupplier({ ...newSupplier, address: e.target.value })
                                 }
                                 placeholder="Supplier address"
-                                rows={2}
                             />
                         </div>
                     </div>
-                    <DialogFooter>
+                    <div className="flex justify-end gap-2 pt-4">
                         <Button variant="outline" onClick={() => setShowSupplierDialog(false)}>
                             Cancel
                         </Button>
@@ -639,7 +606,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                             <Building2 className="size-4 mr-2" />
                             Create Supplier
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </PharmacyLayout>

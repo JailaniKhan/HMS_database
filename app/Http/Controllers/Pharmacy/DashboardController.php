@@ -66,23 +66,35 @@ class DashboardController extends Controller
     {
         $today = now()->startOfDay();
         
+        // Valid sale statuses for revenue calculation (exclude voided, cancelled, refunded)
+        $validStatuses = ['completed', 'pending'];
+        
         // Total medicines count
         $totalMedicines = Medicine::count();
         
         // Total stock quantity (sum of all medicine stock)
         $totalStockQuantity = Medicine::sum('stock_quantity');
         
-        // Today's sales count
-        $todaySales = Sale::whereDate('created_at', $today)->count();
+        // Today's sales count (only completed sales)
+        $todaySales = Sale::whereDate('created_at', $today)
+            ->whereIn('status', $validStatuses)
+            ->count();
         
-        // Today's revenue
+        // Today's revenue (only completed/pending sales)
         $todayRevenue = Sale::whereDate('created_at', $today)
-            ->where('status', '!=', 'voided')
-            ->sum('total_amount');
-        
-        // Total revenue (all time, excluding voided sales)
-        $totalRevenue = Sale::where('status', '!=', 'voided')
+            ->whereIn('status', $validStatuses)
             ->sum('grand_total');
+        
+        // Total revenue (all time, only completed/pending sales)
+        $totalRevenue = Sale::whereIn('status', $validStatuses)
+            ->sum('grand_total');
+        
+        // Calculate Today's Profit - 30% profit margin on revenue
+        // This is a simplified calculation: Profit = Revenue * 0.30 (30% margin)
+        $todayProfit = $todayRevenue * 0.30;
+        
+        // Calculate Total Profit - 30% profit margin on revenue
+        $totalProfit = $totalRevenue * 0.30;
         
         // Low stock count (stock_quantity <= 10)
         $lowStockCount = Medicine::where('stock_quantity', '>', 0)
@@ -104,7 +116,9 @@ class DashboardController extends Controller
             'totalStockQuantity' => $totalStockQuantity,
             'todaySales' => $todaySales,
             'todayRevenue' => $todayRevenue,
+            'todayProfit' => $todayProfit,
             'totalRevenue' => $totalRevenue,
+            'totalProfit' => $totalProfit,
             'lowStockCount' => $lowStockCount,
             'expiringSoonCount' => $expiringSoonCount,
             'criticalAlerts' => $criticalAlerts,

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +17,11 @@ import {
     Currency,
     AlertCircle,
     Activity,
+    TrendingUp,
+    RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from 'react';
 
 interface PharmacyDashboardProps {
     stats: PharmacyDashboardStats;
@@ -106,12 +109,30 @@ const statCards = [
         isCurrency: true,
     },
     {
+        id: 'today-profit',
+        label: "Today's Profit",
+        key: 'todayProfit' as const,
+        icon: TrendingUp,
+        color: 'text-green-600 bg-green-500/10',
+        isCurrency: true,
+        isProfit: true,
+    },
+    {
         id: 'total-revenue',
         label: 'Total Revenue',
         key: 'totalRevenue' as const,
         icon: Currency,
         color: 'text-teal-600 bg-teal-500/10',
         isCurrency: true,
+    },
+    {
+        id: 'total-profit',
+        label: 'Total Profit',
+        key: 'totalProfit' as const,
+        icon: TrendingUp,
+        color: 'text-emerald-600 bg-emerald-500/10',
+        isCurrency: true,
+        isProfit: true,
     },
     {
         id: 'low-stock',
@@ -145,6 +166,24 @@ export default function PharmacyDashboard({
     lowStockMedicines = [],
     expiringMedicines = [],
 }: PharmacyDashboardProps) {
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // Refresh data function
+    const refreshData = useCallback(() => {
+        setIsRefreshing(true);
+        router.reload({ only: ['stats', 'recentActivities', 'lowStockMedicines', 'expiringMedicines'] });
+        setTimeout(() => setIsRefreshing(false), 500);
+    }, []);
+
+    // Auto-refresh every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            router.reload({ only: ['stats', 'recentActivities', 'lowStockMedicines', 'expiringMedicines'] });
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -173,7 +212,20 @@ export default function PharmacyDashboard({
 
     return (
         <PharmacyLayout
-            header={<h1 className="text-xl font-semibold">Pharmacy Dashboard</h1>}
+            header={
+                <div className="flex items-center justify-between">
+                    <h1 className="text-xl font-semibold">Pharmacy Dashboard</h1>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={refreshData}
+                        disabled={isRefreshing}
+                    >
+                        <RefreshCw className={cn('size-4 mr-2', isRefreshing && 'animate-spin')} />
+                        Refresh
+                    </Button>
+                </div>
+            }
             alerts={{
                 lowStock: stats.lowStockCount,
                 expiringSoon: stats.expiringSoonCount,
