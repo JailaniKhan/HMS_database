@@ -254,6 +254,11 @@ class StockController extends Controller
         
         $medicines = Medicine::with('category')->get();
         
+        // Check if export is requested
+        if ($request->has('export')) {
+            return $this->exportValuation($medicines, $request->input('export'));
+        }
+        
         $totalValue = $medicines->sum(function ($medicine) {
             return $medicine->stock_quantity * $medicine->unit_price;
         });
@@ -390,6 +395,8 @@ class StockController extends Controller
             abort(403, 'Unauthorized access');
         }
         
+        $format = $request->input('format', 'csv');
+        
         $query = Medicine::with('category');
         
         // Apply same filters as index
@@ -427,6 +434,10 @@ class StockController extends Controller
         }
         
         $medicines = $query->get();
+        
+        if ($format === 'pdf') {
+            return $this->exportStockPdf($medicines);
+        }
         
         // Generate CSV
         $headers = [
@@ -466,6 +477,59 @@ class StockController extends Controller
         };
         
         return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Export stock data as PDF.
+     */
+    protected function exportStockPdf($medicines)
+    {
+        $pharmacyName = config('pharmacy.name', 'Hospital Pharmacy');
+        $pharmacyAddress = config('pharmacy.address', '');
+        $pharmacyPhone = config('pharmacy.phone', '');
+        
+        // Calculate summary statistics
+        $totalItems = $medicines->count();
+        $totalUnits = $medicines->sum('stock_quantity');
+        $totalValue = $medicines->sum(function ($m) {
+            return $m->stock_quantity * $m->unit_price;
+        });
+        
+        $statusCounts = [
+            'in_stock' => 0,
+            'low_stock' => 0,
+            'out_of_stock' => 0,
+            'critical' => 0,
+        ];
+        
+        foreach ($medicines as $medicine) {
+            if ($medicine->stock_quantity <= 0) {
+                $statusCounts['out_of_stock']++;
+            } elseif ($medicine->stock_quantity <= $medicine->reorder_level * 0.5) {
+                $statusCounts['critical']++;
+            } elseif ($medicine->stock_quantity <= $medicine->reorder_level) {
+                $statusCounts['low_stock']++;
+            } else {
+                $statusCounts['in_stock']++;
+            }
+        }
+        
+        $data = [
+            'medicines' => $medicines,
+            'pharmacyName' => $pharmacyName,
+            'pharmacyAddress' => $pharmacyAddress,
+            'pharmacyPhone' => $pharmacyPhone,
+            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'totalItems' => $totalItems,
+            'totalUnits' => $totalUnits,
+            'totalValue' => $totalValue,
+            'statusCounts' => $statusCounts,
+        ];
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.stock-pdf', $data);
+        $pdf->setPaper('A4', 'landscape');
+        
+        return $pdf->download('stock-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**
@@ -656,5 +720,164 @@ class StockController extends Controller
             'expired' => $expired,
             'expiringSoon' => $expiringSoon
         ]);
+    }
+    
+    /**
+     * Export stock valuation report.
+     */
+    protected function exportValuation($medicines, string $format)
+    {
+        $pharmacyName = config('pharmacy.name', 'Hospital Pharmacy');
+        $pharmacyAddress = config('pharmacy.address', '');
+        $pharmacyPhone = config('pharmacy.phone', '');
+        
+        // Calculate totals
+        $totalValue = $medicines->sum(function ($medicine) {
+            return $medicine->stock_quantity * $medicine->unit_price;
+        });
+        
+        $totalItems = $medicines->count();
+        $totalUnits = $medicines->sum('stock_quantity');
+        
+        // Category breakdown
+        $categoryBreakdown = $medicines->groupBy('category_id')
+            ->map(function ($items) use ($totalValue) {
+                $category = $items->first()->category;
+                $categoryValue = $items->sum(function ($item) {
+                    return $item->stock_quantity * $item->unit_price;
+                });
+
+                return [
+                    'category' => $category ? $category->name : 'Uncategorized',
+                    'item_count' => $items->count(),
+                    'total_value' => $categoryValue,
+                    'percentage' => $totalValue > 0 ? ($categoryValue / $totalValue) * 100 : 0,
+                ];
+            })
+            ->sortByDesc('total_value')
+            ->values();
+        
+        // Status breakdown
+        $statusCounts = [
+            'in_stock' => 0,
+            'low_stock' => 0,
+            'out_of_stock' => 0,
+            'critical' => 0,
+        ];
+        $statusValues = [
+            'in_stock' => 0,
+            'low_stock' => 0,
+            'out_of_stock' => 0,
+            'critical' => 0,
+        ];
+        
+        foreach ($medicines as $medicine) {
+            $itemValue = $medicine->stock_quantity * $medicine->unit_price;
+            
+            if ($medicine->stock_quantity <= 0) {
+                $statusCounts['out_of_stock']++;
+                $statusValues['out_of_stock'] += $itemValue;
+            } elseif ($medicine->stock_quantity <= $medicine->reorder_level * 0.5) {
+                $statusCounts['critical']++;
+                $statusValues['critical'] += $itemValue;
+            } elseif ($medicine->stock_quantity <= $medicine->reorder_level) {
+                $statusCounts['low_stock']++;
+                $statusValues['low_stock'] += $itemValue;
+            } else {
+                $statusCounts['in_stock']++;
+                $statusValues['in_stock'] += $itemValue;
+            }
+        }
+        
+        if ($format === 'pdf') {
+            $data = [
+                'medicines' => $medicines,
+                'pharmacyName' => $pharmacyName,
+                'pharmacyAddress' => $pharmacyAddress,
+                'pharmacyPhone' => $pharmacyPhone,
+                'generatedAt' => now()->format('Y-m-d H:i:s'),
+                'totalItems' => $totalItems,
+                'totalUnits' => $totalUnits,
+                'totalValue' => $totalValue,
+                'categoryBreakdown' => $categoryBreakdown,
+                'statusCounts' => $statusCounts,
+                'statusValues' => $statusValues,
+                'isValuation' => true,
+            ];
+            
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.stock-pdf', $data);
+            $pdf->setPaper('A4', 'landscape');
+            
+            return $pdf->download('stock-valuation-' . now()->format('Y-m-d') . '.pdf');
+        }
+        
+        // CSV export
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="stock-valuation-' . now()->format('Y-m-d') . '.csv"',
+        ];
+        
+        $callback = function() use ($medicines, $totalValue, $categoryBreakdown, $totalItems, $totalUnits, $statusCounts, $statusValues) {
+            $file = fopen('php://output', 'w');
+            
+            // Summary section
+            fputcsv($file, ['STOCK VALUATION REPORT']);
+            fputcsv($file, ['Generated', now()->format('Y-m-d H:i:s')]);
+            fputcsv($file, ['Total Items', $totalItems]);
+            fputcsv($file, ['Total Units', $totalUnits]);
+            fputcsv($file, ['Total Value', number_format($totalValue, 2)]);
+            fputcsv($file, []);
+            
+            // Category breakdown
+            fputcsv($file, ['CATEGORY BREAKDOWN']);
+            fputcsv($file, ['Category', 'Items', 'Value', 'Percentage']);
+            foreach ($categoryBreakdown as $cat) {
+                fputcsv($file, [
+                    $cat['category'],
+                    $cat['item_count'],
+                    number_format($cat['total_value'], 2),
+                    number_format($cat['percentage'], 1) . '%',
+                ]);
+            }
+            fputcsv($file, []);
+            
+            // Status breakdown
+            fputcsv($file, ['STATUS BREAKDOWN']);
+            fputcsv($file, ['Status', 'Items', 'Value']);
+            fputcsv($file, ['In Stock', $statusCounts['in_stock'], number_format($statusValues['in_stock'], 2)]);
+            fputcsv($file, ['Low Stock', $statusCounts['low_stock'], number_format($statusValues['low_stock'], 2)]);
+            fputcsv($file, ['Critical', $statusCounts['critical'], number_format($statusValues['critical'], 2)]);
+            fputcsv($file, ['Out of Stock', $statusCounts['out_of_stock'], number_format($statusValues['out_of_stock'], 2)]);
+            fputcsv($file, []);
+            
+            // Detailed inventory
+            fputcsv($file, ['DETAILED INVENTORY']);
+            fputcsv($file, ['Medicine ID', 'Name', 'Category', 'Stock Qty', 'Unit Price', 'Total Value', 'Status']);
+            
+            foreach ($medicines as $medicine) {
+                $status = 'In Stock';
+                if ($medicine->stock_quantity <= 0) {
+                    $status = 'Out of Stock';
+                } elseif ($medicine->stock_quantity <= $medicine->reorder_level * 0.5) {
+                    $status = 'Critical';
+                } elseif ($medicine->stock_quantity <= $medicine->reorder_level) {
+                    $status = 'Low Stock';
+                }
+                
+                fputcsv($file, [
+                    $medicine->medicine_id,
+                    $medicine->name,
+                    $medicine->category?->name ?? 'Uncategorized',
+                    $medicine->stock_quantity,
+                    number_format($medicine->unit_price, 2),
+                    number_format($medicine->stock_quantity * $medicine->unit_price, 2),
+                    $status,
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }

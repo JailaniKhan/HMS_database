@@ -130,17 +130,21 @@ class SalesService
 
     /**
      * Calculate sale totals including subtotal, discount, tax, and grand total.
+     * Supports tax exemption for specific categories.
      *
      * @param array $items
      * @param float $discount
      * @param float $taxRate
+     * @param array $taxExemptCategories Array of category IDs that are tax exempt
      * @return array
      */
-    public function calculateTotals(array $items, float $discount = 0, float $taxRate = 0): array
+    public function calculateTotals(array $items, float $discount = 0, float $taxRate = 0, array $taxExemptCategories = []): array
     {
         $subtotal = 0;
+        $taxableAmount = 0;
 
         foreach ($items as $item) {
+            $medicine = Medicine::find($item['medicine_id']);
             $itemTotal = $item['quantity'] * $item['unit_price'];
             
             // Apply item-level discount if present
@@ -149,10 +153,20 @@ class SalesService
             }
             
             $subtotal += $itemTotal;
+            
+            // Check if item is taxable (not in exempt categories)
+            if ($medicine && !in_array($medicine->category_id, $taxExemptCategories)) {
+                $taxableAmount += $itemTotal;
+            }
         }
 
-        // Calculate tax
-        $tax = $subtotal * ($taxRate / 100);
+        // Get tax rate from config if not provided
+        if ($taxRate <= 0) {
+            $taxRate = config('pharmacy.tax_rate', 0);
+        }
+
+        // Calculate tax only on taxable amount
+        $tax = $taxableAmount * ($taxRate / 100);
 
         // Ensure discount doesn't exceed subtotal
         $discount = min($discount, $subtotal);
@@ -164,6 +178,9 @@ class SalesService
             'subtotal' => round($subtotal, 2),
             'discount' => round($discount, 2),
             'tax' => round($tax, 2),
+            'taxable_amount' => round($taxableAmount, 2),
+            'tax_exempt_amount' => round($subtotal - $taxableAmount, 2),
+            'tax_rate' => $taxRate,
             'total' => round($total, 2),
         ];
     }

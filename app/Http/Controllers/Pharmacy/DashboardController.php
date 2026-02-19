@@ -69,6 +69,9 @@ class DashboardController extends Controller
         // Total medicines count
         $totalMedicines = Medicine::count();
         
+        // Total stock quantity (sum of all medicine stock)
+        $totalStockQuantity = Medicine::sum('stock_quantity');
+        
         // Today's sales count
         $todaySales = Sale::whereDate('created_at', $today)->count();
         
@@ -76,6 +79,10 @@ class DashboardController extends Controller
         $todayRevenue = Sale::whereDate('created_at', $today)
             ->where('status', '!=', 'voided')
             ->sum('total_amount');
+        
+        // Total revenue (all time, excluding voided sales)
+        $totalRevenue = Sale::where('status', '!=', 'voided')
+            ->sum('grand_total');
         
         // Low stock count (stock_quantity <= 10)
         $lowStockCount = Medicine::where('stock_quantity', '>', 0)
@@ -94,8 +101,10 @@ class DashboardController extends Controller
 
         return [
             'totalMedicines' => $totalMedicines,
+            'totalStockQuantity' => $totalStockQuantity,
             'todaySales' => $todaySales,
             'todayRevenue' => $todayRevenue,
+            'totalRevenue' => $totalRevenue,
             'lowStockCount' => $lowStockCount,
             'expiringSoonCount' => $expiringSoonCount,
             'criticalAlerts' => $criticalAlerts,

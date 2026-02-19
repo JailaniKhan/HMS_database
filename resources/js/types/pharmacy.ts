@@ -185,12 +185,14 @@ export interface MedicineAlert {
 // Pharmacy Dashboard Stats
 export interface PharmacyDashboardStats {
     totalMedicines: number;
+    totalStockQuantity: number;
     lowStockCount: number;
     outOfStockCount: number;
     expiringSoonCount: number;
     expiredCount: number;
     todaySales: number;
     todayRevenue: number;
+    totalRevenue: number;
     pendingOrders: number;
     criticalAlerts: number;
 }

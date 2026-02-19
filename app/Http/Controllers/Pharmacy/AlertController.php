@@ -275,8 +275,189 @@ class AlertController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        // For now, just redirect back with a message
-        // In a real implementation, we would dispatch the command
-        return redirect()->back()->withErrors(['success' => 'Expiry alert check would be triggered in a real implementation. In production, this runs as a scheduled task.']);
+        $alertsCreated = 0;
+        $alertsResolved = 0;
+        
+        // Get threshold values from config
+        $lowStockThreshold = config('pharmacy.low_stock_threshold', 10);
+        $expiryWarningDays = config('pharmacy.expiry_warning_days', 30);
+        $expiryCriticalDays = config('pharmacy.expiry_critical_days', 7);
+        
+        // Check for expired medicines
+        $expired = Medicine::whereDate('expiry_date', '<', now())
+            ->where('stock_quantity', '>', 0)
+            ->get();
+        
+        foreach ($expired as $medicine) {
+            $alert = MedicineAlert::firstOrCreate(
+                [
+                    'medicine_id' => $medicine->id,
+                    'alert_type' => 'expired',
+                    'status' => 'pending',
+                ],
+                [
+                    'message' => "Medicine {$medicine->name} (Batch: {$medicine->batch_number}) has expired on {$medicine->expiry_date->format('Y-m-d')}",
+                    'priority' => 'critical',
+                    'triggered_at' => now(),
+                ]
+            );
+            if ($alert->wasRecentlyCreated) {
+                $alertsCreated++;
+            }
+        }
+        
+        // Check for medicines expiring soon
+        $expiringSoon = Medicine::whereDate('expiry_date', '>=', now())
+            ->whereDate('expiry_date', '<=', now()->addDays($expiryWarningDays))
+            ->where('stock_quantity', '>', 0)
+            ->get();
+        
+        foreach ($expiringSoon as $medicine) {
+            $daysUntilExpiry = now()->diffInDays($medicine->expiry_date, false);
+            $priority = $daysUntilExpiry <= $expiryCriticalDays ? 'high' : 'medium';
+            
+            $alert = MedicineAlert::firstOrCreate(
+                [
+                    'medicine_id' => $medicine->id,
+                    'alert_type' => 'expiring_soon',
+                    'status' => 'pending',
+                ],
+                [
+                    'message' => "Medicine {$medicine->name} (Batch: {$medicine->batch_number}) is expiring in {$daysUntilExpiry} days on {$medicine->expiry_date->format('Y-m-d')}",
+                    'priority' => $priority,
+                    'triggered_at' => now(),
+                ]
+            );
+            if ($alert->wasRecentlyCreated) {
+                $alertsCreated++;
+            }
+        }
+        
+        // Check for low stock medicines
+        $lowStock = Medicine::where('stock_quantity', '>', 0)
+            ->whereColumn('stock_quantity', '<=', 'reorder_level')
+            ->get();
+        
+        foreach ($lowStock as $medicine) {
+            $criticalPercentage = config('pharmacy.critical_stock_percentage', 50) / 100;
+            $criticalThreshold = $medicine->reorder_level * $criticalPercentage;
+            $priority = $medicine->stock_quantity <= $criticalThreshold ? 'critical' : 'high';
+            
+            $alert = MedicineAlert::firstOrCreate(
+                [
+                    'medicine_id' => $medicine->id,
+                    'alert_type' => 'low_stock',
+                    'status' => 'pending',
+                ],
+                [
+                    'message' => "Medicine {$medicine->name} is low in stock. Current: {$medicine->stock_quantity}, Reorder Level: {$medicine->reorder_level}",
+                    'priority' => $priority,
+                    'triggered_at' => now(),
+                ]
+            );
+            if ($alert->wasRecentlyCreated) {
+                $alertsCreated++;
+            }
+        }
+        
+        // Check for out of stock medicines
+        $outOfStock = Medicine::where('stock_quantity', '<=', 0)->get();
+        
+        foreach ($outOfStock as $medicine) {
+            $alert = MedicineAlert::firstOrCreate(
+                [
+                    'medicine_id' => $medicine->id,
+                    'alert_type' => 'out_of_stock',
+                    'status' => 'pending',
+                ],
+                [
+                    'message' => "Medicine {$medicine->name} is out of stock and needs immediate reordering.",
+                    'priority' => 'critical',
+                    'triggered_at' => now(),
+                ]
+            );
+            if ($alert->wasRecentlyCreated) {
+                $alertsCreated++;
+            }
+        }
+        
+        // Auto-resolve alerts for medicines that no longer meet alert conditions
+        $resolvedExpired = MedicineAlert::where('alert_type', 'expired')
+            ->where('status', 'pending')
+            ->whereHas('medicine', function ($q) {
+                $q->where('stock_quantity', '<=', 0)
+                  ->orWhereDate('expiry_date', '>=', now());
+            })
+            ->update(['status' => 'resolved', 'resolved_at' => now()]);
+        $alertsResolved += $resolvedExpired;
+        
+        $resolvedLowStock = MedicineAlert::where('alert_type', 'low_stock')
+            ->where('status', 'pending')
+            ->whereHas('medicine', function ($q) {
+                $q->whereColumn('stock_quantity', '>', 'reorder_level');
+            })
+            ->update(['status' => 'resolved', 'resolved_at' => now()]);
+        $alertsResolved += $resolvedLowStock;
+        
+        $resolvedOutOfStock = MedicineAlert::where('alert_type', 'out_of_stock')
+            ->where('status', 'pending')
+            ->whereHas('medicine', function ($q) {
+                $q->where('stock_quantity', '>', 0);
+            })
+            ->update(['status' => 'resolved', 'resolved_at' => now()]);
+        $alertsResolved += $resolvedOutOfStock;
+        
+        $message = "Alert check completed. {$alertsCreated} new alerts created";
+        if ($alertsResolved > 0) {
+            $message .= ", {$alertsResolved} alerts auto-resolved";
+        }
+        $message .= '.';
+        
+        return redirect()->back()->with('success', $message);
+    }
+    
+    /**
+     * Get expiry risk assessment.
+     * Calculates financial risk of expiring and expired medicines.
+     */
+    public function expiryRiskAssessment(): array
+    {
+        $expired = Medicine::whereDate('expiry_date', '<', now())
+            ->where('stock_quantity', '>', 0)
+            ->selectRaw('SUM(stock_quantity * cost_price) as total_cost, SUM(stock_quantity * sale_price) as total_sale, COUNT(*) as item_count')
+            ->first();
+        
+        $expiryWarningDays = config('pharmacy.expiry_warning_days', 30);
+        
+        $expiring30Days = Medicine::whereDate('expiry_date', '>=', now())
+            ->whereDate('expiry_date', '<=', now()->addDays($expiryWarningDays))
+            ->where('stock_quantity', '>', 0)
+            ->selectRaw('SUM(stock_quantity * cost_price) as total_cost, SUM(stock_quantity * sale_price) as total_sale, COUNT(*) as item_count')
+            ->first();
+        
+        $expiring60Days = Medicine::whereDate('expiry_date', '>', now()->addDays($expiryWarningDays))
+            ->whereDate('expiry_date', '<=', now()->addDays(60))
+            ->where('stock_quantity', '>', 0)
+            ->selectRaw('SUM(stock_quantity * cost_price) as total_cost, SUM(stock_quantity * sale_price) as total_sale, COUNT(*) as item_count')
+            ->first();
+        
+        return [
+            'expired' => [
+                'cost_value' => round($expired->total_cost ?? 0, 2),
+                'sale_value' => round($expired->total_sale ?? 0, 2),
+                'item_count' => $expired->item_count ?? 0,
+            ],
+            'expiring_30_days' => [
+                'cost_value' => round($expiring30Days->total_cost ?? 0, 2),
+                'sale_value' => round($expiring30Days->total_sale ?? 0, 2),
+                'item_count' => $expiring30Days->item_count ?? 0,
+            ],
+            'expiring_60_days' => [
+                'cost_value' => round($expiring60Days->total_cost ?? 0, 2),
+                'sale_value' => round($expiring60Days->total_sale ?? 0, 2),
+                'item_count' => $expiring60Days->item_count ?? 0,
+            ],
+            'total_risk_value' => round(($expired->total_cost ?? 0) + ($expiring30Days->total_cost ?? 0), 2),
+        ];
     }
 }

@@ -166,7 +166,23 @@ const pharmacyNavItems: (NavItem & { permission?: string })[] = [
             },
         ],
     },
-
+    {
+        title: 'Purchases',
+        href: '/pharmacy/purchases',
+        icon: ShoppingCart,
+        items: [
+            {
+                title: 'All Purchases',
+                href: '/pharmacy/purchases',
+                icon: BarChart3,
+            },
+            {
+                title: 'New Purchase',
+                href: '/pharmacy/purchases/create',
+                icon: Plus,
+            },
+        ],
+    },
     {
         title: 'Alerts',
         href: '/pharmacy/alerts',

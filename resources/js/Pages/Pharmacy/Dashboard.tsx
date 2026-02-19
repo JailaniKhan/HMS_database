@@ -47,6 +47,14 @@ const quickActions = [
         color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     },
     {
+        id: 'new-purchase',
+        label: 'New Purchase',
+        description: 'Add stock from supplier',
+        href: '/pharmacy/purchases/create',
+        icon: Package,
+        color: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+    },
+    {
         id: 'add-medicine',
         label: 'Add Medicine',
         description: 'Add a new medicine to inventory',
@@ -54,7 +62,6 @@ const quickActions = [
         icon: Pill,
         color: 'bg-green-500/10 text-green-600 border-green-500/20',
     },
-    
     {
         id: 'view-alerts',
         label: 'View Alerts',
@@ -75,6 +82,14 @@ const statCards = [
         color: 'text-blue-600 bg-blue-500/10',
     },
     {
+        id: 'total-stock',
+        label: 'Total Stock Quantity',
+        key: 'totalStockQuantity' as const,
+        icon: Package,
+        color: 'text-indigo-600 bg-indigo-500/10',
+        format: (val: number) => val.toLocaleString(),
+    },
+    {
         id: 'today-sales',
         label: "Today's Sales",
         key: 'todaySales' as const,
@@ -88,6 +103,14 @@ const statCards = [
         key: 'todayRevenue' as const,
         icon: Currency,
         color: 'text-emerald-600 bg-emerald-500/10',
+        isCurrency: true,
+    },
+    {
+        id: 'total-revenue',
+        label: 'Total Revenue',
+        key: 'totalRevenue' as const,
+        icon: Currency,
+        color: 'text-teal-600 bg-teal-500/10',
         isCurrency: true,
     },
     {

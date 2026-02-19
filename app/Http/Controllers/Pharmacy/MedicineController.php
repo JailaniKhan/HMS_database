@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Concerns\HasPerformanceOptimization;
+use App\Http\Requests\StoreMedicineRequest;
+use App\Http\Requests\UpdateMedicineRequest;
 use App\Models\Medicine;
 use App\Models\MedicineCategory;
 use Illuminate\Http\Request;
@@ -18,8 +20,21 @@ class MedicineController extends Controller
 {
     use HasPerformanceOptimization;
 
-    const LOW_STOCK_THRESHOLD = 10;
-    const EXPIRY_WARNING_DAYS = 30;
+    /**
+     * Get the low stock threshold from config.
+     */
+    private function getLowStockThreshold(): int
+    {
+        return config('pharmacy.low_stock_threshold', 10);
+    }
+
+    /**
+     * Get the expiry warning days from config.
+     */
+    private function getExpiryWarningDays(): int
+    {
+        return config('pharmacy.expiry_warning_days', 30);
+    }
 
     /**
      * Check if the current user can access pharmacy
@@ -96,15 +111,18 @@ class MedicineController extends Controller
             }
         }
         
+        $lowStockThreshold = $this->getLowStockThreshold();
+        $expiryWarningDays = $this->getExpiryWarningDays();
+        
         // Apply stock status filter
         if ($request->filled('stock_status')) {
             $stockStatus = htmlspecialchars(strip_tags($request->stock_status), ENT_QUOTES, 'UTF-8');
             switch ($stockStatus) {
                 case 'in_stock':
-                    $query->where('quantity', '>', self::LOW_STOCK_THRESHOLD);
+                    $query->where('quantity', '>', $lowStockThreshold);
                     break;
                 case 'low_stock':
-                    $query->where('quantity', '<=', self::LOW_STOCK_THRESHOLD)
+                    $query->where('quantity', '<=', $lowStockThreshold)
                           ->where('quantity', '>', 0);
                     break;
                 case 'out_of_stock':
@@ -119,11 +137,11 @@ class MedicineController extends Controller
             $today = now();
             switch ($expiryStatus) {
                 case 'valid':
-                    $query->whereDate('expiry_date', '>', $today->copy()->addDays(self::EXPIRY_WARNING_DAYS));
+                    $query->whereDate('expiry_date', '>', $today->copy()->addDays($expiryWarningDays));
                     break;
                 case 'expiring_soon':
                     $query->whereDate('expiry_date', '>=', $today)
-                          ->whereDate('expiry_date', '<=', $today->copy()->addDays(self::EXPIRY_WARNING_DAYS));
+                          ->whereDate('expiry_date', '<=', $today->copy()->addDays($expiryWarningDays));
                     break;
                 case 'expired':
                     $query->whereDate('expiry_date', '<', $today);
@@ -133,7 +151,7 @@ class MedicineController extends Controller
         
         // Apply search query with SQL injection protection
         if ($request->filled('query')) {
-            $searchTerm = $this->sanitizeSearchTerm($request->query);
+            $searchTerm = $this->sanitizeSearchTerm($request->input('query'));
             if (!empty($searchTerm)) {
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('name', 'like', '%' . $searchTerm . '%')
@@ -242,12 +260,12 @@ class MedicineController extends Controller
         
         $medicine = Medicine::with('category')->findOrFail($medicineId);
         
-        // Get recent sales (last 30 days)
+        // Get recent sales (last 30 days) with eager loading to prevent N+1
         $recentSales = \App\Models\SalesItem::where('medicine_id', $medicineId)
             ->whereHas('sale', function ($q) {
                 $q->where('created_at', '>=', now()->subDays(30));
             })
-            ->with('sale')
+            ->with(['sale.patient', 'sale.soldBy'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -430,7 +448,7 @@ class MedicineController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
         
-        $quantity = filter_var($request->quantity, FILTER_VALIDATE_INT);
+       $quantity = filter_var($request->quantity, FILTER_VALIDATE_INT);
         
         $medicine->update([
             'quantity' => $quantity,
@@ -447,8 +465,10 @@ class MedicineController extends Controller
     {
         $this->authorizePharmacyAccess();
         
-        // Consider medicines with stock less than LOW_STOCK_THRESHOLD as low stock
-        $medicines = Medicine::where('quantity', '<=', self::LOW_STOCK_THRESHOLD)
+        $lowStockThreshold = $this->getLowStockThreshold();
+        
+        // Consider medicines with stock less than threshold as low stock
+        $medicines = Medicine::where('quantity', '<=', $lowStockThreshold)
                     ->where('quantity', '>=', 1)
                     ->with('category')
                     ->paginate(10);
@@ -481,9 +501,11 @@ class MedicineController extends Controller
     {
         $this->authorizePharmacyAccess();
         
-        // Get medicines that expire within the next EXPIRY_WARNING_DAYS days
+        $expiryWarningDays = $this->getExpiryWarningDays();
+        
+        // Get medicines that expire within the next warning days
         $medicines = Medicine::whereDate('expiry_date', '>=', now())
-                    ->whereDate('expiry_date', '<=', now()->addDays(self::EXPIRY_WARNING_DAYS))
+                    ->whereDate('expiry_date', '<=', now()->addDays($expiryWarningDays))
                     ->with('category')
                     ->paginate(10);
         

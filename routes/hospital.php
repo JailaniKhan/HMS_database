@@ -14,6 +14,7 @@ use App\Http\Controllers\Pharmacy\StockController;
 use App\Http\Controllers\Pharmacy\SalesController;
 use App\Http\Controllers\Pharmacy\AlertController;
 use App\Http\Controllers\Pharmacy\DashboardController as PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\PurchaseController;
 use App\Http\Controllers\Laboratory\LabTestController;
 use App\Http\Controllers\Laboratory\LabTestResultController;
 use App\Http\Controllers\Laboratory\QualityControlController;
@@ -234,6 +235,15 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/reports/stock', [\App\Http\Controllers\Pharmacy\ReportController::class, 'stock'])->name('pharmacy.reports.stock');
         Route::get('/reports/expiry', [\App\Http\Controllers\Pharmacy\ReportController::class, 'expiry'])->name('pharmacy.reports.expiry');
         Route::delete('/reports/expiry/delete-expired', [\App\Http\Controllers\Pharmacy\ReportController::class, 'deleteExpired'])->name('pharmacy.reports.expiry.delete');
+
+        // Purchase Routes
+        Route::get('/purchases', [PurchaseController::class, 'index'])->name('pharmacy.purchases.index');
+        Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('pharmacy.purchases.create');
+        Route::post('/purchases', [PurchaseController::class, 'store'])->name('pharmacy.purchases.store');
+        Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->name('pharmacy.purchases.show');
+        Route::post('/purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('pharmacy.purchases.receive');
+        Route::post('/purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('pharmacy.purchases.cancel');
+        Route::post('/purchases/suppliers/quick-store', [PurchaseController::class, 'quickStoreSupplier'])->name('pharmacy.purchases.suppliers.quick-store');
     });
 
     // Laboratory Routes

@@ -133,6 +133,7 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
         };
 
         return (
+            <>
             <Card ref={ref} className={cn('w-full', className)} {...props}>
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -185,7 +186,7 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
                                 </div>
                             )}
 
-                            <div className={cn('px-6 overflow-y-auto', maxHeight && `max-h-[${maxHeight}]`)}>
+                            <div className="px-6 overflow-y-auto" style={{ maxHeight }}>
                                 <div className="space-y-4 pr-4">
                                     {items.map((item) => (
                                         <CartItemRow
@@ -246,6 +247,7 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            </>
         );
     }
 );
