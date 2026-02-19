@@ -23,7 +23,7 @@ import {
   Tag,
   Boxes,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import type { MedicineCategory } from '@/types/pharmacy';
 
@@ -82,12 +82,26 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
   });
 
   // Auto-generate code when name or category changes
+  // Use refs to track previous values to avoid re-render loops
+  const prevNameRef = useRef(data.name);
+  const prevCategoryRef = useRef(data.category_id);
+  
   useEffect(() => {
+    // Only update if the values actually changed (not on initial render)
     if (autoGenerateCode && data.name && data.category_id) {
-      const newCode = generateMedicineCode(data.category_id, data.name);
-      setData('medicine_id', newCode);
+      const prevName = prevNameRef.current;
+      const prevCategory = prevCategoryRef.current;
+      
+      if (prevName !== data.name || prevCategory !== data.category_id) {
+        const newCode = generateMedicineCode(data.category_id, data.name);
+        setData('medicine_id', newCode);
+      }
     }
-  }, [data.name, data.category_id, autoGenerateCode]);
+    
+    // Update refs after checking
+    prevNameRef.current = data.name;
+    prevCategoryRef.current = data.category_id;
+  }, [data.name, data.category_id, autoGenerateCode, setData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -521,7 +535,9 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                   )}
                   {data.sale_price > 0 && data.cost_price > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Profit margin: {((data.sale_price - data.cost_price) / data.cost_price * 100).toFixed(1)}%
+                      Profit margin: {data.cost_price > 0 
+                        ? (((data.sale_price - data.cost_price) / data.cost_price) * 100).toFixed(1) + '%'
+                        : 'N/A'}
                     </p>
                   )}
                 </div>

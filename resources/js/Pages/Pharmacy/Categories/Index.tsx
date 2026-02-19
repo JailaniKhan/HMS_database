@@ -21,9 +21,19 @@ import {
   ArrowLeft,
   Search,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { MedicineCategory } from '@/types/pharmacy';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CategoryIndexProps {
   categories: {
@@ -49,36 +59,48 @@ interface CategoryIndexProps {
       total: number;
     };
   };
+  query?: string;
 }
 
-export default function CategoryIndex({ categories }: CategoryIndexProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+export default function CategoryIndex({ categories, query = '' }: CategoryIndexProps) {
+  const [searchTerm, setSearchTerm] = useState(query);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{id: number; name: string; count: number} | null>(null);
 
-  const filteredCategories = categories.data.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Server-side search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== query) {
+        router.get('/pharmacy/categories', { search: searchTerm }, {
+          preserveState: true,
+          preserveScroll: true,
+        });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, query]);
 
-  // Sanitize user input to prevent XSS
-  const sanitizeForDisplay = (text: string): string => {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  };
+  // For display, use server-filtered data (categories.data already contains filtered results)
+  // The search is handled server-side via the router.get call above
 
   const handleDelete = (categoryId: number, categoryName: string, medicineCount: number) => {
-    // Security: Sanitize categoryName before displaying in UI
-    const sanitizedName = sanitizeForDisplay(categoryName);
-    
     if (medicineCount > 0) {
-      // Use a modal or toast notification instead of alert for production
-      // For now, sanitize the input to prevent XSS
-      alert(`Cannot delete the selected category because it contains ${medicineCount} medicine(s). Please reassign or delete these medicines first.`);
+      // Show dialog for categories with medicines
+      setCategoryToDelete({ id: categoryId, name: categoryName, count: medicineCount });
+      setDeleteDialogOpen(true);
       return;
     }
     
-    if (confirm(`Are you sure you want to delete this category? This action cannot be undone.`)) {
-      router.delete(`/pharmacy/categories/${categoryId}`);
+    // Show confirmation dialog for empty categories
+    setCategoryToDelete({ id: categoryId, name: categoryName, count: 0 });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (categoryToDelete) {
+      router.delete(`/pharmacy/categories/${categoryToDelete.id}`);
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -99,7 +121,7 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <Link href="/pharmacy/medicines">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Go back to medicines">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
@@ -202,8 +224,8 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((category) => (
+                  {categories.data.length > 0 ? (
+                    categories.data.map((category) => (
                       <TableRow key={category.id}>
                         <TableCell className="font-medium">
                           #{category.id}
@@ -237,7 +259,7 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Link href={`/pharmacy/categories/${category.id}/edit`}>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" aria-label={`Edit ${category.name}`}>
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -246,6 +268,7 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
                               size="sm"
                               className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                               onClick={() => handleDelete(category.id, category.name, category.medicines_count)}
+                              aria-label={`Delete ${category.name}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -316,6 +339,39 @@ export default function CategoryIndex({ categories }: CategoryIndexProps) {
             </CardContent>
           </Card>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {categoryToDelete && categoryToDelete.count > 0 ? 'Cannot Delete Category' : 'Delete Category'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {categoryToDelete && categoryToDelete.count > 0 ? (
+                  <>
+                    Cannot delete the category <strong>{categoryToDelete.name}</strong> because it contains {categoryToDelete.count} medicine(s). 
+                    Please reassign or delete these medicines first before deleting this category.
+                  </>
+                ) : (
+                  <>Are you sure you want to delete the category <strong>{categoryToDelete?.name}</strong>? This action cannot be undone.</>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              {categoryToDelete && categoryToDelete.count > 0 ? (
+                <AlertDialogAction onClick={() => setDeleteDialogOpen(false)}>OK</AlertDialogAction>
+              ) : (
+                <>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </>
+              )}
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PharmacyLayout>
   );

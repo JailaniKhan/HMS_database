@@ -4,7 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
+import { PriceDisplay } from '@/components/pharmacy';
 import {
     TrendingUp,
     ArrowLeft,
@@ -141,7 +150,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                                <p className="text-2xl font-bold">${summary.totalRevenue.toLocaleString()}</p>
+                                <p className="text-2xl font-bold"><PriceDisplay amount={summary.totalRevenue} /></p>
                             </div>
                         </div>
                     </CardContent>
@@ -155,7 +164,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Avg Order Value</p>
-                                <p className="text-2xl font-bold">${summary.averageOrderValue.toFixed(2)}</p>
+                                <p className="text-2xl font-bold"><PriceDisplay amount={summary.averageOrderValue} /></p>
                             </div>
                         </div>
                     </CardContent>
@@ -189,9 +198,11 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                         {Object.entries(summary.paymentBreakdown).map(([method, amount]) => (
                             <div key={method} className="p-4 rounded-lg bg-muted">
                                 <p className="text-sm text-muted-foreground capitalize">{paymentMethodLabels[method] || method}</p>
-                                <p className="text-xl font-bold">${amount.toLocaleString()}</p>
+                                <p className="text-xl font-bold"><PriceDisplay amount={amount} /></p>
                                 <p className="text-xs text-muted-foreground">
-                                    {((amount / summary.totalRevenue) * 100).toFixed(1)}% of total
+                                    {summary.totalRevenue > 0 
+                                        ? ((amount / summary.totalRevenue) * 100).toFixed(1) + '%'
+                                        : '0%'} of total
                                 </p>
                             </div>
                         ))}
@@ -275,27 +286,27 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b">
-                                    <th className="text-left py-3 px-4 font-medium">Invoice #</th>
-                                    <th className="text-left py-3 px-4 font-medium">Date</th>
-                                    <th className="text-left py-3 px-4 font-medium">Customer</th>
-                                    <th className="text-left py-3 px-4 font-medium">Items</th>
-                                    <th className="text-right py-3 px-4 font-medium">Total</th>
-                                    <th className="text-left py-3 px-4 font-medium">Payment</th>
-                                    <th className="text-left py-3 px-4 font-medium">Status</th>
-                                    <th className="text-right py-3 px-4 font-medium">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-left">Invoice #</TableHead>
+                                    <TableHead className="text-left">Date</TableHead>
+                                    <TableHead className="text-left">Customer</TableHead>
+                                    <TableHead className="text-left">Items</TableHead>
+                                    <TableHead className="text-right">Total</TableHead>
+                                    <TableHead className="text-left">Payment</TableHead>
+                                    <TableHead className="text-left">Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {sales.data.map((sale) => (
-                                    <tr key={sale.id} className="border-b hover:bg-muted/50">
-                                        <td className="py-3 px-4 font-medium">{sale.sale_id}</td>
-                                        <td className="py-3 px-4 text-sm">
+                                    <TableRow key={sale.id}>
+                                        <TableCell className="font-medium">{sale.sale_id}</TableCell>
+                                        <TableCell>
                                             {format(parseISO(sale.created_at), 'MMM d, yyyy')}
-                                        </td>
-                                        <td className="py-3 px-4">
+                                        </TableCell>
+                                        <TableCell>
                                             {sale.patient ? (
                                                 <div>
                                                     <p className="font-medium">
@@ -308,34 +319,34 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                                             ) : (
                                                 <span className="text-muted-foreground">Walk-in Customer</span>
                                             )}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm">
+                                        </TableCell>
+                                        <TableCell>
                                             {sale.items?.length || 0} items
-                                        </td>
-                                        <td className="py-3 px-4 text-right font-medium">
-                                            ${Number(sale.grand_total).toFixed(2)}
-                                        </td>
-                                        <td className="py-3 px-4">
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                            <PriceDisplay amount={Number(sale.grand_total)} />
+                                        </TableCell>
+                                        <TableCell>
                                             <Badge variant="outline" className="capitalize">
                                                 {paymentMethodLabels[sale.payment_method] || sale.payment_method}
                                             </Badge>
-                                        </td>
-                                        <td className="py-3 px-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <Badge className={statusColors[sale.status]}>
                                                 {sale.status}
                                             </Badge>
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
+                                        </TableCell>
+                                        <TableCell className="text-right">
                                             <Link href={route('pharmacy.sales.show', sale.id)}>
                                                 <Button variant="ghost" size="sm">
                                                     View
                                                 </Button>
                                             </Link>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {/* Pagination */}

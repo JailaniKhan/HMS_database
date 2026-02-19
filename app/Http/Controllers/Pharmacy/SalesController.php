@@ -233,7 +233,7 @@ class SalesController extends Controller
             
             Log::info('Sale transaction committed', ['sale_id' => $sale->id]);
             
-            return redirect()->route('pharmacy.sales.show', $sale->id)
+            return redirect()->route('pharmacy.sales.receipt', $sale->id)
                 ->with('success', 'Sale completed successfully.');
                 
         } catch (\Exception $e) {

@@ -4,7 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
+import { PriceDisplay } from '@/components/pharmacy';
 import {
     AlertCircle,
     ArrowLeft,
@@ -188,7 +197,7 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Value at Risk</p>
-                                <p className="text-2xl font-bold">${summary.totalValueAtRisk.toLocaleString()}</p>
+                                <p className="text-2xl font-bold"><PriceDisplay amount={summary.totalValueAtRisk} /></p>
                             </div>
                         </div>
                     </CardContent>
@@ -218,7 +227,11 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                         <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
                             <p className="text-sm text-yellow-600 font-medium">8-30 Days</p>
                             <p className="text-2xl font-bold text-yellow-700">
-                                {Math.max(0, summary.expiring30Days - summary.expiringSoonCount)}
+                                {/* Backend should provide expiring8to30Days count for accurate calculation */}
+                                {/* Fallback: Calculate from available data, but may overlap with expiringSoonCount */}
+                                {summary.expiring30Days > summary.expiringSoonCount 
+                                    ? summary.expiring30Days - summary.expiringSoonCount 
+                                    : 0}
                             </p>
                             <p className="text-xs text-yellow-500">Plan for usage</p>
                         </div>
@@ -336,47 +349,47 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b">
-                                    <th className="text-left py-3 px-4 font-medium">Medicine</th>
-                                    <th className="text-left py-3 px-4 font-medium">Batch #</th>
-                                    <th className="text-right py-3 px-4 font-medium">Stock</th>
-                                    <th className="text-left py-3 px-4 font-medium">Expiry Date</th>
-                                    <th className="text-left py-3 px-4 font-medium">Time Left</th>
-                                    <th className="text-right py-3 px-4 font-medium">Value</th>
-                                    <th className="text-center py-3 px-4 font-medium">Status</th>
-                                    <th className="text-right py-3 px-4 font-medium">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-left">Medicine</TableHead>
+                                    <TableHead className="text-left">Batch #</TableHead>
+                                    <TableHead className="text-right">Stock</TableHead>
+                                    <TableHead className="text-left">Expiry Date</TableHead>
+                                    <TableHead className="text-left">Time Left</TableHead>
+                                    <TableHead className="text-right">Value</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {medicines.data.map((medicine) => {
                                     const status = getExpiryStatus(medicine);
                                     const stockValue = medicine.stock_quantity * medicine.unit_price;
                                     return (
-                                        <tr key={medicine.id} className="border-b hover:bg-muted/50">
-                                            <td className="py-3 px-4">
+                                        <TableRow key={medicine.id} className="border-b hover:bg-muted/50">
+                                            <TableCell className="py-3 px-4">
                                                 <div>
                                                     <p className="font-medium">{medicine.name}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {medicine.medicine_id}
                                                     </p>
                                                 </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-sm font-mono">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-sm font-mono">
                                                 {medicine.batch_number || 'N/A'}
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-right">
                                                 {medicine.stock_quantity}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-sm">
                                                 {medicine.expiry_date ? (
                                                     format(parseISO(medicine.expiry_date), 'MMM d, yyyy')
                                                 ) : (
                                                     <span className="text-muted-foreground">N/A</span>
                                                 )}
-                                            </td>
-                                            <td className="py-3 px-4 text-sm">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-sm">
                                                 <span className={`font-medium ${
                                                     status === 'expired' ? 'text-red-600' :
                                                     status === 'critical' ? 'text-orange-600' :
@@ -385,16 +398,16 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                                                 }`}>
                                                     {getDaysUntilExpiryText(medicine)}
                                                 </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
-                                                ${stockValue.toFixed(2)}
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-right">
+                                                <PriceDisplay amount={stockValue} />
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-center">
                                                 <Badge variant="outline" className={expiryStatusColors[status]}>
                                                     {expiryStatusLabels[status]}
                                                 </Badge>
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
+                                            </TableCell>
+                                            <TableCell className="py-3 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link href={route('pharmacy.medicines.show', medicine.id)}>
                                                         <Button variant="ghost" size="sm">
@@ -406,17 +419,24 @@ export default function ExpiryReport({ medicines, alerts, filters, summary }: Ex
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-red-600 hover:text-red-700"
+                                                            onClick={() => {
+                                                                if (confirm('Are you sure you want to delete this expired medicine? This action cannot be undone.')) {
+                                                                    router.delete(route('pharmacy.reports.expiry.delete'), {
+                                                                        preserveScroll: true,
+                                                                    });
+                                                                }
+                                                            }}
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     )}
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {/* Pagination */}

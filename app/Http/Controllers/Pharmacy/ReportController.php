@@ -341,4 +341,20 @@ class ReportController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Delete all expired medicines.
+     */
+    public function deleteExpired(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasPermission('delete-medicine')) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        $deletedCount = Medicine::where('expiry_date', '<', now())->delete();
+        
+        return redirect()->back()->with('success', "Successfully deleted {$deletedCount} expired medicine(ies).");
+    }
 }

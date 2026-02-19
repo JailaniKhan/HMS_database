@@ -45,15 +45,15 @@ const alertTypeLabels: Record<string, string> = {
 };
 
 const priorityColors: Record<string, string> = {
-    low: 'bg-blue-100 text-blue-800 border-blue-200',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    high: 'bg-orange-100 text-orange-800 border-orange-200',
-    critical: 'bg-red-100 text-red-800 border-red-200',
+    low: 'bg-blue-500/10 text-blue-500 border-blue-200',
+    medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-200',
+    high: 'bg-orange-500/10 text-orange-500 border-orange-200',
+    critical: 'bg-red-500/10 text-red-500 border-red-200',
 };
 
 const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    resolved: 'bg-green-100 text-green-800',
+    pending: 'bg-yellow-500/10 text-yellow-500',
+    resolved: 'bg-green-500/10 text-green-500',
 };
 
 export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps) {
@@ -275,7 +275,7 @@ export default function AlertsIndex({ alerts, filters, stats }: AlertsIndexProps
                                         key={alert.id}
                                         className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                                     >
-```                                        <div className={`p-3 rounded-lg ${priorityColors[alert.priority]}`}>
+                                        <div className={`p-3 rounded-lg ${priorityColors[alert.priority]}`}>
                                             <Icon className="size-5" />
                                         </div>
 

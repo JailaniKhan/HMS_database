@@ -31,80 +31,82 @@ class SalesService
      */
     public function processSale(array $data, int $userId): Sale
     {
-        // Validate stock availability
-        $this->validateStock($data['items']);
+        return DB::transaction(function () use ($data, $userId) {
+            // Validate stock availability
+            $this->validateStock($data['items']);
 
-        // Calculate totals
-        $totals = $this->calculateTotals(
-            $data['items'],
-            $data['discount_amount'] ?? 0,
-            $data['tax_amount'] ?? 0
-        );
-
-        // Generate invoice number
-        $invoiceNumber = $this->generateInvoiceNumber();
-
-        // Create sale record
-        $sale = Sale::create([
-            'sale_id' => $invoiceNumber,
-            'patient_id' => $data['patient_id'] ?? null,
-            'prescription_id' => $data['prescription_id'] ?? null,
-            'sold_by' => $userId,
-            'total_amount' => $totals['subtotal'],
-            'discount' => $totals['discount'],
-            'tax' => $totals['tax'],
-            'grand_total' => $totals['total'],
-            'payment_method' => $data['payment_method'],
-            'status' => 'completed',
-            'notes' => $data['notes'] ?? null,
-            'is_prescription_sale' => $data['is_prescription_sale'] ?? false,
-        ]);
-
-        // Create sales items and deduct stock
-        foreach ($data['items'] as $item) {
-            $medicine = Medicine::findOrFail($item['medicine_id']);
-
-            // Create sales item
-            SalesItem::create([
-                'sale_id' => $sale->id,
-                'medicine_id' => $item['medicine_id'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total_price' => $item['quantity'] * $item['unit_price'],
-                'discount' => $item['discount'] ?? 0,
-            ]);
-
-            // Deduct stock
-            $this->inventoryService->deductStock(
-                $item['medicine_id'],
-                $item['quantity'],
-                'Sale: ' . $invoiceNumber,
-                $sale->id
+            // Calculate totals
+            $totals = $this->calculateTotals(
+                $data['items'],
+                $data['discount_amount'] ?? 0,
+                $data['tax_amount'] ?? 0
             );
 
-            // If this is a prescription sale, update the prescription item dispensed quantity
-            if (!empty($data['prescription_id'])) {
-                $this->updatePrescriptionItemDispensed(
-                    $data['prescription_id'],
+            // Generate invoice number
+            $invoiceNumber = $this->generateInvoiceNumber();
+
+            // Create sale record
+            $sale = Sale::create([
+                'sale_id' => $invoiceNumber,
+                'patient_id' => $data['patient_id'] ?? null,
+                'prescription_id' => $data['prescription_id'] ?? null,
+                'sold_by' => $userId,
+                'total_amount' => $totals['subtotal'],
+                'discount' => $totals['discount'],
+                'tax' => $totals['tax'],
+                'grand_total' => $totals['total'],
+                'payment_method' => $data['payment_method'],
+                'status' => 'completed',
+                'notes' => $data['notes'] ?? null,
+                'is_prescription_sale' => $data['is_prescription_sale'] ?? false,
+            ]);
+
+            // Create sales items and deduct stock
+            foreach ($data['items'] as $item) {
+                $medicine = Medicine::findOrFail($item['medicine_id']);
+
+                // Create sales item
+                SalesItem::create([
+                    'sale_id' => $sale->id,
+                    'medicine_id' => $item['medicine_id'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total_price' => $item['quantity'] * $item['unit_price'],
+                    'discount' => $item['discount'] ?? 0,
+                ]);
+
+                // Deduct stock
+                $this->inventoryService->deductStock(
                     $item['medicine_id'],
-                    $item['quantity']
+                    $item['quantity'],
+                    'Sale: ' . $invoiceNumber,
+                    $sale->id
                 );
+
+                // If this is a prescription sale, update the prescription item dispensed quantity
+                if (!empty($data['prescription_id'])) {
+                    $this->updatePrescriptionItemDispensed(
+                        $data['prescription_id'],
+                        $item['medicine_id'],
+                        $item['quantity']
+                    );
+                }
             }
-        }
 
-        // Log the sale creation
-        $logMessage = $sale->is_prescription_sale
-            ? "Prescription {$invoiceNumber} dispensed successfully with " . count($data['items']) . " items"
-            : "Sale {$invoiceNumber} processed successfully with " . count($data['items']) . " items";
-        
-        $this->auditLogService->logActivity(
-            $sale->is_prescription_sale ? 'Prescription Dispensed' : 'Sale Processed',
-            'Pharmacy',
-            $logMessage,
-            'info'
-        );
+            // Log the sale creation
+            $logMessage = $sale->is_prescription_sale
+                ? "Prescription {$invoiceNumber} dispensed successfully with " . count($data['items']) . " items"
+                : "Sale {$invoiceNumber} processed successfully with " . count($data['items']) . " items";
+            
+            $this->auditLogService->logActivity(
+                $sale->is_prescription_sale ? 'Prescription Dispensed' : 'Sale Processed',
+                'Pharmacy',
+                $logMessage,
+                'info'
+            );
 
-        return $sale->fresh(['items.medicine', 'patient', 'soldBy', 'prescription']);
+            return $sale->fresh(['items.medicine', 'patient', 'soldBy', 'prescription']);
+        });
     }
 
     /**

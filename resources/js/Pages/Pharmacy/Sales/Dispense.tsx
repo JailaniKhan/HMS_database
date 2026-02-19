@@ -147,6 +147,8 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
         } else {
             disc = discountValue;
         }
+        // Ensure discount doesn't exceed subtotal
+        disc = Math.min(disc, sub);
         const calculatedTax = sub * (taxRate / 100);
         const tot = sub - disc + calculatedTax;
         return {
@@ -156,6 +158,9 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
             total: tot,
         };
     }, [cartItems, discountValue, discountType, taxRate]);
+
+    // Check if discount exceeds subtotal (for validation warning)
+    const discountExceedsSubtotal = discountType === 'fixed' && discountValue > subtotal && subtotal > 0;
 
     // Cart handlers
     const handleAddToCart = useCallback((medicine: Medicine) => {
@@ -275,8 +280,8 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
         post('/pharmacy/sales', {
             onSuccess: () => {
                 setShowCheckoutDialog(false);
-                setSaleComplete(true);
-                setCompletedSaleId(null);
+                // Sale completed successfully - controller redirects to receipt page
+                // No need to set saleComplete state as page will redirect
             },
         });
     };
@@ -704,6 +709,14 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {discountExceedsSubtotal && (
+                                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                        <p className="text-sm text-amber-800 flex items-center gap-2">
+                                            <AlertCircle className="h-4 w-4" />
+                                            Discount cannot exceed subtotal ({formatCurrency(subtotal)})
+                                        </p>
+                                    </div>
+                                )}
                                 <Tabs value={discountType} onValueChange={(v) => setDiscountType(v as 'percentage' | 'fixed')}>
                                     <TabsList className="grid w-full grid-cols-2">
                                         <TabsTrigger value="percentage">Percentage</TabsTrigger>
@@ -839,6 +852,7 @@ export default function Dispense({ medicines, patients, prescriptions, taxRate =
                                         onClick={handleCheckout}
                                         className="w-full"
                                         size="lg"
+                                        disabled={discountExceedsSubtotal || total < 0}
                                     >
                                         <Receipt className="mr-2 h-4 w-4" />
                                         Checkout

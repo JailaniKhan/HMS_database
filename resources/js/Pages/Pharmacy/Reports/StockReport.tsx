@@ -4,7 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
+import { PriceDisplay } from '@/components/pharmacy';
 import {
     Package,
     ArrowLeft,
@@ -141,7 +150,7 @@ export default function StockReport({ medicines, filters, summary, categories }:
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Total Value</p>
-                                <p className="text-2xl font-bold">${summary.totalValue.toLocaleString()}</p>
+                                <p className="text-2xl font-bold"><PriceDisplay amount={summary.totalValue} /></p>
                             </div>
                         </div>
                     </CardContent>
@@ -191,7 +200,7 @@ export default function StockReport({ medicines, filters, summary, categories }:
                                 <p className="text-sm text-muted-foreground">{category.name}</p>
                                 <p className="text-xl font-bold">{category.count} items</p>
                                 <p className="text-xs text-muted-foreground">
-                                    ${category.value.toLocaleString()} value
+                                    <PriceDisplay amount={category.value} /> value
                                 </p>
                             </div>
                         ))}
@@ -268,37 +277,37 @@ export default function StockReport({ medicines, filters, summary, categories }:
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b">
-                                    <th className="text-left py-3 px-4 font-medium">Medicine</th>
-                                    <th className="text-left py-3 px-4 font-medium">Category</th>
-                                    <th className="text-right py-3 px-4 font-medium">Stock</th>
-                                    <th className="text-right py-3 px-4 font-medium">Reorder Level</th>
-                                    <th className="text-right py-3 px-4 font-medium">Unit Price</th>
-                                    <th className="text-right py-3 px-4 font-medium">Value</th>
-                                    <th className="text-center py-3 px-4 font-medium">Status</th>
-                                    <th className="text-right py-3 px-4 font-medium">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-left">Medicine</TableHead>
+                                    <TableHead className="text-left">Category</TableHead>
+                                    <TableHead className="text-right">Stock</TableHead>
+                                    <TableHead className="text-right">Reorder Level</TableHead>
+                                    <TableHead className="text-right">Unit Price</TableHead>
+                                    <TableHead className="text-right">Value</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {medicines.data.map((medicine) => {
                                     const status = getStockStatus(medicine);
                                     const stockValue = Number(medicine.stock_quantity) * Number(medicine.unit_price);
                                     return (
-                                        <tr key={medicine.id} className="border-b hover:bg-muted/50">
-                                            <td className="py-3 px-4">
+                                        <TableRow key={medicine.id}>
+                                            <TableCell>
                                                 <div>
                                                     <p className="font-medium">{medicine.name}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {medicine.medicine_id}
                                                     </p>
                                                 </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-sm">
+                                            </TableCell>
+                                            <TableCell>
                                                 {medicine.category?.name || 'N/A'}
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
+                                            </TableCell>
+                                            <TableCell className="text-right">
                                                 <span className={`font-medium ${
                                                     status === 'out_of_stock' ? 'text-red-600' :
                                                     status === 'low_stock' ? 'text-yellow-600' :
@@ -306,33 +315,33 @@ export default function StockReport({ medicines, filters, summary, categories }:
                                                 }`}>
                                                     {medicine.stock_quantity}
                                                 </span>
-                                            </td>
-                                            <td className="py-3 px-4 text-right text-sm">
+                                            </TableCell>
+                                            <TableCell className="text-right">
                                                 {medicine.reorder_level}
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
-                                                ${Number(medicine.unit_price).toFixed(2)}
-                                            </td>
-                                            <td className="py-3 px-4 text-right font-medium">
-                                                ${Number(stockValue).toFixed(2)}
-                                            </td>
-                                            <td className="py-3 px-4 text-center">
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <PriceDisplay amount={Number(medicine.unit_price)} />
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium">
+                                                <PriceDisplay amount={Number(stockValue)} />
+                                            </TableCell>
+                                            <TableCell className="text-center">
                                                 <Badge className={stockStatusColors[status]}>
                                                     {stockStatusLabels[status]}
                                                 </Badge>
-                                            </td>
-                                            <td className="py-3 px-4 text-right">
+                                            </TableCell>
+                                            <TableCell className="text-right">
                                                 <Link href={route('pharmacy.medicines.show', medicine.id)}>
                                                     <Button variant="ghost" size="sm">
                                                         View
                                                     </Button>
                                                 </Link>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {/* Pagination */}

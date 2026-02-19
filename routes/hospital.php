@@ -213,11 +213,14 @@ Route::middleware(['web', 'auth'])->group(function () {
         
         // Quick Patient Creation for Sales (returns JSON)
         Route::post('/quick-patient', [PatientController::class, 'quickStore'])->name('pharmacy.quick-patient.store');
+        
+        // Export route must come BEFORE parameterized routes
+        Route::get('/sales/export', [SalesController::class, 'export'])->name('pharmacy.sales.export');
+        
         Route::get('/sales/{sale}', [SalesController::class, 'show'])->name('pharmacy.sales.show');
         Route::post('/sales/{sale}/void', [SalesController::class, 'void'])->name('pharmacy.sales.void');
         Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])->name('pharmacy.sales.receipt');
         Route::get('/sales/{sale}/print', [SalesController::class, 'printReceipt'])->name('pharmacy.sales.print');
-        Route::get('/sales/export', [SalesController::class, 'export'])->name('pharmacy.sales.export');
 
         Route::get('/alerts', [AlertController::class, 'index'])->name('pharmacy.alerts.index');
         Route::get('/alerts/pending', [AlertController::class, 'pending'])->name('pharmacy.alerts.pending');
@@ -230,6 +233,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/reports/sales', [\App\Http\Controllers\Pharmacy\ReportController::class, 'sales'])->name('pharmacy.reports.sales');
         Route::get('/reports/stock', [\App\Http\Controllers\Pharmacy\ReportController::class, 'stock'])->name('pharmacy.reports.stock');
         Route::get('/reports/expiry', [\App\Http\Controllers\Pharmacy\ReportController::class, 'expiry'])->name('pharmacy.reports.expiry');
+        Route::delete('/reports/expiry/delete-expired', [\App\Http\Controllers\Pharmacy\ReportController::class, 'deleteExpired'])->name('pharmacy.reports.expiry.delete');
     });
 
     // Laboratory Routes

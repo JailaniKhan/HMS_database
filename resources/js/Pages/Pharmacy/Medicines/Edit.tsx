@@ -586,6 +586,30 @@ export default function MedicineEdit({ medicine, categories }: MedicineEditProps
                   )}
                 </div>
                 
+                {/* Barcode */}
+                <div className="space-y-2">
+                  <Label htmlFor="barcode">
+                    Barcode
+                  </Label>
+                  <div className="relative">
+                    <Barcode className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="barcode"
+                      name="barcode"
+                      value={data.barcode}
+                      onChange={handleChange}
+                      placeholder="Enter barcode (optional)"
+                      className={cn("pl-9", errors.barcode && "border-destructive")}
+                    />
+                  </div>
+                  {errors.barcode && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.barcode}
+                    </p>
+                  )}
+                </div>
+                
                 {/* Stock Quantity */}
                 <div className="space-y-2">
                   <Label htmlFor="stock_quantity">

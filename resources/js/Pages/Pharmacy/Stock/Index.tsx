@@ -30,6 +30,13 @@ import { cn } from '@/lib/utils';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine, MedicineCategory } from '@/types/pharmacy';
 
+// Helper function to decode HTML entities safely
+const decodeHtmlEntity = (html: string): string => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 interface StockItem extends Medicine {
     category?: MedicineCategory;
 }
@@ -293,7 +300,7 @@ export default function StockIndex({ medicines, categories, stats, filters = {} 
                                         <TableHead>Category</TableHead>
                                         <TableHead className="text-center">Current Stock</TableHead>
                                         <TableHead className="text-center">Min Level</TableHead>
-                                        <TableHead className="text-center">Reorder Point</TableHead>
+                                        <TableHead className="text-center">Suggested Order Qty</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -338,6 +345,7 @@ export default function StockIndex({ medicines, categories, stats, filters = {} 
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <span className="text-muted-foreground">
+                                                            {/* Column renamed to 'Suggested Order Qty' to clarify this is a calculated value */}
                                                             {medicine.reorder_level ? Math.ceil(medicine.reorder_level * 1.5) : '-'}
                                                         </span>
                                                     </TableCell>
@@ -411,7 +419,7 @@ export default function StockIndex({ medicines, categories, stats, filters = {} 
                                                             : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
                                                         !link.url && 'pointer-events-none opacity-50'
                                                     )}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{ __html: decodeHtmlEntity(link.label) }}
                                                 />
                                             ))}
                                     </div>

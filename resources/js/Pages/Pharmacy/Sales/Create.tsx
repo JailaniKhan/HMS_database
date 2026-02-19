@@ -112,6 +112,8 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
         } else {
             disc = discountValue;
         }
+        // Ensure discount doesn't exceed subtotal
+        disc = Math.min(disc, sub);
         const calculatedTax = sub * (taxRate / 100);
         const tot = sub - disc + calculatedTax;
         return {
@@ -121,6 +123,9 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
             total: tot,
         };
     }, [cartItems, discountValue, discountType, taxRate]);
+
+    // Check if discount exceeds subtotal (for validation warning)
+    const discountExceedsSubtotal = discountType === 'fixed' && discountValue > subtotal && subtotal > 0;
 
     // Cart handlers
     const handleAddToCart = useCallback((medicine: Medicine) => {
@@ -239,9 +244,8 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
         post('/pharmacy/sales', {
             onSuccess: () => {
                 setShowCheckoutDialog(false);
-                setSaleComplete(true);
-                // Sale ID will be set from redirect or flash data
-                setCompletedSaleId(null);
+                // Sale completed successfully - controller redirects to receipt page
+                // No need to set saleComplete state as page will redirect
             },
         });
     };
@@ -419,6 +423,7 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={handleClearPatient}
+                                                aria-label="Clear selected patient"
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
@@ -529,6 +534,14 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {discountExceedsSubtotal && (
+                                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                        <p className="text-sm text-amber-800 flex items-center gap-2">
+                                            <AlertCircle className="h-4 w-4" />
+                                            Discount cannot exceed subtotal ({formatCurrency(subtotal)})
+                                        </p>
+                                    </div>
+                                )}
                                 <Tabs value={discountType} onValueChange={(v) => setDiscountType(v as 'percentage' | 'fixed')}>
                                     <TabsList className="grid w-full grid-cols-2">
                                         <TabsTrigger value="percentage">Percentage</TabsTrigger>
@@ -664,6 +677,7 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                         onClick={handleCheckout}
                                         className="w-full"
                                         size="lg"
+                                        disabled={discountExceedsSubtotal || total < 0}
                                     >
                                         <Receipt className="mr-2 h-4 w-4" />
                                         Checkout

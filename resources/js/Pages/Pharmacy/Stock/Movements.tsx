@@ -29,6 +29,13 @@ import { cn } from '@/lib/utils';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Medicine } from '@/types/pharmacy';
 
+// Helper function to decode HTML entities safely
+const decodeHtmlEntity = (html: string): string => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 interface StockMovement {
     id: number;
     medicine_id: number;
@@ -398,7 +405,7 @@ export default function Movements({ movements, medicines, filters = {} }: Moveme
                                                             : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
                                                         !link.url && 'pointer-events-none opacity-50'
                                                     )}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{ __html: decodeHtmlEntity(link.label) }}
                                                 />
                                             ))}
                                     </div>

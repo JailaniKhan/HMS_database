@@ -5,6 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PriceDisplay, TotalPrice } from './PriceDisplay';
 import type { CartItem } from '@/types/pharmacy';
 import {
@@ -110,6 +120,18 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
         // Check if any item exceeds stock
         const stockWarnings = items.filter((item) => item.quantity > item.stock_quantity);
 
+        // State for clear cart confirmation
+        const [showClearCartDialog, setShowClearCartDialog] = React.useState(false);
+
+        const handleClearCart = () => {
+            setShowClearCartDialog(true);
+        };
+
+        const confirmClearCart = () => {
+            onClearCart();
+            setShowClearCartDialog(false);
+        };
+
         return (
             <Card ref={ref} className={cn('w-full', className)} {...props}>
                 <CardHeader className="pb-3">
@@ -127,8 +149,9 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={onClearCart}
+                                onClick={handleClearCart}
                                 className="text-destructive hover:text-destructive"
+                                aria-label="Clear cart"
                             >
                                 <Trash2 className="size-4 mr-1" />
                                 Clear
@@ -205,6 +228,24 @@ const Cart = React.forwardRef<HTMLDivElement, CartProps>(
                     </>
                 )}
             </Card>
+
+            {/* Clear Cart Confirmation Dialog */}
+            <AlertDialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Clear Cart?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to clear all items from the cart? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmClearCart} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Clear Cart
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         );
     }
 );

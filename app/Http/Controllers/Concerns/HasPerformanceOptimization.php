@@ -20,8 +20,25 @@ trait HasPerformanceOptimization
      */
     protected function clearStaticCache(string $pattern): void
     {
-        // Note: In production, use Cache::tags() for better cache management
-        Cache::flush();
+        // Clear specific cache keys based on pattern instead of flushing all cache
+        $cacheKeys = [
+            'medicine_categories' => 'medicine_categories_*',
+            'departments' => 'departments_*',
+            'insurance_providers' => 'insurance_providers_*',
+            'doctors_list' => 'doctors_list_*',
+            'patients_list' => 'patients_list_*',
+        ];
+
+        // If pattern matches a known key, clear only that cache
+        if (isset($cacheKeys[$pattern])) {
+            Cache::forget($cacheKeys[$pattern]);
+            return;
+        }
+
+        // Clear all known cache keys
+        foreach ($cacheKeys as $key => $fullPattern) {
+            Cache::forget($key);
+        }
     }
 
     /**

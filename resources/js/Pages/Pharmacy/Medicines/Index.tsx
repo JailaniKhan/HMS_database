@@ -22,6 +22,13 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { Medicine, MedicineCategory } from '@/types/pharmacy';
 
+// Helper function to decode HTML entities safely
+const decodeHtmlEntity = (html: string): string => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
+
 interface MedicineIndexProps {
   medicines: {
     data: Medicine[];
@@ -51,6 +58,13 @@ interface MedicineIndexProps {
   category_id?: string;
   stock_status?: string;
   expiry_status?: string;
+  // Backend-provided stats for accurate counts across all pages
+  stats?: {
+    total: number;
+    inStock: number;
+    lowStock: number;
+    outOfStock: number;
+  };
 }
 
 export default function MedicineIndex({ 
@@ -59,7 +73,8 @@ export default function MedicineIndex({
   query = '', 
   category_id = '',
   stock_status = '',
-  expiry_status = ''
+  expiry_status = '',
+  stats: backendStats
 }: MedicineIndexProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState<FilterState>({
@@ -98,14 +113,19 @@ export default function MedicineIndex({
     },
   ], [categoryOptions]);
 
-  // Statistics
+  // Statistics - use backend stats if available, otherwise compute from current page (less accurate)
   const stats = useMemo(() => {
+    // If backend provides stats, use those (accurate across all pages)
+    if (backendStats) {
+      return backendStats;
+    }
+    // Fallback: compute from current page data (may be inaccurate when paginated)
     const total = medicines.meta?.total || 0;
     const inStock = medicines.data?.filter(m => m.stock_quantity > m.reorder_level).length || 0;
     const lowStock = medicines.data?.filter(m => m.stock_quantity > 0 && m.stock_quantity <= m.reorder_level).length || 0;
     const outOfStock = medicines.data?.filter(m => m.stock_quantity <= 0).length || 0;
     return { total, inStock, lowStock, outOfStock };
-  }, [medicines]);
+  }, [medicines, backendStats]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -423,7 +443,7 @@ export default function MedicineIndex({
                           : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
                         !link.url && 'pointer-events-none opacity-50'
                       )}
-                      dangerouslySetInnerHTML={{ __html: link.label }}
+                      dangerouslySetInnerHTML={{ __html: decodeHtmlEntity(link.label) }}
                     />
                   ))}
               </div>

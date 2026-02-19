@@ -69,7 +69,10 @@ export default function Receipt({ sale, pharmacy }: ReceiptProps) {
     };
 
     const handleDownload = () => {
-        // In a real implementation, this would generate a PDF
+        // PDF generation is not currently implemented.
+        // In a production environment, this would use a library like jsPDF, pdfmake, or
+        // a server-side PDF generation service to create and download a PDF receipt.
+        // For now, this opens the print view which can be printed to PDF via the browser.
         window.open(`/pharmacy/sales/${sale.id}/print`, '_blank');
     };
 
@@ -304,6 +307,9 @@ export default function Receipt({ sale, pharmacy }: ReceiptProps) {
                             </div>
 
                             {/* QR Code Placeholder */}
+                            {/* Note: This is a placeholder QR code visual. In a production implementation,
+                               this would encode actual sale data (e.g., sale ID, timestamp, total)
+                               using a QR code library like qrcode.react to enable digital verification. */}
                             <div className="flex justify-center pt-4">
                                 <div className="w-24 h-24 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
                                     <div className="text-center">

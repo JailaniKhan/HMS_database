@@ -33,6 +33,22 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import HospitalLayout from '@/layouts/PharmacyLayout';
 import type { Sale } from '@/types/pharmacy';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+
+// Helper function to decode HTML entities safely
+const decodeHtmlEntity = (html: string): string => {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+};
 
 interface Patient {
     id: number;
@@ -97,6 +113,9 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
         date_from: filters.date_from || '',
         date_to: filters.date_to || '',
     });
+    const [voidDialogOpen, setVoidDialogOpen] = useState(false);
+    const [voidReason, setVoidReason] = useState('');
+    const [saleToVoid, setSaleToVoid] = useState<number | null>(null);
 
     // Filter configurations
     const filterConfigs: FilterConfig[] = useMemo(() => [
@@ -210,6 +229,26 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
         if (localFilters.date_to) params.append('date_to', localFilters.date_to as string);
         
         window.location.href = `/pharmacy/sales/export?${params.toString()}`;
+    };
+
+    const handleVoid = () => {
+        if (!voidReason.trim() || !saleToVoid) return;
+        
+        router.post(`/pharmacy/sales/${saleToVoid}/void`, {
+            reason: voidReason,
+        }, {
+            onSuccess: () => {
+                setVoidDialogOpen(false);
+                setVoidReason('');
+                setSaleToVoid(null);
+            },
+        });
+    };
+
+    const openVoidDialog = (saleId: number) => {
+        setSaleToVoid(saleId);
+        setVoidReason('');
+        setVoidDialogOpen(true);
     };
 
     return (
@@ -404,13 +443,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                                                                 variant="ghost" 
                                                                 size="sm"
                                                                 className="text-destructive hover:text-destructive"
-                                                                onClick={() => {
-                                                                    if (confirm('Are you sure you want to void this sale?')) {
-                                                                        router.post(`/pharmacy/sales/${sale.id}/void`, {
-                                                                            reason: 'Voided by user'
-                                                                        });
-                                                                    }
-                                                                }}
+                                                                onClick={() => openVoidDialog(sale.id)}
                                                             >
                                                                 <Ban className="h-4 w-4" />
                                                             </Button>
@@ -469,7 +502,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                                                             : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
                                                         !link.url && 'pointer-events-none opacity-50'
                                                     )}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    dangerouslySetInnerHTML={{ __html: decodeHtmlEntity(link.label) }}
                                                 />
                                             ))}
                                     </div>
@@ -488,6 +521,44 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Void Sale Dialog */}
+                <Dialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Void Sale</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to void this sale? This action cannot be undone and will restore stock quantities.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Reason for voiding</label>
+                                <Textarea
+                                    value={voidReason}
+                                    onChange={(e) => setVoidReason(e.target.value)}
+                                    placeholder="Enter reason for voiding this sale..."
+                                    rows={3}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setVoidDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleVoid}
+                                disabled={!voidReason.trim()}
+                            >
+                                Void Sale
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </HospitalLayout>
     );

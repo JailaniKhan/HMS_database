@@ -24,6 +24,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Medicine, MedicineCategory, SalesItem, StockMovement } from '@/types/pharmacy';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface MedicineShowProps {
   medicine: Medicine & {
@@ -34,6 +45,8 @@ interface MedicineShowProps {
 }
 
 export default function MedicineShow({ medicine, recentSales, stockHistory }: MedicineShowProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   // Determine stock status
   const getStockStatus = (): import('@/components/pharmacy').StockStatus => {
     if (medicine.stock_quantity <= 0) return 'out-of-stock';
@@ -84,31 +97,35 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
   };
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this medicine? This action cannot be undone.')) {
-      // Use router.visit with POST method and _method spoofing to avoid 405 errors
-      router.visit(`/pharmacy/medicines/${medicine.id}`, {
-        method: 'post',
-        data: {
-          _method: 'DELETE',
-        },
-        onSuccess: () => {
-          console.log('Medicine deleted successfully');
-        },
-        onError: (errors) => {
-          console.error('Delete failed:', errors);
-          alert('Failed to delete medicine. Please try again.');
-        },
-      });
-    }
+    setDeleteDialogOpen(true);
   };
 
-  // Calculate total sales - ensure proper number conversion
+  const confirmDelete = () => {
+    // Use router.visit with POST method and _method spoofing to avoid 405 errors
+    router.visit(`/pharmacy/medicines/${medicine.id}`, {
+      method: 'post',
+      data: {
+        _method: 'DELETE',
+      },
+      onSuccess: () => {
+        console.log('Medicine deleted successfully');
+      },
+      onError: (errors) => {
+        console.error('Delete failed:', errors);
+        alert('Failed to delete medicine. Please try again.');
+      },
+    });
+    setDeleteDialogOpen(false);
+  };
+
+  // Calculate total sales - simplified type handling
+  // Note: Backend should ensure total_price is always numeric. This is a defensive check.
   const totalSalesQuantity = recentSales.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
   const totalSalesRevenue = recentSales.reduce((sum, sale) => {
     const price = sale.total_price;
-    // Handle null, undefined, or string values
-    if (price === null || price === undefined) return sum;
-    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    // Handle potential null/undefined values gracefully
+    if (price == null) return sum;
+    const numPrice = Number(price);
     return sum + (isNaN(numPrice) ? 0 : numPrice);
   }, 0);
 
@@ -523,6 +540,24 @@ export default function MedicineShow({ medicine, recentSales, stockHistory }: Me
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Medicine</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{medicine.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PharmacyLayout>
   );
 }
