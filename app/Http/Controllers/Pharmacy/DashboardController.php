@@ -90,19 +90,21 @@ class DashboardController extends Controller
             ->sum('grand_total');
         
         // Calculate Today's Profit using actual cost prices from sales_items
-        // Profit = (unit_price - cost_price) * quantity
+        // Profit = (total_price - cost_price_at_sale_time)
+        // Using total_price which already accounts for item-level discounts
         $todayProfit = DB::table('sales_items')
             ->join('sales', 'sales_items.sale_id', '=', 'sales.id')
             ->whereDate('sales.created_at', $today)
             ->whereIn('sales.status', $validStatuses)
-            ->selectRaw('SUM(sales_items.quantity * (sales_items.unit_price - COALESCE(sales_items.cost_price, 0))) as profit')
+            ->selectRaw('SUM(sales_items.total_price - (sales_items.quantity * COALESCE(sales_items.cost_price, 0))) as profit')
             ->value('profit') ?? 0;
         
         // Calculate Total Profit using actual cost prices from sales_items
+        // Using total_price which already accounts for item-level discounts
         $totalProfit = DB::table('sales_items')
             ->join('sales', 'sales_items.sale_id', '=', 'sales.id')
             ->whereIn('sales.status', $validStatuses)
-            ->selectRaw('SUM(sales_items.quantity * (sales_items.unit_price - COALESCE(sales_items.cost_price, 0))) as profit')
+            ->selectRaw('SUM(sales_items.total_price - (sales_items.quantity * COALESCE(sales_items.cost_price, 0))) as profit')
             ->value('profit') ?? 0;
         
         // Low stock count (stock_quantity <= 10)

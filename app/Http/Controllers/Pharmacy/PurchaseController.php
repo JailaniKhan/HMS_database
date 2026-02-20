@@ -346,7 +346,7 @@ class PurchaseController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return back()->withErrors($validator)->withInput();
         }
         
         $supplier = Supplier::create([
@@ -359,9 +359,9 @@ class PurchaseController extends Controller
             'is_active' => true,
         ]);
         
-        return response()->json([
-            'id' => $supplier->id,
-            'name' => $supplier->name,
-        ]);
+        return back()
+            ->with('success', 'Supplier created successfully.')
+            ->with('supplier', $supplier);
     }
 }
+

@@ -3,17 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -30,9 +22,6 @@ import {
     User,
     Plus,
     Receipt,
-    CreditCard,
-    Wallet,
-    Landmark,
     Percent,
     Currency,
     Calculator,
@@ -576,67 +565,6 @@ export default function SaleCreate({ medicines, patients, taxRate = 0 }: SaleCre
                                         </div>
                                     </TabsContent>
                                 </Tabs>
-                            </CardContent>
-                        </Card>
-
-                        {/* Payment Method */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <CreditCard className="h-5 w-5" />
-                                    Payment Method
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Select
-                                    value={data.payment_method}
-                                    onValueChange={(value) => setData('payment_method', value as 'cash' | 'card' | 'insurance' | 'credit')}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select payment method" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="cash">
-                                            <div className="flex items-center gap-2">
-                                                <Wallet className="h-4 w-4" />
-                                                Cash
-                                            </div>
-                                        </SelectItem>
-                                        <SelectItem value="card">
-                                            <div className="flex items-center gap-2">
-                                                <CreditCard className="h-4 w-4" />
-                                                Card
-                                            </div>
-                                        </SelectItem>
-                                        <SelectItem value="insurance">
-                                            <div className="flex items-center gap-2">
-                                                <Landmark className="h-4 w-4" />
-                                                Insurance
-                                            </div>
-                                        </SelectItem>
-                                        <SelectItem value="credit">
-                                            <div className="flex items-center gap-2">
-                                                <Receipt className="h-4 w-4" />
-                                                Credit
-                                            </div>
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </CardContent>
-                        </Card>
-
-                        {/* Notes */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Notes</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Textarea
-                                    value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
-                                    placeholder="Add any notes about this sale..."
-                                    rows={3}
-                                />
                             </CardContent>
                         </Card>
 

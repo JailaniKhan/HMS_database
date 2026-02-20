@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             DefaultUsersSeeder::class,
             AuditLogSeeder::class,
             BillingSettingsSeeder::class,
+            MedicineCategorySeeder::class,
         ]);
     }
 }
