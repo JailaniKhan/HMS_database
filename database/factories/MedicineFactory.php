@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\MedicineCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,22 +17,28 @@ class MedicineFactory extends Factory
      */
     public function definition(): array
     {
-        $dosageForms = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Drops'];
-        $units = ['mg', 'ml', 'g', 'units'];
-        
         return [
+            'medicine_code' => 'MED-' . $this->faker->unique()->numberBetween(1000, 9999),
+            'medicine_id' => 'MED-' . $this->faker->unique()->numberBetween(1000, 9999),
             'name' => $this->faker->word() . ' ' . $this->faker->randomElement(['500mg', '250mg', '100mg', '10ml']),
-            'generic_name' => $this->faker->word(),
-            'brand_name' => $this->faker->company(),
-            'dosage_form' => $this->faker->randomElement($dosageForms),
-            'strength' => $this->faker->randomNumber(2) . $this->faker->randomElement($units),
-            'unit' => $this->faker->randomElement($units),
+            'description' => $this->faker->optional()->sentence(),
+            'manufacturer' => $this->faker->company(),
+            'chemical_name' => $this->faker->optional()->word(),
+            'category' => $this->faker->randomElement(['Pain Relief', 'Antibiotic', 'Cardiovascular', 'Diabetes']),
+            'form' => $this->faker->randomElement(['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Drops']),
+            'strength' => $this->faker->randomNumber(2) . $this->faker->randomElement(['mg', 'ml', 'g', 'units']),
+            'cost_price' => $this->faker->randomFloat(2, 1, 100),
+            'sale_price' => $this->faker->randomFloat(2, 5, 500),
+            'unit_price' => $this->faker->randomFloat(2, 5, 500),
+            'quantity' => $this->faker->numberBetween(0, 1000),
             'stock_quantity' => $this->faker->numberBetween(0, 1000),
             'reorder_level' => $this->faker->numberBetween(10, 50),
-            'price' => $this->faker->randomFloat(2, 5, 500),
+            'batch_number' => 'BAT-' . $this->faker->numberBetween(1000, 9999),
             'expiry_date' => $this->faker->dateTimeBetween('now', '+2 years')->format('Y-m-d'),
-            'manufacturer' => $this->faker->company(),
-            'description' => $this->faker->optional()->sentence(),
+            'status' => 'active',
+            'side_effects' => $this->faker->optional()->sentence(),
+            'instructions' => $this->faker->optional()->sentence(),
+            'category_id' => MedicineCategory::factory(),
         ];
     }
     

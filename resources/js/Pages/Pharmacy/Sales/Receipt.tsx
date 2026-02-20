@@ -21,7 +21,7 @@ interface SaleWithDetails extends Sale {
         id: number;
         patient_id: string;
         first_name: string;
-        last_name: string;
+        father_name: string;
         phone?: string;
         email?: string;
     } | null;
@@ -206,7 +206,7 @@ export default function Receipt({ sale, pharmacy }: ReceiptProps) {
                                             Customer
                                         </p>
                                         <p className="font-medium">
-                                            {sale.patient.first_name} {sale.patient.last_name}
+                                            {sale.patient.first_name} {sale.patient.father_name}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             ID: {sale.patient.patient_id}

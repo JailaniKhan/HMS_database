@@ -310,7 +310,7 @@ export default function SalesReport({ sales, filters, summary }: SalesReportProp
                                             {sale.patient ? (
                                                 <div>
                                                     <p className="font-medium">
-                                                        {sale.patient.first_name} {sale.patient.last_name}
+                                                        {sale.patient.first_name} {sale.patient.father_name}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {sale.patient.patient_id}

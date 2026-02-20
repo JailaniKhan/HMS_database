@@ -318,6 +318,43 @@ class SalesService
     }
 
     /**
+     * Void a sale transaction.
+     *
+     * @param Sale $sale
+     * @param string $reason
+     * @param int $userId
+     * @return bool
+     * @throws \Exception
+     */
+    public function voidSale(Sale $sale, string $reason, int $userId): bool
+    {
+        return DB::transaction(function () use ($sale, $reason, $userId) {
+            if ($sale->status !== 'completed') {
+                throw new \Exception('Only completed sales can be voided');
+            }
+
+            // Restore stock
+            $this->restoreStock($sale);
+
+            // Update sale status
+            $sale->update([
+                'status' => 'voided',
+                'notes' => ($sale->notes ? $sale->notes . "\n" : '') . "Voided: {$reason}",
+            ]);
+
+            // Log the void action
+            $this->auditLogService->logActivity(
+                'Sale Voided',
+                'Sales',
+                "Sale {$sale->sale_id} voided by user {$userId}. Reason: {$reason}",
+                'warning'
+            );
+
+            return true;
+        });
+    }
+
+    /**
      * Get top selling medicines for a date range.
      *
      * @param string $startDate

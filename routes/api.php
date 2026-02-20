@@ -11,6 +11,14 @@ use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Billing\BillController;
 use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\API\v1\MedicineController as ApiMedicineController;
+use App\Http\Controllers\API\v1\SalesController as ApiSalesController;
+use App\Http\Controllers\API\v1\StockController as ApiStockController;
+use App\Http\Controllers\API\v1\AlertController as ApiAlertController;
+use App\Http\Controllers\API\v1\PurchaseController as ApiPurchaseController;
+use App\Http\Controllers\API\v1\MedicineCategoryController as ApiMedicineCategoryController;
+use App\Http\Controllers\API\v1\ReportController as ApiReportController;
+use App\Http\Controllers\API\v1\DashboardController as ApiDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,6 +106,47 @@ Route::prefix('v1')->group(function () {
 
         // Pharmacy routes
         Route::prefix('pharmacy')->group(function () {
+            // Medicines
+            Route::apiResource('medicines', ApiMedicineController::class);
+            Route::get('medicines/{medicine}/stock-history', [ApiMedicineController::class, 'stockHistory']);
+            Route::post('medicines/{medicine}/adjust-stock', [ApiMedicineController::class, 'adjustStock']);
+
+            // Medicine Categories
+            Route::apiResource('categories', ApiMedicineCategoryController::class);
+
+            // Sales
+            Route::apiResource('sales', ApiSalesController::class);
+            Route::post('sales/{sale}/void', [ApiSalesController::class, 'void']);
+            Route::get('sales/{sale}/receipt', [ApiSalesController::class, 'receipt']);
+            Route::get('sales/{sale}/items', [ApiSalesController::class, 'items']);
+
+            // Stock Management
+            Route::get('stock', [ApiStockController::class, 'index']);
+            Route::get('stock/movements', [ApiStockController::class, 'movements']);
+            Route::post('stock/adjust', [ApiStockController::class, 'adjust']);
+            Route::get('stock/valuation', [ApiStockController::class, 'valuation']);
+            Route::get('stock/alerts', [ApiStockController::class, 'alerts']);
+
+            // Purchases
+            Route::apiResource('purchases', ApiPurchaseController::class);
+            Route::post('purchases/{purchase}/receive', [ApiPurchaseController::class, 'receive']);
+            Route::post('purchases/{purchase}/cancel', [ApiPurchaseController::class, 'cancel']);
+
+            // Alerts
+            Route::get('alerts', [ApiAlertController::class, 'index']);
+            Route::get('alerts/pending', [ApiAlertController::class, 'pending']);
+            Route::post('alerts/{alert}/resolve', [ApiAlertController::class, 'resolve']);
+            Route::get('alerts/expiry-risk', [ApiAlertController::class, 'expiryRisk']);
+
+            // Reports
+            Route::get('reports/dashboard', [ApiReportController::class, 'dashboard']);
+            Route::get('reports/sales', [ApiReportController::class, 'sales']);
+            Route::get('reports/stock', [ApiReportController::class, 'stock']);
+            Route::get('reports/expiry', [ApiReportController::class, 'expiry']);
+
+            // Dashboard
+            Route::get('dashboard/stats', [ApiDashboardController::class, 'stats']);
+            Route::get('dashboard/activities', [ApiDashboardController::class, 'recentActivities']);
         });
     });
 });

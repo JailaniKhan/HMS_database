@@ -44,7 +44,7 @@ interface SaleWithDetails extends Sale {
         id: number;
         patient_id: string;
         first_name: string;
-        last_name: string;
+        father_name: string;
         phone?: string;
         email?: string;
     } | null;
@@ -424,7 +424,7 @@ export default function SaleShow({ sale, timeline = [] }: SaleShowProps) {
                                     <div className="space-y-3">
                                         <div>
                                             <p className="font-medium text-lg">
-                                                {sale.patient.first_name} {sale.patient.last_name}
+                                                {sale.patient.first_name} {sale.patient.father_name}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 {sale.patient.patient_id}
