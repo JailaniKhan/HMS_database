@@ -47,4 +47,20 @@ class Department extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    /**
+     * Get the lab test requests for this department.
+     */
+    public function labTestRequests()
+    {
+        return $this->hasMany(LabTestRequest::class);
+    }
+
+    /**
+     * Get the pending lab test requests for this department.
+     */
+    public function pendingLabTestRequests()
+    {
+        return $this->hasMany(LabTestRequest::class)->where('status', 'pending');
+    }
 }

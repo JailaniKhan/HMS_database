@@ -63,10 +63,17 @@ interface LabTestRequest {
   patient: Patient;
 }
 
+interface PatientTestRequest {
+  test_name: string;
+  request_id: string;
+  status: string;
+}
+
 interface LabTestResultCreateProps {
   patients: Patient[];
   labTests: LabTest[];
   requests: LabTestRequest[];
+  patientTestRequests: Record<number, PatientTestRequest[]>;
 }
 
 interface ResultParameter {
@@ -125,7 +132,7 @@ const testTemplates: Record<string, TestParameter[]> = {
   ],
 };
 
-export default function LabTestResultCreate({ patients, labTests, requests }: LabTestResultCreateProps) {
+export default function LabTestResultCreate({ patients, labTests, requests, patientTestRequests }: LabTestResultCreateProps) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTest, setSelectedTest] = useState<LabTest | null>(null);
   const [patientSearch, setPatientSearch] = useState('');
@@ -153,6 +160,16 @@ export default function LabTestResultCreate({ patients, labTests, requests }: La
       (p.father_name?.toLowerCase() || '').includes(search)
     ).slice(0, 10);
   }, [patients, patientSearch]);
+
+  // Get lab tests specific to the selected patient
+  const patientSpecificTests = useMemo(() => {
+    if (!selectedPatient) return labTests;
+    
+    const patientTests = patientTestRequests[selectedPatient.id] || [];
+    const patientTestNames = patientTests.map(t => t.test_name);
+    
+    return labTests.filter(test => patientTestNames.includes(test.name));
+  }, [selectedPatient, labTests, patientTestRequests]);
 
   // Get test parameters based on selected test
   const testParameters = useMemo(() => {
@@ -435,21 +452,31 @@ export default function LabTestResultCreate({ patients, labTests, requests }: La
                       {/* Lab Test Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="lab_test_id">Lab Test *</Label>
-                        <Select
-                          value={data.lab_test_id}
-                          onValueChange={handleTestSelect}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select lab test" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {labTests.map((test) => (
-                              <SelectItem key={test.id} value={test.id.toString()}>
-                                {test.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {!selectedPatient ? (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                            Please select a patient first to view their lab tests
+                          </div>
+                        ) : patientSpecificTests.length === 0 ? (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                            All lab tests for this patient already have results entered
+                          </div>
+                        ) : (
+                          <Select
+                            value={data.lab_test_id}
+                            onValueChange={handleTestSelect}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select lab test" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {patientSpecificTests.map((test) => (
+                                <SelectItem key={test.id} value={test.id.toString()}>
+                                  {test.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         {errors.lab_test_id && (
                           <p className="text-sm text-red-600">{errors.lab_test_id}</p>
                         )}

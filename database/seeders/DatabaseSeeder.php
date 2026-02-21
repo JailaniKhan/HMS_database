@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             DepartmentSeeder::class,
+            LabTestSeeder::class,
             PermissionSeeder::class,
             AdminRoleSeeder::class,
             RolePermissionSeeder::class,
@@ -24,6 +25,7 @@ class DatabaseSeeder extends Seeder
             AuditLogSeeder::class,
             BillingSettingsSeeder::class,
             MedicineCategorySeeder::class,
+            LinkLabTestRequestsToDepartmentsSeeder::class,
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateLabTestRequest;
 use App\Models\LabTestRequest;
 use App\Models\Patient;
 use App\Models\Doctor;
+use App\Models\Department;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +36,7 @@ class LabTestRequestController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $query = LabTestRequest::with(['patient', 'doctor', 'createdBy']);
+        $query = LabTestRequest::with(['patient', 'doctor', 'createdBy', 'department']);
 
         // Apply filters
         if ($request->has('status') && $request->status) {
@@ -48,6 +49,10 @@ class LabTestRequestController extends Controller
 
         if ($request->has('doctor_id') && $request->doctor_id) {
             $query->byDoctor($request->doctor_id);
+        }
+
+        if ($request->has('department_id') && $request->department_id) {
+            $query->byDepartment($request->department_id);
         }
 
         if ($request->has('test_type') && $request->test_type) {
@@ -82,9 +87,12 @@ class LabTestRequestController extends Controller
 
         $labTestRequests = $query->latest()->paginate(10)->withQueryString();
 
+        $departments = Department::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('Laboratory/LabTestRequests/Index', [
             'labTestRequests' => $labTestRequests,
-            'filters' => $request->only(['status', 'patient_id', 'doctor_id', 'test_type', 'date_from', 'date_to', 'query']),
+            'filters' => $request->only(['status', 'patient_id', 'doctor_id', 'department_id', 'test_type', 'date_from', 'date_to', 'query']),
+            'departments' => $departments,
         ]);
     }
 
@@ -101,10 +109,12 @@ class LabTestRequestController extends Controller
 
         $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name')->get();
         $doctors = Doctor::select('id', 'doctor_id', 'full_name')->get();
+        $departments = Department::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('Laboratory/LabTestRequests/Create', [
             'patients' => $patients,
             'doctors' => $doctors,
+            'departments' => $departments,
         ]);
     }
 
@@ -172,6 +182,7 @@ class LabTestRequestController extends Controller
 
         $patients = Patient::select('id', 'patient_id', 'first_name', 'father_name')->get();
         $doctors = Doctor::select('id', 'doctor_id', 'full_name')->get();
+        $departments = Department::select('id', 'name')->orderBy('name')->get();
 
         // Load relationships for the lab test request
         $labTestRequest->load(['patient', 'doctor']);
@@ -180,6 +191,7 @@ class LabTestRequestController extends Controller
             'labTestRequest' => $labTestRequest,
             'patients' => $patients,
             'doctors' => $doctors,
+            'departments' => $departments,
         ]);
     }
 

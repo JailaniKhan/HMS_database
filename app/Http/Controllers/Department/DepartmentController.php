@@ -181,7 +181,30 @@ class DepartmentController extends Controller
                 }
             }
             
-            // If no services, add a default consultation fee
+            // If no services, check if this is a Laboratory appointment with lab test requests
+            if (empty($services) && $appointment->department && $appointment->department->name === 'Laboratory') {
+                $labTestRequests = \App\Models\LabTestRequest::where('patient_id', $appointment->patient_id)
+                    ->where('doctor_id', $appointment->doctor_id)
+                    ->where('department_id', $appointment->department_id)
+                    ->whereDate('scheduled_at', $appointment->appointment_date->toDateString())
+                    ->get();
+                
+                foreach ($labTestRequests as $labRequest) {
+                    // Find the lab test cost by name
+                    $labTest = \App\Models\LabTest::where('name', $labRequest->test_name)->first();
+                    $cost = $labTest ? (float) $labTest->cost : 0;
+                    
+                    $services[] = [
+                        'id' => $labRequest->id,
+                        'name' => $labRequest->test_name,
+                        'custom_cost' => $cost,
+                        'discount_percentage' => 0,
+                        'final_cost' => $cost,
+                    ];
+                }
+            }
+            
+            // If still no services, add a default consultation fee
             if (empty($services)) {
                 $services[] = [
                     'id' => null,
@@ -191,6 +214,9 @@ class DepartmentController extends Controller
                     'final_cost' => (float) $appointment->grand_total,
                 ];
             }
+            
+            // Calculate grand total from services
+            $grandTotal = array_sum(array_column($services, 'final_cost'));
             
             // Build the appointment row with all services
             $result[] = [
@@ -212,7 +238,7 @@ class DepartmentController extends Controller
                 ] : null,
                 'services' => $services,
                 'services_count' => count($services),
-                'grand_total' => (float) $appointment->grand_total,
+                'grand_total' => $grandTotal,
                 'fee' => (float) $appointment->fee,
                 'discount' => (float) $appointment->discount,
             ];

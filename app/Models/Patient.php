@@ -98,4 +98,9 @@ class Patient extends Model
     {
         return $this->hasMany(LabTestResult::class);
     }
+
+    public function labTestRequests()
+    {
+        return $this->hasMany(LabTestRequest::class);
+    }
 }

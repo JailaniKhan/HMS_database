@@ -34,18 +34,21 @@ export interface LabTestRequest {
     request_id: string;
     patient_id: number;
     doctor_id: number;
+    department_id: number | null;
     test_name: string;
     test_type: LabTestRequestType;
     status: LabTestRequestStatus;
     scheduled_at: string;
     completed_at: string | null;
     notes: string | null;
+    clinical_indications: string | null;
     created_by: number;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
     patient?: Patient;
     doctor?: Doctor;
+    department?: Department;
     createdBy?: User;
     results?: LabTestResult[];
 }
@@ -56,10 +59,12 @@ export type LabTestRequestType = 'routine' | 'urgent' | 'stat';
 export interface LabTestRequestFormData {
     patient_id: string;
     doctor_id: string;
+    department_id: string;
     test_name: string;
     test_type: LabTestRequestType;
     scheduled_at: string;
     notes: string;
+    clinical_indications: string;
     status?: LabTestRequestStatus;
 }
 
@@ -67,6 +72,7 @@ export interface LabTestRequestFormData {
 type Patient = import('./patient').Patient;
 type Doctor = import('./doctor').Doctor;
 type User = import('./index.d').User;
+type Department = import('./department').Department;
 
 export interface LabTestFormData {
     name: string;

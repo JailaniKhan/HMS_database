@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import type { LabTestRequest } from '@/types/lab-test';
 import type { Patient } from '@/types/patient';
 import type { Doctor } from '@/types/doctor';
+import type { Department } from '@/types/department';
 import type { User as UserType } from '@/types/index.d';
 
 interface LabTestRequestWithRelations extends LabTestRequest {
@@ -75,6 +76,7 @@ interface LabTestRequestIndexProps {
     status?: string;
     patient_id?: string;
     doctor_id?: string;
+    department_id?: string;
     test_type?: string;
     date_from?: string;
     date_to?: string;
@@ -82,6 +84,7 @@ interface LabTestRequestIndexProps {
   };
   patients?: Patient[];
   doctors?: Doctor[];
+  departments?: Department[];
 }
 
 export default function LabTestRequestIndex({ 
@@ -89,6 +92,7 @@ export default function LabTestRequestIndex({
   filters,
   patients = [],
   doctors = [],
+  departments = [],
 }: LabTestRequestIndexProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeFilters, setActiveFilters] = useState<FilterState>({
@@ -97,6 +101,7 @@ export default function LabTestRequestIndex({
     test_type: filters.test_type || '',
     patient_id: filters.patient_id || '',
     doctor_id: filters.doctor_id || '',
+    department_id: filters.department_id || '',
     date_from: filters.date_from || '',
     date_to: filters.date_to || '',
   });
@@ -124,6 +129,15 @@ export default function LabTestRequestIndex({
         { label: 'STAT', value: 'stat', icon: Zap },
       ],
     },
+    ...(departments.length > 0 ? [{
+      id: 'department_id',
+      label: 'Department',
+      type: 'select' as const,
+      options: departments.map(d => ({
+        label: d.name,
+        value: d.id.toString(),
+      })),
+    }] : []),
     ...(patients.length > 0 ? [{
       id: 'patient_id',
       label: 'Patient',
@@ -142,7 +156,7 @@ export default function LabTestRequestIndex({
         value: d.id.toString(),
       })),
     }] : []),
-  ], [patients, doctors]);
+  ], [patients, doctors, departments]);
 
   // Statistics
   const stats = useMemo(() => {

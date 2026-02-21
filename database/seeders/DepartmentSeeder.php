@@ -28,6 +28,7 @@ class DepartmentSeeder extends Seeder
             ['name' => 'Oncology', 'description' => 'Cancer treatment'],
             ['name' => 'Gynecology', 'description' => 'Women\'s health'],
             ['name' => 'ENT', 'description' => 'Ear, Nose, and Throat'],
+            ['name' => 'Laboratory', 'description' => 'Laboratory services and testing'],
         ];
 
         foreach ($departments as $department) {

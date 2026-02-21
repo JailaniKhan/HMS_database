@@ -217,9 +217,10 @@ class AppointmentController extends Controller
             'discount' => 'nullable|numeric|min:0|max:100',
             'status' => 'required|in:scheduled,completed,cancelled,no_show,rescheduled',
             'services' => 'nullable',
-            'services.*.department_service_id' => 'required_with:services|exists:department_services,id',
+            'services.*.department_service_id' => 'required_with:services',
             'services.*.custom_cost' => 'required_with:services|numeric|min:0',
             'services.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'services.*.is_lab_test' => 'nullable|boolean',
         ]);
 
         // Handle services - may come as JSON string from hidden input or as array

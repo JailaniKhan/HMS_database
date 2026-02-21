@@ -27,6 +27,7 @@ class UpdateLabTestRequest extends FormRequest
         return [
             'patient_id' => ['sometimes', 'required', 'integer', 'exists:patients,id'],
             'doctor_id' => ['sometimes', 'required', 'integer', 'exists:doctors,id'],
+            'department_id' => ['sometimes', 'nullable', 'exists:departments,id'],
             'test_name' => ['sometimes', 'required', 'string', 'max:255'],
             'test_type' => ['sometimes', 'required', 'string', Rule::in(['routine', 'urgent', 'stat'])],
             'status' => ['sometimes', 'required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'cancelled'])],
@@ -47,6 +48,7 @@ class UpdateLabTestRequest extends FormRequest
             'patient_id.exists' => 'The selected patient does not exist.',
             'doctor_id.required' => 'Please select a doctor.',
             'doctor_id.exists' => 'The selected doctor does not exist.',
+            'department_id.exists' => 'The selected department does not exist.',
             'test_name.required' => 'Please enter the test name.',
             'test_name.max' => 'The test name must not exceed 255 characters.',
             'test_type.required' => 'Please select the test type.',
@@ -67,6 +69,7 @@ class UpdateLabTestRequest extends FormRequest
         return [
             'patient_id' => 'patient',
             'doctor_id' => 'doctor',
+            'department_id' => 'department',
             'test_name' => 'test name',
             'test_type' => 'test type',
             'status' => 'status',

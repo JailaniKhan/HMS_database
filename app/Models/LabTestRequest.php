@@ -45,6 +45,7 @@ class LabTestRequest extends Model
         'request_id',
         'patient_id',
         'doctor_id',
+        'department_id',
         'test_name',
         'test_type',
         'status',
@@ -95,6 +96,14 @@ class LabTestRequest extends Model
     }
 
     /**
+     * Get the department associated with this lab test request.
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
      * Get the user who created this lab test request.
      */
     public function createdBy()
@@ -132,6 +141,22 @@ class LabTestRequest extends Model
     public function scopeByDoctor($query, int $doctorId)
     {
         return $query->where('doctor_id', $doctorId);
+    }
+
+    /**
+     * Scope to filter by department.
+     */
+    public function scopeByDepartment($query, int $departmentId)
+    {
+        return $query->where('department_id', $departmentId);
+    }
+
+    /**
+     * Scope to filter by department and status.
+     */
+    public function scopeByDepartmentAndStatus($query, int $departmentId, string $status)
+    {
+        return $query->where('department_id', $departmentId)->where('status', $status);
     }
 
     /**

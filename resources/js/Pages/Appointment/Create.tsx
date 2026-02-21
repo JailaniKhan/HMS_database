@@ -43,9 +43,10 @@ interface Doctor {
 
 interface DepartmentService {
     id: number;
-    department_id: number;
+    department_id: number | null;
     name: string;
     base_cost: string;
+    is_lab_test?: boolean;
 }
 
 interface Department {
@@ -61,12 +62,14 @@ interface SelectedService {
     custom_cost: string;
     discount_percentage: string;
     final_cost: number;
+    is_lab_test?: boolean;
 }
 
 interface SubmitService {
     department_service_id: string;
     custom_cost: number;
     discount_percentage: number;
+    is_lab_test?: boolean;
 }
 
 interface PrintAppointment {
@@ -255,7 +258,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
         }
     }, [printAppointment, hasSubmitted, selectedServices]);
     
-    const { data, setData, post, processing, errors } = useForm<FormData>({
+    const { data, setData, processing, errors } = useForm<FormData>({
         patient_id: '',
         doctor_id: '',
         department_id: '',
@@ -289,6 +292,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
             department_service_id: s.department_service_id,
             custom_cost: parseFloat(s.custom_cost) || 0,
             discount_percentage: parseFloat(s.discount_percentage) || 0,
+            is_lab_test: s.is_lab_test || false,
         })).filter(s => s.department_service_id !== ''); // Only include services with valid IDs
         
         console.log('[DEBUG] Prepared services data for submission:', servicesData);
@@ -358,6 +362,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
             custom_cost: '',
             discount_percentage: '0',
             final_cost: 0,
+            is_lab_test: false,
         };
         
         setSelectedServices([...selectedServices, newService]);
@@ -378,6 +383,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                 if (deptService) {
                     updated.name = deptService.name;
                     updated.custom_cost = deptService.base_cost;
+                    updated.is_lab_test = deptService.is_lab_test || false;
                 }
             }
             
@@ -534,6 +540,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                             department_service_id: s.department_service_id,
                             custom_cost: parseFloat(s.custom_cost) || 0,
                             discount_percentage: parseFloat(s.discount_percentage) || 0,
+                            is_lab_test: s.is_lab_test || false,
                         })).filter((s: any) => s.department_service_id !== ''))} />
 
                         <Card className="shadow-lg border-t-4 border-t-blue-500">
@@ -699,10 +706,14 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
                                 <CardTitle className="flex items-center gap-2 text-xl">
                                     <Package className="h-6 w-6 text-indigo-600" />
-                                    Department Services
+                                    {data.department_id && departments.find(d => d.id.toString() === data.department_id)?.name === 'Laboratory' 
+                                        ? 'Laboratory Tests' 
+                                        : 'Department Services'}
                                 </CardTitle>
                                 <CardDescription className="text-base">
-                                    Add department services to the appointment (optional)
+                                    {data.department_id && departments.find(d => d.id.toString() === data.department_id)?.name === 'Laboratory' 
+                                        ? 'Add laboratory tests to create test requests (optional)' 
+                                        : 'Add department services to the appointment (optional)'}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
@@ -730,7 +741,9 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                                 className="bg-indigo-50 border-indigo-200 hover:bg-indigo-100"
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                Add Service
+                                                {data.department_id && departments.find(d => d.id.toString() === data.department_id)?.name === 'Laboratory' 
+                                                    ? 'Add Lab Test' 
+                                                    : 'Add Service'}
                                             </Button>
                                         </div>
 
@@ -743,7 +756,9 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                                     >
                                                         <div className="flex justify-between items-center">
                                                             <span className="font-semibold text-indigo-700">
-                                                                Service #{index + 1}
+                                                                {data.department_id && departments.find(d => d.id.toString() === data.department_id)?.name === 'Laboratory' 
+                                                                    ? `Lab Test #${index + 1}` 
+                                                                    : `Service #${index + 1}`}
                                                             </span>
                                                             <Button
                                                                 type="button"
@@ -931,7 +946,7 @@ export default function AppointmentCreate({ patients, doctors, departments, prin
                                             {selectedServices.map((service, index) => (
                                                 <div key={service.id} className="flex justify-between items-center py-2 border-b last:border-0">
                                                     <div>
-                                                        <span className="font-medium">{service.name || `Service #${index + 1}`}</span>
+                                                        <span className="font-medium">{service.name || `${data.department_id && departments.find(d => d.id.toString() === data.department_id)?.name === 'Laboratory' ? 'Lab Test' : 'Service'} #${index + 1}`}</span>
                                                         <span className="text-sm text-muted-foreground ml-2">
                                                             (؋{parseFloat(service.custom_cost || '0').toFixed(2)} 
                                                             {parseFloat(service.discount_percentage || '0') > 0 && (

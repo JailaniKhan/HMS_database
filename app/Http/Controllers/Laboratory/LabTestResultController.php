@@ -90,11 +90,94 @@ class LabTestResultController extends Controller
             abort(403, 'Unauthorized access');
         }
         
-        $labTests = LabTest::all();
-        $patients = Patient::all();
+        // Get patients who have lab test requests (pending, in_progress, or completed)
+        $patientsWithRequests = Patient::whereHas('labTestRequests', function ($query) {
+            $query->whereIn('status', ['pending', 'in_progress', 'completed']);
+        })->get();
+        
+        // Filter to exclude patients who already have results for all their tests
+        $patients = $patientsWithRequests->filter(function ($patient) {
+            $allRequests = $patient->labTestRequests()
+                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                ->get();
+            $results = $patient->labTestResults()->get();
+            
+            // If patient has requests but no results, include them
+            if ($allRequests->isNotEmpty() && $results->isEmpty()) {
+                return true;
+            }
+            
+            // If patient has requests and some results, check if there are unresulted tests
+            if ($allRequests->isNotEmpty() && $results->isNotEmpty()) {
+                $resultTestIds = $results->pluck('test_id')->toArray();
+                $unresolvedTests = $allRequests
+                    ->filter(function ($request) use ($resultTestIds) {
+                        // Find lab test by name
+                        $labTest = LabTest::where('name', $request->test_name)->first();
+                        return !in_array($labTest?->id, $resultTestIds);
+                    });
+                return $unresolvedTests->isNotEmpty();
+            }
+            
+            return false;
+        })->values();
+        
+        // Get lab tests that have been requested by these patients but don't have results yet
+        $requestedTestNames = [];
+        if (!$patients->isEmpty()) {
+            $allRequestedTests = \App\Models\LabTestRequest::whereIn('patient_id', $patients->pluck('id'))
+                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                ->get();
+            
+            // Get test IDs that have results for any of these patients
+            $testsWithResults = LabTestResult::whereIn('patient_id', $patients->pluck('id'))
+                ->pluck('test_id')
+                ->toArray();
+            
+            // Map test names and filter out ones with results
+            $requestedTestNames = $allRequestedTests
+                ->filter(function ($req) use ($testsWithResults) {
+                    $labTest = LabTest::where('name', $req->test_name)->first();
+                    return !in_array($labTest?->id, $testsWithResults);
+                })
+                ->pluck('test_name')
+                ->unique()
+                ->toArray();
+        }
+            
+        $labTests = $requestedTestNames ? LabTest::whereIn('name', $requestedTestNames)->get() : collect();
+        
+        // Get patient-specific test requests (map of patient_id to their test requests)
+        // Exclude tests that already have results
+        $patientTestRequests = [];
+        foreach ($patients as $patient) {
+            // Get all requests for this patient
+            $allRequests = $patient->labTestRequests()
+                ->whereIn('status', ['pending', 'in_progress', 'completed'])
+                ->get();
+            
+            // Get test IDs that already have results
+            $resultTestIds = $patient->labTestResults()->pluck('test_id')->toArray();
+            
+            // Filter out tests that already have results
+            $patientRequests = $allRequests
+                ->filter(function ($req) use ($resultTestIds) {
+                    $labTest = LabTest::where('name', $req->test_name)->first();
+                    return !in_array($labTest?->id, $resultTestIds);
+                })
+                ->map(function ($req) {
+                    return [
+                        'test_name' => $req->test_name,
+                        'request_id' => $req->request_id,
+                        'status' => $req->status,
+                    ];
+                })
+                ->toArray();
+            $patientTestRequests[$patient->id] = $patientRequests;
+        }
         
         // Get pending lab test requests for the dropdown
-        $requests = \App\Models\LabTestRequest::whereIn('status', ['pending', 'in_progress'])
+        $requests = \App\Models\LabTestRequest::whereIn('status', ['pending', 'in_progress', 'completed'])
             ->with('patient')
             ->get()
             ->map(function ($request) {
@@ -110,6 +193,7 @@ class LabTestResultController extends Controller
             'labTests' => $labTests,
             'patients' => $patients,
             'requests' => $requests,
+            'patientTestRequests' => $patientTestRequests,
         ]);
     }
 

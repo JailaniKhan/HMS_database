@@ -76,7 +76,29 @@ class AppointmentService
                         ->where('is_active', true);
                 }])
                 ->orderBy('name')
-                ->get(),
+                ->get()
+                ->map(function($department) {
+                    $dept = $department->toArray();
+                    
+                    // For Laboratory department, replace services with lab tests
+                    if ($department->name === 'Laboratory') {
+                        $labTests = \App\Models\LabTest::select('id', 'name', 'cost as base_cost')
+                            ->where('status', 'active')
+                            ->get()
+                            ->map(function($test) {
+                                return [
+                                    'id' => $test->id,
+                                    'department_id' => null, // Not a department service
+                                    'name' => $test->name,
+                                    'base_cost' => $test->base_cost,
+                                    'is_lab_test' => true, // Flag to identify lab tests
+                                ];
+                            });
+                        $dept['services'] = $labTests;
+                    }
+                    
+                    return $dept;
+                }),
         ];
     }
 
@@ -126,7 +148,16 @@ class AppointmentService
 
             // Attach services if provided
             if (!empty($data['services'])) {
-                $this->attachServices($appointment, $data['services']);
+                // Check if this is a Laboratory appointment with lab tests
+                $isLabAppointment = $data['department_id'] && 
+                    \App\Models\Department::where('id', $data['department_id'])->where('name', 'Laboratory')->exists() &&
+                    collect($data['services'])->contains('is_lab_test', true);
+                
+                if ($isLabAppointment) {
+                    $this->createLabTestRequests($appointment, $data['services'], $data);
+                } else {
+                    $this->attachServices($appointment, $data['services']);
+                }
             }
 
             DB::commit();
@@ -175,6 +206,45 @@ class AppointmentService
         Log::info('Services after attach', [
             'count' => $attachedServices->count(),
             'services' => $attachedServices->toArray(),
+        ]);
+    }
+
+    /**
+     * Create lab test requests for Laboratory appointments
+     */
+    private function createLabTestRequests(Appointment $appointment, array $services, array $appointmentData): void
+    {
+        Log::info('Creating lab test requests for appointment', [
+            'appointment_id' => $appointment->id,
+            'services_count' => count($services),
+        ]);
+
+        foreach ($services as $service) {
+            if (!isset($service['is_lab_test']) || !$service['is_lab_test']) {
+                continue; // Skip non-lab tests
+            }
+
+            // For lab tests, department_service_id is actually lab_test_id
+            $labTest = \App\Models\LabTest::find($service['department_service_id']);
+            if (!$labTest) {
+                continue;
+            }
+
+            \App\Models\LabTestRequest::create([
+                'patient_id' => $appointment->patient_id,
+                'doctor_id' => $appointment->doctor_id,
+                'department_id' => $appointment->department_id,
+                'test_name' => $labTest->name,
+                'test_type' => 'routine', // Default, can be modified later
+                'status' => 'pending',
+                'scheduled_at' => $appointment->appointment_date,
+                'notes' => $appointment->notes,
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        Log::info('Lab test requests created for appointment', [
+            'appointment_id' => $appointment->id,
         ]);
     }
 

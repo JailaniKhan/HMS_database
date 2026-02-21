@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Heading from '@/components/heading';
 import LaboratoryLayout from '@/layouts/LaboratoryLayout';
@@ -26,11 +27,13 @@ import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { Patient } from '@/types/patient';
 import type { Doctor } from '@/types/doctor';
+import type { Department } from '@/types/department';
 import type { LabTestRequestType } from '@/types/lab-test';
 
 interface LabTestRequestCreateProps {
   patients: Patient[];
   doctors: Doctor[];
+  departments: Department[];
 }
 
 interface PriorityOption {
@@ -69,7 +72,7 @@ const priorityOptions: PriorityOption[] = [
   },
 ];
 
-export default function LabTestRequestCreate({ patients, doctors }: LabTestRequestCreateProps) {
+export default function LabTestRequestCreate({ patients, doctors, departments }: LabTestRequestCreateProps) {
   const [patientSearch, setPatientSearch] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   const [doctorSearch, setDoctorSearch] = useState('');
@@ -78,6 +81,7 @@ export default function LabTestRequestCreate({ patients, doctors }: LabTestReque
   const { data, setData, post, processing, errors, reset } = useForm({
     patient_id: '',
     doctor_id: '',
+    department_id: '',
     test_name: '',
     test_type: 'routine' as LabTestRequestType,
     scheduled_at: new Date().toISOString().slice(0, 16),
@@ -381,6 +385,47 @@ export default function LabTestRequestCreate({ patients, doctors }: LabTestReque
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Department Selection */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                      <Stethoscope className="h-4 w-4 text-teal-600" />
+                    </div>
+                    <div>
+                      <CardTitle>Department</CardTitle>
+                      <CardDescription>Select the department for this test request</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="department_id">Department</Label>
+                    <Select
+                      value={data.department_id}
+                      onValueChange={(value) => setData('department_id', value)}
+                    >
+                      <SelectTrigger id="department_id" className={cn(errors.department_id && "border-destructive")}>
+                        <SelectValue placeholder="Select a department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((department) => (
+                          <SelectItem key={department.id} value={department.id.toString()}>
+                            {department.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.department_id && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.department_id}
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 

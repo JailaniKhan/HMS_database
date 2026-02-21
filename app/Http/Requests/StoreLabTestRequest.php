@@ -25,6 +25,7 @@ class StoreLabTestRequest extends FormRequest
         return [
             'patient_id' => ['required', 'integer', 'exists:patients,id'],
             'doctor_id' => ['required', 'integer', 'exists:doctors,id'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'test_name' => ['required', 'string', 'max:255'],
             'test_type' => ['required', 'string', Rule::in(['routine', 'urgent', 'stat'])],
             'scheduled_at' => ['required', 'date', 'after_or_equal:today'],
@@ -44,6 +45,7 @@ class StoreLabTestRequest extends FormRequest
             'patient_id.exists' => 'The selected patient does not exist.',
             'doctor_id.required' => 'Please select a doctor.',
             'doctor_id.exists' => 'The selected doctor does not exist.',
+            'department_id.exists' => 'The selected department does not exist.',
             'test_name.required' => 'Please enter the test name.',
             'test_name.max' => 'The test name must not exceed 255 characters.',
             'test_type.required' => 'Please select the test type.',
@@ -63,6 +65,7 @@ class StoreLabTestRequest extends FormRequest
         return [
             'patient_id' => 'patient',
             'doctor_id' => 'doctor',
+            'department_id' => 'department',
             'test_name' => 'test name',
             'test_type' => 'test type',
             'scheduled_at' => 'scheduled date',
