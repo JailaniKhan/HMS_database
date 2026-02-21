@@ -5,9 +5,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Appointment\AppointmentController;
-use App\Http\Controllers\Billing\BillController;
-use App\Http\Controllers\Billing\PaymentController;
-use App\Http\Controllers\Billing\BillingReportController;
 use App\Http\Controllers\Pharmacy\MedicineController;
 use App\Http\Controllers\Pharmacy\MedicineCategoryController;
 use App\Http\Controllers\Pharmacy\StockController;
@@ -82,87 +79,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::post('/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update.post');
         Route::put('/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
         Route::delete('/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
-    });
-
-    // Billing Routes
-    Route::middleware('check.permission:view-billing')->prefix('billing')->group(function () {
-        Route::get('/', [BillController::class, 'index'])->name('billing.index');
-        Route::get('/create', [BillController::class, 'create'])->name('billing.create');
-        Route::post('/', [BillController::class, 'store'])->name('billing.store');
-
-        // Bill Parts standalone page - MUST be before /{bill} route
-        Route::get('/parts', [BillController::class, 'partsIndex'])
-            ->name('billing.parts.index')
-            ->middleware('check.permission:view-billing');
-        Route::get('/parts/dashboard', [BillController::class, 'partsDashboard'])
-            ->name('billing.parts.dashboard')
-            ->middleware('check.permission:view-billing');
-
-        // Bill-specific routes - MUST be after /parts routes
-        Route::get('/{bill}', [BillController::class, 'show'])->name('billing.show');
-        Route::get('/{bill}/edit', [BillController::class, 'edit'])->name('billing.edit');
-        Route::put('/{bill}', [BillController::class, 'update'])->name('billing.update');
-        Route::delete('/{bill}', [BillController::class, 'destroy'])->name('billing.destroy');
-
-        // Bill Actions
-        Route::post('/{bill}/void', [BillController::class, 'void'])
-            ->name('billing.void')
-            ->middleware('check.permission:void-billing');
-        Route::get('/{bill}/invoice', [BillController::class, 'generateInvoice'])
-            ->name('billing.invoice')
-            ->middleware('check.permission:view-billing');
-        Route::get('/{bill}/items', [BillController::class, 'getBillItems'])
-            ->name('billing.items')
-            ->middleware('check.permission:view-billing');
-
-        Route::post('/{bill}/reminder', [BillController::class, 'sendReminder'])
-            ->name('billing.reminder')
-            ->middleware('check.permission:manage-billing');
-
-        // Payments
-        Route::get('/{bill}/payments', [PaymentController::class, 'index'])
-            ->name('billing.payments.index')
-            ->middleware('check.permission:view-payments');
-        Route::post('/{bill}/payments', [PaymentController::class, 'store'])
-            ->name('billing.payments.store')
-            ->middleware('check.permission:record-payments');
-    });
-
-    // Payments (Global)
-    Route::middleware('check.permission:view-payments')->prefix('payments')->group(function () {
-        Route::get('/', [PaymentController::class, 'listAll'])
-            ->name('payments.index');
-        Route::get('/{payment}', [PaymentController::class, 'show'])
-            ->name('payments.show');
-        Route::post('/{payment}/refund', [PaymentController::class, 'refund'])
-            ->name('payments.refund')
-            ->middleware('check.permission:process-refunds');
-    });
-
-    // Billing Reports
-    Route::middleware('check.permission:view-billing-reports')->prefix('reports/billing')->group(function () {
-        Route::get('/', [BillingReportController::class, 'index'])
-            ->name('reports.billing.index');
-        Route::get('/revenue', [BillingReportController::class, 'revenueReport'])
-            ->name('reports.billing.revenue');
-        Route::get('/outstanding', [BillingReportController::class, 'outstandingReport'])
-            ->name('reports.billing.outstanding');
-        Route::get('/payment-methods', [BillingReportController::class, 'paymentMethodReport'])
-            ->name('reports.billing.payment-methods');
-        Route::get('/transactions', [BillingReportController::class, 'transactionsReport'])
-            ->name('reports.billing.transactions');
-        Route::get('/department-revenue', [BillingReportController::class, 'departmentRevenueReport'])
-            ->name('reports.billing.department-revenue');
-        Route::get('/payment-trends', [BillingReportController::class, 'paymentTrendsReport'])
-            ->name('reports.billing.payment-trends');
-        Route::get('/collections', [BillingReportController::class, 'collectionsReport'])
-            ->name('reports.billing.collections');
-        Route::get('/overdue', [BillingReportController::class, 'overdueReport'])
-            ->name('reports.billing.overdue');
-        Route::get('/refunds', [BillingReportController::class, 'refundsReport'])
-            ->name('reports.billing.refunds');
-        Route::get('/provider-performance', [BillingReportController::class, 'providerPerformanceReport'])
-            ->name('reports.billing.provider-performance');
     });
 
     // Wallet and Revenue Tracking

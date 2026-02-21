@@ -28,11 +28,15 @@ class WalletController extends Controller
             ->limit(50)
             ->get();
 
-        // Dispatch real-time update event
-        // broadcast(new WalletUpdated($wallet, $revenueData, $transactions))->toOthers();
+        // Compute a display balance fallback using payments + completed sales
+        $computedRevenue = Payment::where('status', 'completed')->sum('amount')
+            + Sale::where('status', 'completed')->sum('grand_total');
+
+        $displayBalance = $wallet->balance > 0 ? $wallet->balance : $computedRevenue;
 
         return Inertia::render('Wallet/Index', [
             'wallet' => $wallet,
+            'displayBalance' => $displayBalance,
             'revenueData' => $revenueData,
             'transactions' => $transactions,
         ]);
@@ -98,7 +102,9 @@ class WalletController extends Controller
      */
     private function getPharmacyRevenue(Carbon $start, Carbon $end)
     {
-        return Sale::where('payment_status', 'paid')
+        // Some sales are marked completed but payment_status may remain 'pending'.
+        // Count completed sales as revenue.
+        return Sale::where('status', 'completed')
             ->whereBetween('created_at', [$start, $end])
             ->sum('grand_total');
     }
@@ -125,8 +131,14 @@ class WalletController extends Controller
             ->limit(50)
             ->get();
 
+        $computedRevenue = Payment::where('status', 'completed')->sum('amount')
+            + Sale::where('status', 'completed')->sum('grand_total');
+
+        $displayBalance = $wallet->balance > 0 ? $wallet->balance : $computedRevenue;
+
         return response()->json([
             'wallet' => $wallet,
+            'displayBalance' => $displayBalance,
             'revenueData' => $revenueData,
             'transactions' => $transactions,
             'timestamp' => now()->toISOString(),

@@ -60,14 +60,16 @@ interface RevenueData {
 
 interface Props {
     wallet: Wallet;
+    displayBalance?: number;
     revenueData: RevenueData;
     transactions: Transaction[];
 }
 
-export default function Index({ wallet: initialWallet, revenueData: initialRevenueData, transactions: initialTransactions }: Props) {
+export default function Index({ wallet: initialWallet, displayBalance: initialDisplayBalance, revenueData: initialRevenueData, transactions: initialTransactions }: Props) {
     const [wallet, setWallet] = useState(initialWallet);
     const [revenueData, setRevenueData] = useState(initialRevenueData);
     const [transactions, setTransactions] = useState(initialTransactions);
+    const [displayBalance, setDisplayBalance] = useState<number | undefined>(initialDisplayBalance);
     const [isLoading, setIsLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(new Date());
 
@@ -112,6 +114,7 @@ export default function Index({ wallet: initialWallet, revenueData: initialReven
             if (response.ok) {
                 const data = await response.json();
                 setWallet(data.wallet);
+                setDisplayBalance(data.displayBalance);
                 setRevenueData(data.revenueData);
                 setTransactions(data.transactions);
                 setLastUpdated(new Date());
@@ -169,10 +172,10 @@ export default function Index({ wallet: initialWallet, revenueData: initialReven
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-blue-900">{formatCurrency(wallet.balance)}</div>
-                        <p className="text-xs text-blue-600 mt-1">
-                            Last updated: {formatDate(wallet.updated_at)}
-                        </p>
+                                <div className="text-3xl font-bold text-blue-900">{formatCurrency(displayBalance ?? wallet.balance)}</div>
+                                <p className="text-xs text-blue-600 mt-1">
+                                    Last updated: {formatDate(wallet.updated_at)}
+                                </p>
                     </CardContent>
                 </Card>
 

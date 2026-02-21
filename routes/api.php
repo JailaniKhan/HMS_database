@@ -8,8 +8,6 @@ use App\Http\Controllers\API\v1\DepartmentController;
 use App\Http\Controllers\API\v1\AdminController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
-use App\Http\Controllers\Billing\BillController;
-use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\API\v1\MedicineController as ApiMedicineController;
 use App\Http\Controllers\API\v1\SalesController as ApiSalesController;
@@ -86,18 +84,6 @@ Route::prefix('v1')->group(function () {
             Route::delete('/change-requests/{requestId}/cancel', [PermissionsController::class, 'cancelPermissionChangeRequest']);
         });
 
-        // Billing routes
-        Route::prefix('billing')->group(function () {
-            // All items endpoint for frontend
-            Route::get('/all/items', [BillController::class, 'getAllItems']);
-        });
-
-        // Payments routes
-        Route::prefix('payments')->group(function () {
-            Route::get('/', [PaymentController::class, 'listAll']);
-            Route::get('/{payment}', [PaymentController::class, 'show']);
-            Route::post('/{payment}/refund', [PaymentController::class, 'refund']);
-        });
 
         // Dashboard routes
         Route::prefix('dashboard')->group(function () {

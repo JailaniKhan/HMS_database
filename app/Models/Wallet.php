@@ -32,7 +32,22 @@ class Wallet extends Model
      */
     public function updateBalance(): void
     {
-        $this->balance = $this->transactions()->sum('amount');
+        $credits = $this->transactions()->where('type', 'credit')->sum('amount');
+        $debits = $this->transactions()->where('type', 'debit')->sum('amount');
+
+        // Balance is credits minus debits
+        $this->balance = $credits - $debits;
         $this->save();
+    }
+
+    /**
+     * Recalculate balances for all wallets.
+     * Helper method you can call from artisan tinker: Wallet::recalculateAll();
+     */
+    public static function recalculateAll(): void
+    {
+        static::all()->each(function (self $wallet) {
+            $wallet->updateBalance();
+        });
     }
 }
