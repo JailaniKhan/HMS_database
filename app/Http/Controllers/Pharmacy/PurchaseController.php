@@ -38,6 +38,7 @@ class PurchaseController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('purchase_number', 'like', "%{$search}%")
                   ->orWhere('invoice_number', 'like', "%{$search}%")
+                  ->orWhere('company', 'like', "%{$search}%")
                   ->orWhereHas('supplier', function($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%");
                   });
@@ -116,6 +117,7 @@ class PurchaseController extends Controller
         
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'nullable|exists:suppliers,id',
+            'company' => 'nullable|string|max:255',
             'invoice_number' => 'nullable|string|max:100',
             'purchase_date' => 'required|date',
             'tax' => 'nullable|numeric|min:0',
@@ -125,6 +127,7 @@ class PurchaseController extends Controller
             'items.*.medicine_id' => 'required|exists:medicines,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.cost_price' => 'required|numeric|min:0',
+            'items.*.sale_price' => 'nullable|numeric|min:0',
             'items.*.batch_number' => 'nullable|string|max:100',
             'items.*.expiry_date' => 'nullable|date',
         ]);
@@ -140,6 +143,7 @@ class PurchaseController extends Controller
             $purchase = Purchase::create([
                 'purchase_number' => Purchase::generatePurchaseNumber(),
                 'invoice_number' => $request->invoice_number,
+                'company' => $request->company,
                 'supplier_id' => $request->supplier_id,
                 'purchase_date' => $request->purchase_date,
                 'subtotal' => 0,
@@ -164,6 +168,7 @@ class PurchaseController extends Controller
                     'medicine_id' => $item['medicine_id'],
                     'quantity' => $item['quantity'],
                     'cost_price' => $item['cost_price'],
+                    'sale_price' => $item['sale_price'] ?? null,
                     'total_price' => $totalPrice,
                     'batch_number' => $item['batch_number'] ?? null,
                     'expiry_date' => $item['expiry_date'] ?? null,

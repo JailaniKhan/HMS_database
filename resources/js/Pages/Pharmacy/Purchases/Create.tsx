@@ -63,6 +63,7 @@ interface PurchaseItem {
     name: string;
     quantity: number | string;
     cost_price: number | string;
+    sale_price: number | string;
     batch_number: string;
     expiry_date: string;
     current_stock: number;
@@ -76,6 +77,7 @@ interface Props {
 
 export default function CreatePurchase({ medicines, suppliers, purchaseNumber }: Props) {
     const [supplierId, setSupplierId] = useState<string>('');
+    const [company, setCompany] = useState<string>('');
     const [invoiceNumber, setInvoiceNumber] = useState<string>('');
     const [purchaseDate, setPurchaseDate] = useState<string>(
         new Date().toISOString().split('T')[0]
@@ -116,6 +118,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                 name: medicine.name,
                 quantity: 1,
                 cost_price: medicine.cost_price || medicine.unit_price,
+                sale_price: medicine.unit_price || '',
                 batch_number: '',
                 expiry_date: '',
                 current_stock: medicine.stock_quantity,
@@ -170,6 +173,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
             '/pharmacy/purchases',
             {
                 supplier_id: supplierId || null,
+                company: company || null,
                 invoice_number: invoiceNumber || null,
                 purchase_date: purchaseDate,
                 tax: 0,
@@ -179,6 +183,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                     medicine_id: item.medicine_id,
                     quantity: item.quantity,
                     cost_price: item.cost_price,
+                    sale_price: item.sale_price,
                     batch_number: item.batch_number || null,
                     expiry_date: item.expiry_date || null,
                 })),
@@ -225,7 +230,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Purchase Info Row */}
-                    <div className="grid gap-4 md:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-5">
                         <div>
                             <Label>Purchase Number</Label>
                             <Input value={purchaseNumber} disabled />
@@ -236,6 +241,14 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                                 placeholder="Supplier invoice number"
                                 value={invoiceNumber}
                                 onChange={(e) => setInvoiceNumber(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <Label>Company</Label>
+                            <Input
+                                placeholder="Company name"
+                                value={company}
+                                onChange={(e) => setCompany(e.target.value)}
                             />
                         </div>
                         <div>
@@ -307,6 +320,7 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                                         <TableHead>Medicine</TableHead>
                                         <TableHead className="w-24">Qty</TableHead>
                                         <TableHead className="w-32">Cost Price</TableHead>
+                                        <TableHead className="w-32">Sale Price</TableHead>
                                         <TableHead className="w-32">Batch #</TableHead>
                                         <TableHead className="w-36">Expiry</TableHead>
                                         <TableHead className="w-24">Total</TableHead>
@@ -349,6 +363,22 @@ export default function CreatePurchase({ medicines, suppliers, purchaseNumber }:
                                                         updateItem(
                                                             index,
                                                             'cost_price',
+                                                            e.target.value === '' ? '' : parseFloat(e.target.value) || 0
+                                                        )
+                                                    }
+                                                    className="w-28"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={item.sale_price || ''}
+                                                    onChange={(e) =>
+                                                        updateItem(
+                                                            index,
+                                                            'sale_price',
                                                             e.target.value === '' ? '' : parseFloat(e.target.value) || 0
                                                         )
                                                     }

@@ -31,6 +31,23 @@ interface MedicineCreateProps {
   categories: MedicineCategory[];
 }
 
+interface MedicineFormData {
+  name: string;
+  medicine_id: string;
+  description: string;
+  category_id: string;
+  manufacturer: string;
+  dosage_form: string;
+  strength: string;
+  batch_number: string;
+  barcode: string;
+  cost_price: string | number;
+  sale_price: string | number;
+  stock_quantity: string | number;
+  reorder_level: string | number;
+  expiry_date: string;
+}
+
 // Dosage form options
 const dosageForms = [
   { value: 'tablet', label: 'Tablet' },
@@ -64,7 +81,7 @@ const generateMedicineCode = (categoryId: string, name: string): string => {
 export default function MedicineCreate({ categories }: MedicineCreateProps) {
   const [autoGenerateCode, setAutoGenerateCode] = useState(true);
 
-  const { data, setData, post, processing, errors, reset } = useForm({
+  const { data, setData, post, processing, errors, reset } = useForm<MedicineFormData>({
     name: '',
     medicine_id: '',
     description: '',
@@ -74,10 +91,10 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
     strength: '',
     batch_number: '',
     barcode: '',
-    cost_price: 0,
-    sale_price: 0,
-    stock_quantity: 0,
-    reorder_level: 10,
+    cost_price: '',
+    sale_price: '',
+    stock_quantity: '',
+    reorder_level: '',
     expiry_date: '',
   });
 
@@ -110,11 +127,13 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setData(name as keyof typeof data, 
-      name === 'cost_price' || name === 'sale_price' ? parseFloat(value) || 0 : 
-      name === 'stock_quantity' || name === 'reorder_level' ? parseInt(value) || 0 : 
-      value
-    );
+    if (name === 'cost_price' || name === 'sale_price') {
+      setData(name as keyof typeof data, value === '' ? '' : parseFloat(value) || 0);
+    } else if (name === 'stock_quantity' || name === 'reorder_level') {
+      setData(name as keyof typeof data, value === '' ? '' : parseInt(value) || 0);
+    } else {
+      setData(name as keyof typeof data, value);
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -496,7 +515,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       step="1"
                       value={data.cost_price}
                       onChange={handleChange}
-                      placeholder="0"
+                      placeholder="Enter cost price"
                       className={cn("pl-9", errors.cost_price && "border-destructive")}
                     />
                   </div>
@@ -523,7 +542,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       min="0"
                       value={data.sale_price}
                       onChange={handleChange}
-                      placeholder=""
+                      placeholder="Enter sale price"
                       className={cn("pl-9", errors.sale_price && "border-destructive")}
                     />
                   </div>
@@ -533,10 +552,10 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       {errors.sale_price}
                     </p>
                   )}
-                  {data.sale_price > 0 && data.cost_price > 0 && (
+                  {data.sale_price && data.cost_price && (
                     <p className="text-xs text-muted-foreground">
-                      Profit margin: {data.cost_price > 0 
-                        ? (((data.sale_price - data.cost_price) / data.cost_price) * 100).toFixed(1) + '%'
+                      Profit margin: {Number(data.cost_price) > 0 
+                        ? (((Number(data.sale_price) - Number(data.cost_price)) / Number(data.cost_price)) * 100).toFixed(1) + '%'
                         : 'N/A'}
                     </p>
                   )}
@@ -555,7 +574,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       type="number"
                       value={data.stock_quantity}
                       onChange={handleChange}
-                      placeholder=""
+                      placeholder="Enter stock quantity"
                       className={cn("pl-9", errors.stock_quantity && "border-destructive")}
                     />
                   </div>
@@ -581,7 +600,7 @@ export default function MedicineCreate({ categories }: MedicineCreateProps) {
                       min="0"
                       value={data.reorder_level}
                       onChange={handleChange}
-                      placeholder="10"
+                      placeholder="Enter reorder level"
                       className={cn("pl-9", errors.reorder_level && "border-destructive")}
                     />
                   </div>

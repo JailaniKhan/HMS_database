@@ -38,6 +38,7 @@ interface PurchaseItem {
     id: number;
     quantity: number;
     cost_price: number;
+    sale_price: number | null;
     total_price: number;
     batch_number: string | null;
     expiry_date: string | null;
@@ -55,6 +56,7 @@ interface Purchase {
     id: number;
     purchase_number: string;
     invoice_number: string | null;
+    company: string | null;
     purchase_date: string;
     subtotal: number;
     tax: number;
@@ -216,6 +218,19 @@ export default function ShowPurchase({ purchase }: Props) {
                                         </p>
                                     </div>
                                 </div>
+                                {purchase.company && (
+                                    <div className="flex items-start gap-3">
+                                        <Building2 className="size-5 text-muted-foreground mt-0.5" />
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">
+                                                Company
+                                            </p>
+                                            <p className="font-medium">
+                                                {purchase.company}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex items-start gap-3">
                                     <Calendar className="size-5 text-muted-foreground mt-0.5" />
                                     <div>
@@ -290,6 +305,7 @@ export default function ShowPurchase({ purchase }: Props) {
                                         <TableHead>Category</TableHead>
                                         <TableHead className="text-center">Qty</TableHead>
                                         <TableHead className="text-right">Cost Price</TableHead>
+                                        <TableHead className="text-right">Sale Price</TableHead>
                                         <TableHead>Batch #</TableHead>
                                         <TableHead>Expiry</TableHead>
                                         <TableHead className="text-right">Total</TableHead>
@@ -316,6 +332,13 @@ export default function ShowPurchase({ purchase }: Props) {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <PriceDisplay amount={item.cost_price} />
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {item.sale_price ? (
+                                                    <PriceDisplay amount={item.sale_price} />
+                                                ) : (
+                                                    '-'
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {item.batch_number || '-'}

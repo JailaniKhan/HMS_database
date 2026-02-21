@@ -26,7 +26,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import PharmacyLayout from '@/layouts/PharmacyLayout';
 import { PriceDisplay } from '@/components/pharmacy';
@@ -40,7 +39,6 @@ import {
     Eye,
     XCircle,
     FileText,
-    Calendar,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -48,6 +46,7 @@ interface Purchase {
     id: number;
     purchase_number: string;
     invoice_number: string | null;
+    company: string | null;
     purchase_date: string;
     subtotal: number;
     tax: number;
@@ -310,8 +309,9 @@ export default function PurchasesIndex({ purchases, suppliers, stats, filters }:
                             <TableRow>
                                 <TableHead>Purchase #</TableHead>
                                 <TableHead>Date</TableHead>
+                                <TableHead>Invoice #</TableHead>
+                                <TableHead>Company</TableHead>
                                 <TableHead>Supplier</TableHead>
-                                <TableHead>Items</TableHead>
                                 <TableHead>Total</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Payment</TableHead>
@@ -333,8 +333,9 @@ export default function PurchasesIndex({ purchases, suppliers, stats, filters }:
                                             {purchase.purchase_number}
                                         </TableCell>
                                         <TableCell>{formatDate(purchase.purchase_date)}</TableCell>
+                                        <TableCell>{purchase.invoice_number || 'N/A'}</TableCell>
+                                        <TableCell>{purchase.company || 'N/A'}</TableCell>
                                         <TableCell>{purchase.supplier?.name || 'N/A'}</TableCell>
-                                        <TableCell>{purchase.items_count} items</TableCell>
                                         <TableCell>
                                             <PriceDisplay amount={purchase.total_amount} />
                                         </TableCell>
@@ -362,7 +363,7 @@ export default function PurchasesIndex({ purchases, suppliers, stats, filters }:
                                                 </Link>
                                                 {purchase.status === 'pending' && (
                                                     <Link
-                                                        href={`/pharmacy/purchases/${purchase.id}`}
+                                                        href={`/pharmacy/purchases/${purchase.id}/receive`}
                                                         method="post"
                                                         as="button"
                                                     >
