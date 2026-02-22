@@ -130,6 +130,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
         // Sales Routes
         Route::get('/sales', [SalesController::class, 'index'])->name('pharmacy.sales.index');
+        Route::get('/sales/dashboard', [SalesController::class, 'dashboard'])->name('pharmacy.sales.dashboard');
         Route::get('/sales/create', [SalesController::class, 'create'])->name('pharmacy.sales.create');
         Route::get('/sales/dispense', [SalesController::class, 'dispense'])->name('pharmacy.sales.dispense');
         Route::post('/sales', [SalesController::class, 'store'])->name('pharmacy.sales.store');

@@ -106,15 +106,15 @@ const pharmacyNavItems: (NavItem & { permission?: string })[] = [
                 icon: BarChart3,
             },
             {
+                title: 'Sales Dashboard',
+                href: '/pharmacy/sales/dashboard',
+                icon: BarChart3,
+            },
+            {
                 title: 'New Sale',
                 href: '/pharmacy/sales/create',
                 icon: Plus,
             },
-            // {
-            //     title: 'Dispense',
-            //     href: '/pharmacy/sales/dispense',
-            //     icon: ShoppingCart,
-            // },
         ],
     },
     {

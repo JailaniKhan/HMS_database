@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import HospitalLayout from '@/layouts/PharmacyLayout';
+import PharmacyLayout from '@/layouts/PharmacyLayout';
 import type { Sale } from '@/types/pharmacy';
 import {
     Dialog,
@@ -283,7 +283,7 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
     };
 
     return (
-        <HospitalLayout>
+        <PharmacyLayout>
             <div className="space-y-6">
                 <Head title="Pharmacy Sales" />
                 
@@ -599,6 +599,6 @@ export default function SaleIndex({ sales, filters = {}, stats }: SaleIndexProps
                     </DialogContent>
                 </Dialog>
             </div>
-        </HospitalLayout>
+        </PharmacyLayout>
     );
 }

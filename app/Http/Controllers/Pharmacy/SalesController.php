@@ -41,15 +41,48 @@ class SalesController extends Controller
     public function index(Request $request): Response
     {
         $user = Auth::user();
-        
+
         // Check if user has appropriate permission
         if (!$user->hasPermission('view-pharmacy')) {
             abort(403, 'Unauthorized access');
         }
-        
+
+        // Determine view type (today, monthly, yearly)
+        $view = $request->query('view', 'today');
+        $isSuperAdmin = $user->isSuperAdmin();
+
+        // Set date range based on view
+        $now = now();
+        switch ($view) {
+            case 'yearly':
+                $year = $request->query('year', $now->year);
+                $dateFrom = "{$year}-01-01";
+                $dateTo = "{$year}-12-31";
+                $periodLabel = "Year {$year}";
+                break;
+            case 'monthly':
+                $year = $request->query('year', $now->year);
+                $month = $request->query('month', $now->month);
+                $dateFrom = "{$year}-{$month}-01";
+                $dateTo = date('Y-m-t', strtotime("{$year}-{$month}-01"));
+                $periodLabel = date('F Y', strtotime("{$year}-{$month}-01"));
+                break;
+            default: // today
+                $dateFrom = $now->toDateString();
+                $dateTo = $now->toDateString();
+                $periodLabel = 'Today';
+                $view = 'today';
+                break;
+        }
+
+        // Build query
         $query = Sale::with(['items.medicine', 'patient', 'soldBy'])
             ->withCount('items');
-        
+
+        // Apply date range
+        $query->whereDate('created_at', '>=', $dateFrom)
+              ->whereDate('created_at', '<=', $dateTo);
+
         // Apply search filter
         if ($request->filled('query')) {
             $searchTerm = $request->input('query');
@@ -59,49 +92,167 @@ class SalesController extends Controller
                       $pq->where('first_name', 'like', '%' . $searchTerm . '%')
                          ->orWhere('father_name', 'like', '%' . $searchTerm . '%')
                          ->orWhere('patient_id', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('soldBy', function ($sq) use ($searchTerm) {
+                      $sq->where('name', 'like', '%' . $searchTerm . '%');
                   });
             });
         }
-        
-        // Apply status filter
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+
+        // Apply category filter
+        if ($request->filled('category') && $request->category !== 'all') {
+            $query->whereHas('items.medicine.category', function ($cq) use ($request) {
+                $cq->where('name', $request->category);
+            });
         }
-        
-        // Apply payment method filter
-        if ($request->filled('payment_method') && $request->payment_method !== 'all') {
-            $query->where('payment_method', $request->payment_method);
-        }
-        
-        // Apply date range filter - default to today's date if not provided
-        $today = now()->toDateString();
-        $dateFrom = $request->filled('date_from') ? $request->date_from : $today;
-        $dateTo = $request->filled('date_to') ? $request->date_to : $today;
-        
-        $query->whereDate('created_at', '>=', $dateFrom);
-        $query->whereDate('created_at', '<=', $dateTo);
-        
-        $sales = $query->latest()->paginate(15)->withQueryString();
-        
-        // Calculate statistics
-        $stats = [
-            'total_sales' => Sale::count(),
-            'total_revenue' => Sale::where('status', 'completed')->sum('grand_total'),
-            'today_sales' => Sale::whereDate('created_at', today())->count(),
-            'today_revenue' => Sale::whereDate('created_at', today())->where('status', 'completed')->sum('grand_total'),
+
+        // Pagination
+        $perPage = 15;
+        $sales = $query->latest()->paginate($perPage)->withQueryString();
+
+        // Transform sales data for the dashboard
+        $salesData = $sales->map(function ($sale) {
+            return [
+                'id' => $sale->id,
+                'sale_id' => $sale->sale_id,
+                'sale_date' => $sale->created_at->toISOString(),
+                'status' => $sale->status,
+                'patient' => $sale->patient ? [
+                    'id' => $sale->patient->id,
+                    'name' => $sale->patient->first_name . ' ' . $sale->patient->father_name,
+                ] : null,
+                'pharmacist' => $sale->soldBy ? [
+                    'id' => $sale->soldBy->id,
+                    'name' => $sale->soldBy->name,
+                ] : null,
+                'products' => $sale->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->medicine->name,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'discount_percentage' => $item->discount_percentage ?? 0,
+                        'final_price' => $item->total_price,
+                    ];
+                }),
+                'products_count' => $sale->items->count(),
+                'grand_total' => $sale->grand_total,
+                'fee' => $sale->tax_amount ?? 0,
+                'discount' => $sale->discount_amount ?? 0,
+            ];
+        });
+
+        // Calculate summary statistics
+        $summaryQuery = Sale::whereDate('created_at', '>=', $dateFrom)
+                           ->whereDate('created_at', '<=', $dateTo);
+
+        $summary = [
+            'total_revenue' => (float) $summaryQuery->where('status', 'completed')->sum('grand_total'),
+            'yearly_revenue' => (float) Sale::whereYear('created_at', $now->year)
+                                          ->where('status', 'completed')->sum('grand_total'),
+            'total_sales' => $summaryQuery->count(),
+            'completed_count' => $summaryQuery->where('status', 'completed')->count(),
+            'cancelled_count' => $summaryQuery->where('status', 'cancelled')->count(),
+            'pending_count' => $summaryQuery->where('status', 'pending')->count(),
+            'refunded_count' => $summaryQuery->where('status', 'refunded')->count(),
         ];
-        
-        return Inertia::render('Pharmacy/Sales/Index', [
-            'sales' => $sales,
+
+        // Get categories for filter
+        $categories = MedicineCategory::select('id', 'name')
+            ->whereHas('medicines', function ($q) {
+                $q->where('quantity', '>', 0);
+            })
+            ->get()
+            ->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                ];
+            });
+
+        // Navigation logic
+        $navigation = [
+            'can_go_next' => false,
+            'can_go_prev' => false,
+            'next_params' => [],
+            'prev_params' => [],
+        ];
+
+        if ($view === 'today') {
+            $currentDate = $now->toDateString();
+            $prevDate = $now->copy()->subDay()->toDateString();
+            $nextDate = $now->copy()->addDay()->toDateString();
+
+            $navigation['can_go_prev'] = true;
+            $navigation['can_go_next'] = $nextDate <= $now->toDateString();
+            $navigation['prev_params'] = ['view' => 'today', 'day' => $now->copy()->subDay()->day, 'month' => $now->copy()->subDay()->month, 'year' => $now->copy()->subDay()->year];
+            if ($navigation['can_go_next']) {
+                $navigation['next_params'] = ['view' => 'today', 'day' => $now->copy()->addDay()->day, 'month' => $now->copy()->addDay()->month, 'year' => $now->copy()->addDay()->year];
+            }
+        } elseif ($view === 'monthly') {
+            $currentMonth = $now->month;
+            $currentYear = $now->year;
+            $prevMonth = $currentMonth - 1;
+            $prevYear = $currentYear;
+            if ($prevMonth < 1) {
+                $prevMonth = 12;
+                $prevYear--;
+            }
+            $nextMonth = $currentMonth + 1;
+            $nextYear = $currentYear;
+            if ($nextMonth > 12) {
+                $nextMonth = 1;
+                $nextYear++;
+            }
+
+            $navigation['can_go_prev'] = true;
+            $navigation['can_go_next'] = ($nextYear < $now->year) || ($nextYear === $now->year && $nextMonth <= $now->month);
+            $navigation['prev_params'] = ['view' => 'monthly', 'month' => $prevMonth, 'year' => $prevYear];
+            if ($navigation['can_go_next']) {
+                $navigation['next_params'] = ['view' => 'monthly', 'month' => $nextMonth, 'year' => $nextYear];
+            }
+        } elseif ($view === 'yearly') {
+            $currentYear = $now->year;
+            $navigation['can_go_prev'] = true;
+            $navigation['can_go_next'] = ($request->query('year', $now->year) + 1) <= $now->year;
+            $navigation['prev_params'] = ['view' => 'yearly', 'year' => $request->query('year', $now->year) - 1];
+            if ($navigation['can_go_next']) {
+                $navigation['next_params'] = ['view' => 'yearly', 'year' => $request->query('year', $now->year) + 1];
+            }
+        }
+
+        return Inertia::render('Pharmacy/Sales/SalesDashboard', [
+            'sales' => $salesData,
             'filters' => [
-                'query' => $request->query('query', ''),
-                'status' => $request->query('status', ''),
-                'payment_method' => $request->query('payment_method', ''),
-                'date_from' => $request->query('date_from', ''),
-                'date_to' => $request->query('date_to', ''),
+                'view' => $view,
+                'year' => $request->query('year', $now->year),
+                'month' => $request->query('month', $now->month),
+                'day' => $request->query('day', $now->day),
             ],
-            'stats' => $stats,
+            'summary' => $summary,
+            'categories' => $categories,
+            'navigation' => $navigation,
+            'is_super_admin' => $isSuperAdmin,
+            'period_label' => $periodLabel,
+            'pagination' => [
+                'current_page' => $sales->currentPage(),
+                'last_page' => $sales->lastPage(),
+                'per_page' => $sales->perPage(),
+                'total' => $sales->total(),
+                'from' => $sales->firstItem(),
+                'to' => $sales->lastItem(),
+                'has_more_pages' => $sales->hasMorePages(),
+            ],
         ]);
+    }
+
+    /**
+     * Display the sales dashboard.
+     */
+    public function dashboard(Request $request): Response
+    {
+        // Simply call the index method with dashboard-specific parameters
+        return $this->index($request);
     }
 
     /**
