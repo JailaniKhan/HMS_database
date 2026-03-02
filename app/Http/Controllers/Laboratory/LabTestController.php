@@ -455,7 +455,7 @@ if (!$user->isSuperAdmin() && !$user->hasPermission('view-laboratory')) {
                     ->orWhere('description', 'like', '%' . $query . '%')
                     ->orWhere('procedure', 'like', '%' . $query . '%')
                     ->orWhere('unit', 'like', '%' . $query . '%')
-                    ->paginate(10);
+                    ->paginate(143);
 
         return Inertia::render('Laboratory/LabTests/Index', [
             'labTests' => $labTests,
