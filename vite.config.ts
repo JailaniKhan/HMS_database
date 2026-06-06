@@ -28,15 +28,14 @@ export default defineConfig({
         port: 5173,
         strictPort: true,
         hmr: {
-            host: '192.168.43.189',
+            host: process.env.VITE_HMR_HOST || 'localhost',
             port: 5173,
             overlay: true,
             timeout: 30000,
         },
-        cors: true, // Enable CORS for all origins
-        origin: 'http://192.168.43.189:5173', // Set the origin for generated URLs
+        cors: true,
+        origin: process.env.VITE_ORIGIN || 'http://localhost:5173',
         watch: {
-            // Reduce file watching overhead
             ignored: ['**/node_modules/**', '**/storage/**', '**/vendor/**'],
         },
     },
